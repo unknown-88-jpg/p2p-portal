@@ -1,0 +1,1 @@
+[{"v":4999999,"out":false},{"v":5000000,"out":true},{"v":5000001,"out":true},{"v":0,"out":false},{"v":-1,"out":false},{"v":"5000000","out":true},{"v":"4999999.99","out":false},{"v":"abc","out":false},{"v":null,"out":false},{"out":false},{"v":1000000000000,"out":true},{"v":4999999.5,"out":false},{"v":4999999.99,"out":false}]

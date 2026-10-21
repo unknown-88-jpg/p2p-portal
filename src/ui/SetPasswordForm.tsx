@@ -1,0 +1,49 @@
+'use client';
+import { useEffect, useState, type FormEvent } from 'react';
+import { api, errMessage } from './api';
+
+export function SetPasswordForm() {
+  const [token, setToken] = useState('');
+  const [pw, setPw] = useState('');
+  const [pw2, setPw2] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('t') ?? '';
+    // React StrictMode (dev) menjalankan effect 2x: eksekusi ke-2 melihat URL yang sudah dibersihkan.
+    // Jangan menimpa token yang sudah terbaca dengan string kosong.
+    if (!t) return;
+    setToken(t);
+    window.history.replaceState(null, '', '/set-password'); // token tidak tertinggal di URL/riwayat
+  }, []);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (pw !== pw2) { setMsg('Konfirmasi password tidak sama.'); return; }
+    setBusy(true); setMsg(null);
+    try { await api('/api/auth/set-password', { body: { token, password: pw } }); setDone(true); }
+    catch (err) { setMsg(errMessage(err)); }
+    finally { setBusy(false); }
+  }
+
+  if (done) return (
+    <div className="card"><h1>Password tersimpan</h1><p className="sub">Silakan masuk dengan nomor HP dan password baru Anda.</p>
+      <a href="/login"><button className="primary" type="button">Ke halaman masuk</button></a></div>
+  );
+  return (
+    <form className="card" onSubmit={submit} noValidate>
+      <h1>Atur password</h1>
+      <p className="sub">Link berlaku 60 menit dan hanya bisa dipakai sekali.</p>
+      {!token && <div className="msg err" role="alert">Link tidak lengkap. Buka ulang link dari WhatsApp, atau minta link baru.</div>}
+      <label htmlFor="pw">Password baru</label>
+      <input id="pw" type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} required />
+      <div className="hint">Minimal 8 karakter, bukan nomor HP, bukan password umum.</div>
+      <label htmlFor="pw2">Ulangi password</label>
+      <input id="pw2" type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} required />
+      <button className="primary" disabled={busy || !token || !pw || !pw2}>{busy ? 'Menyimpan…' : 'Simpan password'}</button>
+      {msg && <div className="msg err" role="alert">{msg}</div>}
+    </form>
+  );
+}

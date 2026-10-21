@@ -1,0 +1,19 @@
+# Pemicu digest approval (cron Vercel Hobby cuma 1x/hari). Isi Secrets repo: APP_URL (mis. https://xxx.vercel.app), CRON_SECRET.
+# Jadwal dalam UTC: 02:00, 05:00, 08:00, 10:00 UTC = 09:00, 12:00, 15:00, 17:00 WIB. GitHub bisa terlambat beberapa menit.
+name: digest-approval
+on:
+  schedule:
+    - cron: '0 2,5,8,10 * * 1-5'
+  workflow_dispatch:
+jobs:
+  kirim:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Panggil /api/cron/digest
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          code=$(curl -sS -o resp.json -w '%{http_code}' --max-time 60 -H "Authorization: Bearer ${CRON_SECRET}" "${APP_URL%/}/api/cron/digest")
+          echo "HTTP ${code}"; cat resp.json
+          [ "${code}" = "200" ]

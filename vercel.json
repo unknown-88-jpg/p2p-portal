@@ -1,0 +1,1 @@
+{ "regions": ["sin1"], "crons": [{ "path": "/api/cron/lampiran-yatim", "schedule": "0 19 * * *" }] }
