@@ -1,12 +1,13 @@
 import { can } from '@/domain/capabilities';
 import { KELOMPOK_STATUS } from '@/domain/status-label';
 import { rupiah } from '@/domain/pengajuan-form';
-import { labelStatus } from '@/domain/status-label';
 import { inbox } from '@/server/approval';
 import { dashboard } from '@/server/dokumen';
 import { listMine } from '@/server/pengajuan';
 import { authDeps } from '@/server/runtime';
 import { AppNav } from '@/ui/AppNav';
+import { IkonPerhatian, IkonProses, IkonSelesai, IkonSetuju, IkonUang } from '@/ui/icons';
+import { StatusPill } from '@/ui/kit';
 import { wajibSesi } from './_lib/sesi';
 
 export const dynamic = 'force-dynamic';
@@ -19,48 +20,91 @@ export default async function Home() {
   const menunggu = bisaSetuju ? (await inbox(authDeps(), s)).length : 0;
   const dash = await dashboard(authDeps(), s);
   const n = (k: string) => daftar.filter((d) => KELOMPOK_STATUS.find((x) => x.kunci === k)!.cocok(d.status)).length;
+  const total = daftar.length;
+  const metrik = [
+    { k: 'perlu-tindakan', label: 'Perlu tindakan', ikon: <IkonPerhatian />, merah: n('perlu-tindakan') > 0 },
+    { k: 'diproses', label: 'Sedang diproses', ikon: <IkonProses />, merah: false },
+    { k: 'selesai', label: 'Selesai', ikon: <IkonSelesai />, merah: false },
+  ] as const;
   return (
     <>
       <AppNav nama={s.nama} bisaAjukan={bisa} bisaSetujui={bisaSetuju} jumlahMenunggu={menunggu} aktif="beranda" />
-      <main><header className="tile parchment">
-        <div className="wrap">
-          <h1 className="hero-h">Halo, {s.nama.split(' ')[0]}</h1>
-          <p className="hero-sub">{s.jabatan}</p>
-          {bisaSetuju && <div className="cta-row"><a className="btn btn-primary" href="/persetujuan">Persetujuan{menunggu ? ` (${menunggu} menunggu)` : ''}</a></div>}
-          {bisa ? (
-            <>
-              <div className="cta-row">
-                <a className="btn btn-primary" href="/pengajuan/baru">Buat pengajuan</a>
-                <a className="btn btn-secondary" href="/pengajuan">Pengajuan saya</a>
-              </div>
-              <div className="statistik">
-                <div className={`stat${n('perlu-tindakan') ? ' merah' : ''}`}><div className="n">{n('perlu-tindakan')}</div><div className="l">Perlu tindakan</div></div>
-                <div className="stat"><div className="n">{n('diproses')}</div><div className="l">Sedang diproses</div></div>
-                <div className="stat"><div className="n">{n('selesai')}</div><div className="l">Selesai</div></div>
-              </div>
-            </>
-          ) : <p className="muted pt">Fitur Finance menyusul di milestone berikutnya.</p>}
-          {dash.manager && (
-            <>
-              <h2 className="sec-h">Antrean Manager</h2>
-              <div className="statistik">
-                <div className={`stat${dash.manager.antrean ? ' merah' : ''}`}><div className="n">{dash.manager.antrean}</div><div className="l">Menunggu persetujuan</div></div>
-                <div className="stat"><div className="n n-uang">{rupiah(dash.manager.totalNominal)}</div><div className="l">Total nominal antrean</div></div>
-                <div className="stat"><div className="n">{dash.manager.tertuaHari === null ? '—' : `${dash.manager.tertuaHari} hr`}</div><div className="l">Tertua di antrean</div></div>
-              </div>
-              {dash.manager.divisi.length > 0 && (
-                <div className="kartu"><span className="kartu-h">Pengajuan divisi bulan ini</span>
-                  <ul className="ringkas">{dash.manager.divisi.map((v) => <li key={v.nama}><span>{v.nama}</span><span>{v.jumlah} dok · {rupiah(v.nominal)}</span></li>)}</ul></div>
-              )}
-            </>
-          )}
-          {bisa && dash.pic.terbaru.length > 0 && (
-            <div className="kartu"><span className="kartu-h">Aktivitas terakhir</span>
-              {(dash.pic.revisi > 0 || dash.pic.menunggu > 0) && <p className="muted">{dash.pic.revisi} perlu revisi · {dash.pic.draft} draft · {dash.pic.menunggu} menunggu Manager</p>}
-              <ul className="ringkas">{dash.pic.terbaru.map((t) => <li key={t.id}><a href={`/pengajuan/${encodeURIComponent(t.id)}`}>{t.id} · {t.vendor || '—'}</a><span>{labelStatus(t.status).label} · {t.waktu}</span></li>)}</ul></div>
-          )}
+      <main className="dash">
+        <div className="dash-head">
+          <div>
+            <h1 className="page-h">Halo, {s.nama.split(' ')[0]}</h1>
+            <p className="muted">{s.jabatan}</p>
+          </div>
+          <div className="dash-aksi">
+            {bisaSetuju && <a className="btn btn-secondary" href="/persetujuan">Persetujuan{menunggu ? ` (${menunggu} menunggu)` : ''}</a>}
+            {bisa && <a className="btn btn-primary" href="/pengajuan/baru">Buat pengajuan</a>}
+          </div>
         </div>
-      </header></main>
+
+        {bisa ? (
+          <div className="metrik">
+            {metrik.map((m) => (
+              <div key={m.k} className={`metrik-kartu${m.merah ? ' merah' : ''}`}>
+                <span className="metrik-ikon">{m.ikon}</span>
+                <div className="metrik-n num">{n(m.k)}</div>
+                <div className="metrik-l">{m.label}</div>
+              </div>
+            ))}
+          </div>
+        ) : <div className="kartu"><p className="muted">Fitur Finance menyusul di milestone berikutnya.</p></div>}
+
+        {dash.manager && (
+          <>
+            <h2 className="sec-h">Antrean Manager</h2>
+            <div className="metrik">
+              <div className={`metrik-kartu${dash.manager.antrean ? ' merah' : ''}`}><span className="metrik-ikon"><IkonSetuju /></span><div className="metrik-n num">{dash.manager.antrean}</div><div className="metrik-l">Menunggu persetujuan</div></div>
+              <div className="metrik-kartu"><span className="metrik-ikon"><IkonUang /></span><div className="metrik-n metrik-uang num">{rupiah(dash.manager.totalNominal)}</div><div className="metrik-l">Total nominal antrean</div></div>
+              <div className="metrik-kartu"><span className="metrik-ikon"><IkonProses /></span><div className="metrik-n num">{dash.manager.tertuaHari === null ? '—' : `${dash.manager.tertuaHari} hr`}</div><div className="metrik-l">Tertua di antrean</div></div>
+            </div>
+            {dash.manager.divisi.length > 0 && (
+              <div className="kartu kartu-gap"><span className="kartu-h">Pengajuan divisi bulan ini</span>
+                <ul className="ringkas">{dash.manager.divisi.map((v) => <li key={v.nama}><span>{v.nama}</span><span>{v.jumlah} dok · {rupiah(v.nominal)}</span></li>)}</ul></div>
+            )}
+          </>
+        )}
+
+        {bisa && (
+          <div className="dash-grid">
+            <section className="kartu" aria-labelledby="h-aktivitas">
+              <div className="kartu-judul"><h2 className="kartu-t" id="h-aktivitas">Aktivitas terakhir</h2><a className="cap" href="/pengajuan">Lihat semua</a></div>
+              {(dash.pic.revisi > 0 || dash.pic.menunggu > 0) && <p className="muted cap">{dash.pic.revisi} perlu revisi · {dash.pic.draft} draft · {dash.pic.menunggu} menunggu Manager</p>}
+              {dash.pic.terbaru.length === 0 ? (
+                <div className="kosong"><p>Belum ada pengajuan.</p><div className="cta-row cta-tengah"><a className="btn btn-primary" href="/pengajuan/baru">Buat pengajuan pertama</a></div></div>
+              ) : (
+                <div className="tbl-wrap">
+                  <table className="tbl">
+                    <thead><tr><th scope="col">Dokumen</th><th scope="col">Status</th><th scope="col" className="tbl-wkt">Waktu</th></tr></thead>
+                    <tbody>{dash.pic.terbaru.map((t) => (
+                      <tr key={t.id}>
+                        <td><a href={`/pengajuan/${encodeURIComponent(t.id)}`}><b>{t.id}</b></a><span className="tbl-sub">{t.vendor || '—'}</span></td>
+                        <td><StatusPill status={t.status} /></td>
+                        <td className="tbl-wkt muted cap">{t.waktu}</td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+            <section className="kartu" aria-labelledby="h-ringkas">
+              <h2 className="kartu-t" id="h-ringkas">Ringkasan status</h2>
+              <p className="muted cap">{total} pengajuan Anda</p>
+              <div className="bar-list">
+                {metrik.map((m) => (
+                  <div key={m.k} className="bar-baris">
+                    <div className="bar-ket"><span>{m.label}</span><span className="num">{n(m.k)}</span></div>
+                    <progress className={m.k === 'perlu-tindakan' ? 'lewat' : m.k === 'selesai' ? 'ok' : ''} value={n(m.k)} max={Math.max(total, 1)} aria-label={`${m.label}: ${n(m.k)} dari ${total}`} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+      </main>
     </>
   );
 }
