@@ -24,8 +24,8 @@ export function Field({ label, opsional, galat, petunjuk, children, id }: {
 }
 
 /** Pilihan tunggal berbentuk chip. role=radiogroup; panah kiri/kanan memindahkan pilihan (pola WAI-ARIA radio). */
-export function Chips<T extends string>({ label, nilai, pilihan, onPilih, kecil, galat, besar }: {
-  label: string; nilai: T | ''; pilihan: readonly { nilai: T; teks: string; deskripsi?: string }[]; onPilih: (v: T) => void; kecil?: boolean; galat?: string | undefined; besar?: boolean;
+export function Chips<T extends string>({ label, nilai, pilihan, onPilih, kecil, galat, besar, labelTersembunyi }: {
+  label: string; nilai: T | ''; pilihan: readonly { nilai: T; teks: string; deskripsi?: string; nada?: 'netral' | 'merah' | 'biru' | 'hijau'; jumlah?: number }[]; onPilih: (v: T) => void; kecil?: boolean; galat?: string | undefined; besar?: boolean; labelTersembunyi?: boolean;
 }) {
   const id = useId();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -40,13 +40,13 @@ export function Chips<T extends string>({ label, nilai, pilihan, onPilih, kecil,
   }
   return (
     <div className="f">
-      <div className="lbl" id={`${id}-l`}>{label}</div>
+      <div className={labelTersembunyi ? 'sr-only' : 'lbl'} id={`${id}-l`}>{label}</div>
       <div className={besar ? 'chips-besar' : 'chips'} role="radiogroup" aria-labelledby={`${id}-l`} {...(galat ? { 'aria-describedby': `${id}-e` } : {})}>
         {pilihan.map((p, i) => (
           <button key={p.nilai} type="button" role="radio" aria-checked={p.nilai === nilai} tabIndex={i === aktif ? 0 : -1}
-            ref={(el) => { refs.current[i] = el; }} className={`chip${kecil ? ' kecil' : ''}${besar ? ' chip-besar' : ''}`}
+            ref={(el) => { refs.current[i] = el; }} className={`chip${kecil ? ' kecil' : ''}${besar ? ' chip-besar' : ''}${p.nada ? ` fl-${p.nada}` : ''}${p.jumlah === 0 ? ' nol' : ''}`}
             onClick={() => onPilih(p.nilai)} onKeyDown={(e) => tombol(e, i)}>
-            {besar ? <><span className="t">{p.teks}</span>{p.deskripsi && <span className="d">{p.deskripsi}</span>}</> : p.teks}
+            {besar ? <><span className="t">{p.teks}</span>{p.deskripsi && <span className="d">{p.deskripsi}</span>}</> : p.jumlah !== undefined ? <><span>{p.teks}</span><span className="cn">{p.jumlah}</span></> : p.teks}
           </button>
         ))}
       </div>
