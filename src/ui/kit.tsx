@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useId, useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { bacaKetikan, formatRibuan } from '@/domain/pengajuan-form';
-import { labelStatus } from '@/domain/status-label';
+import { labelStatus, type Nada } from '@/domain/status-label';
+import { IkonDokumen, IkonInfo, IkonPerhatian, IkonProses, IkonSelesai, IkonSilang } from './icons';
 
 // Komponen dasar (gaya: lihat globals.css). Presentasional; tanpa pemanggilan API.
 
@@ -82,10 +83,38 @@ export function UangInput({ nilai, onUbah, onBlur, fp, placeholder }: { nilai: s
   );
 }
 
-export const StatusPill = ({ status }: { status: string }) => { const l = labelStatus(status); return <span className={`pill-st ${l.nada}`}>{l.label}</span>; };
+// Ikon status: jam = sedang menunggu/berjalan, centang = selesai/siap, segitiga = perlu perhatian, silang = ditolak. Warna bukan satu-satunya penanda.
+const IKON_STATUS: Record<Nada, () => ReactNode> = {
+  abu: () => <IkonDokumen />, biru: () => <IkonProses />, cyan: () => <IkonProses />, kuning: () => <IkonProses />, oranye: () => <IkonProses />,
+  'hijau-muda': () => <IkonSelesai />, hijau: () => <IkonSelesai />, merah: () => <IkonPerhatian />, 'merah-tua': () => <IkonSilang />,
+};
+export const StatusPill = ({ status }: { status: string }) => { const l = labelStatus(status); return <span className={`pill-st ${l.nada}`}>{IKON_STATUS[l.nada]()}{l.label}</span>; };
 
 export function Pesan({ jenis, children, role }: { jenis: 'err' | 'ok' | 'warn' | 'info'; children: ReactNode; role?: 'alert' | 'status' }) {
-  return <div className={`msg ${jenis}`} role={role ?? (jenis === 'err' ? 'alert' : 'status')}>{children}</div>;
+  const Ikon = jenis === 'ok' ? IkonSelesai : jenis === 'info' ? IkonInfo : IkonPerhatian;
+  return <div className={`msg ${jenis}`} role={role ?? (jenis === 'err' ? 'alert' : 'status')}><Ikon /><div className="msg-isi">{children}</div></div>;
+}
+
+/**
+ * Pemuat di tengah: cincin berputar (ukuran belum diketahui) atau cincin progres + persentase (ukuran diketahui).
+ * Cincin memakai atribut SVG (bukan style inline) supaya lolos CSP. Animasi berhenti bila pengguna memilih "kurangi gerakan".
+ */
+export function Pemuat({ teks, persen }: { teks: string; persen?: number | null }) {
+  const KELILING = 2 * Math.PI * 26;
+  const pasti = typeof persen === 'number';
+  return (
+    <div className="pemuat" role="status" aria-live="polite" aria-busy="true">
+      <div className="pemuat-cincin">
+        <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true" focusable="false" className={pasti ? 'pasti' : 'putar'}>
+          <circle className="lintasan" cx="32" cy="32" r="26" fill="none" strokeWidth="6" />
+          <circle className="isi" cx="32" cy="32" r="26" fill="none" strokeWidth="6" strokeLinecap="round" transform="rotate(-90 32 32)"
+            strokeDasharray={KELILING} strokeDashoffset={pasti ? KELILING * (1 - Math.max(0, Math.min(100, persen)) / 100) : KELILING * 0.72} />
+        </svg>
+        {pasti && <span className="pemuat-angka num">{Math.round(persen)}%</span>}
+      </div>
+      <p className="pemuat-teks">{teks}</p>
+    </div>
+  );
 }
 
 export function Skeleton({ baris = 3 }: { baris?: number }) {

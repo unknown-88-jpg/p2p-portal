@@ -1,6 +1,24 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { Dialog } from './kit';
+import { Dialog, Pemuat } from './kit';
+
+/** Baca isi respons sambil melaporkan persentase (hanya bila ukuran diketahui lewat content-length; dibatasi 99 sampai benar-benar selesai). */
+async function bacaDenganProgres(r: Response, tipe: string, onPersen: (p: number | null) => void): Promise<Blob> {
+  const total = Number(r.headers.get('content-length')) || 0;
+  if (!r.body || !total) return r.blob();
+  const pembaca = r.body.getReader();
+  const potongan: Uint8Array[] = [];
+  let terbaca = 0;
+  onPersen(0);
+  for (;;) {
+    const { done, value } = await pembaca.read();
+    if (done) break;
+    potongan.push(value); terbaca += value.byteLength;
+    onPersen(Math.min(99, Math.floor((terbaca / total) * 100)));
+  }
+  onPersen(100);
+  return new Blob(potongan as BlobPart[], { type: tipe });
+}
 
 type Keadaan = 'diam' | 'muat' | 'gambar' | 'pdf' | 'gagal';
 
@@ -13,6 +31,7 @@ export function LampiranPopup({ id, label = 'Lihat lampiran', kelas = 'btn btn-s
   const [keadaan, setKeadaan] = useState<Keadaan>('diam');
   const [src, setSrc] = useState<string | null>(null);
   const [percobaan, setPercobaan] = useState(0);
+  const [persen, setPersen] = useState<number | null>(null);
   const sudah = useRef(false);
   const url = `/api/pengajuan/${encodeURIComponent(id)}/lampiran`;
 
@@ -22,11 +41,17 @@ export function LampiranPopup({ id, label = 'Lihat lampiran', kelas = 'btn btn-s
     if (!buka || percobaan === 0 || sudah.current) return;
     let batal = false;
     setKeadaan('muat');
+    setPersen(null);
     fetch(url, { credentials: 'same-origin' }).then(async (r) => {
       if (batal) return;
       if (!r.ok) { setKeadaan('gagal'); return; }
       const t = r.headers.get('content-type') ?? '';
-      if (t.startsWith('image/')) { const u = URL.createObjectURL(await r.blob()); if (batal) { URL.revokeObjectURL(u); return; } setSrc(u); sudah.current = true; setKeadaan('gambar'); }
+      if (t.startsWith('image/')) {
+        const blob = await bacaDenganProgres(r, t, (p) => { if (!batal) setPersen(p); });
+        const u = URL.createObjectURL(blob);
+        if (batal) { URL.revokeObjectURL(u); return; }
+        setSrc(u); sudah.current = true; setKeadaan('gambar');
+      }
       else if (t === 'application/pdf') { sudah.current = true; setKeadaan('pdf'); }
       else setKeadaan('gagal');
     }).catch(() => { if (!batal) setKeadaan('gagal'); });
@@ -39,7 +64,7 @@ export function LampiranPopup({ id, label = 'Lihat lampiran', kelas = 'btn btn-s
       <button type="button" className={kelas} onClick={() => { setBuka(true); setPercobaan((n) => (n === 0 ? 1 : n)); }}>{label}</button>
       <Dialog buka={buka} onTutup={() => setBuka(false)} judul={`Lampiran ${id}`} lebar>
         <div className="lampiran-isi" aria-live="polite">
-          {keadaan === 'muat' && <div className="skel baris" aria-busy="true" aria-label="Memuat lampiran" />}
+          {keadaan === 'muat' && <Pemuat teks="Memuat lampiran…" persen={persen} />}
           {keadaan === 'gambar' && src && <img src={src} alt={`Lampiran ${id}`} />}
           {keadaan === 'pdf' && <p className="muted">Lampiran berupa PDF. Buka di tab baru untuk melihatnya.</p>}
           {keadaan === 'gagal' && <p className="err-teks" role="alert">Lampiran tidak dapat dimuat. Tutup lalu coba lagi.

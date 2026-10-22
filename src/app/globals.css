@@ -591,3 +591,62 @@ a.metrik-kartu:focus-visible { outline-offset: 3px; border-radius: 28px; }
 .chip[class*="fl-"][aria-checked="true"]::before { background: #fff; }
 .chip[class*="fl-"][aria-checked="true"] .cn { background: rgba(255, 255, 255, 0.24); color: #fff; }
 .chip[class*="fl-"]:not([aria-checked="true"]):hover { border-color: var(--fl); }
+
+/* ---- Kartu daftar "Pengajuan saya" (mengikuti referensi pengguna) ---- */
+.dok { display: block; padding: 20px 24px; background: var(--canvas); border: 1px solid var(--hairline); border-radius: 24px; margin-top: 14px; color: inherit; transition: border-color .12s; }
+.dok:hover { text-decoration: none; border-color: var(--chip); }
+.dok-h { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding-bottom: 16px; border-bottom: 1px solid var(--divider); }
+.dok-v { font-size: 21px; line-height: 1.2; font-weight: 600; letter-spacing: -0.28px; overflow-wrap: anywhere; }
+.dok-id { font-size: 14px; font-weight: 600; color: var(--ink-80); background: var(--parchment); padding: 4px 12px; border-radius: 999px; letter-spacing: 0; }
+.dok-st { margin-left: auto; }
+.dok-b { display: grid; grid-template-columns: minmax(110px, 0.8fr) minmax(0, 2fr) auto; gap: 16px 24px; margin: 16px 0 0; }
+.dok-b dt { font-size: 14px; color: var(--muted); letter-spacing: -0.224px; }
+.dok-b dd { margin: 2px 0 0; font-size: 17px; font-weight: 600; letter-spacing: -0.2px; overflow-wrap: anywhere; }
+.dok-ref dd { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dok-n { text-align: right; }
+.dok-n dd { font-size: 24px; line-height: 1.15; font-weight: 700; letter-spacing: -0.28px; }
+@media (max-width: 640px) {
+  .dok { padding: 16px 18px; border-radius: 20px; }
+  .dok-v { font-size: 19px; }
+  .dok-st { margin-left: 0; flex-basis: 100%; }
+  .dok-b { grid-template-columns: 1fr auto; }
+  .dok-ref { grid-column: 1 / -1; grid-row: 2; }
+  .dok-n dd { font-size: 20px; }
+}
+
+/* ---- Status & notifikasi: palet semantik yang sama dengan kartu statistik (ikon + warna + teks) ---- */
+.pill-st { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 7px 12px 7px 10px; letter-spacing: -0.1px; }
+.pill-st .ikon { width: 15px; height: 15px; }
+.msg { display: flex; align-items: flex-start; gap: 10px; border: 1px solid transparent; }
+.msg .ikon { width: 20px; height: 20px; margin-top: 1px; }
+.msg-isi { flex: 1; min-width: 0; }
+.msg.err { background: #fff0ef; border-color: #f1c4c8; color: #9f0012; }
+.msg.warn { background: #fff4d6; border-color: #f0d9a0; color: #7a5000; }
+.msg.ok { background: #e6f5ea; border-color: #bfe3c9; color: #17622f; }
+.msg.info { background: #e8f2fd; border-color: #c4dcf5; color: #00509e; }
+/* ---- Halaman Persetujuan di HP (hasil pemeriksaan visual) ---- */
+/* Di daftar (belum membuka detail) tidak ada baris yang tampak terpilih. */
+@media (max-width: 899px) { .inbox:not(.hp-detail) .inbox-row.aktif .doc { border-color: var(--hairline); background: var(--canvas); } }
+/* Kotak centang lebih besar (target sentuh >= 28px) dan tidak menimpa nominal. */
+.inbox-row .pilih-cb { width: 28px; height: 28px; top: 12px; right: 12px; }
+.inbox-row .doc .kanan { padding-right: 38px; }
+/* Tombol dialog tidak memecah teks; template alasan berupa daftar rapi, bukan pil bertingkat. */
+dialog .dlg-aksi .btn { white-space: nowrap; }
+@media (max-width: 480px) { dialog .dlg-aksi .btn { padding-left: 14px; padding-right: 14px; } }
+dialog .chips.tombol-baris { flex-direction: column; align-items: stretch; gap: 8px; }
+dialog .chips.tombol-baris .chip { text-align: left; border-radius: var(--r-md); }
+@media (max-width: 420px) { .nominal-besar { font-size: 28px; line-height: 1.2; } .hero-nominal { padding: 24px 12px; } }
+@media (max-width: 340px) { .nominal-besar { font-size: 24px; } }
+
+/* ---- Pemuat di tengah (cincin berputar / persentase) ---- */
+.pemuat { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 220px; width: 100%; padding: 24px 12px; }
+.pemuat-cincin { position: relative; width: 64px; height: 64px; display: grid; place-items: center; }
+.pemuat-cincin svg { position: absolute; inset: 0; }
+.pemuat .lintasan { stroke: var(--hairline); }
+.pemuat .isi { stroke: var(--primary); }
+.pemuat svg.pasti .isi { transition: stroke-dashoffset .15s linear; }
+.pemuat svg.putar { animation: pemuat-putar 1s linear infinite; }
+@keyframes pemuat-putar { to { transform: rotate(360deg); } }
+.pemuat-angka { position: relative; font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: 0; }
+.pemuat-teks { font-size: 15px; color: var(--muted); letter-spacing: -0.224px; }
+@media (prefers-reduced-motion: reduce) { .pemuat svg.putar { animation: none; } .pemuat svg.pasti .isi { transition: none; } }

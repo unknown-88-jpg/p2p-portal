@@ -31,11 +31,17 @@ export function DaftarPengajuan({ data, kelompokAwal = 'semua' }: { data: Dokume
         <ul className="daftar">
           {tampil.map((d) => (
             <li key={d.id}>
-              <a className="doc" href={href(d)}>
-                <span className="id"><span>{d.id}</span> · <span>{d.tanggal}</span></span>
-                <span className="kanan"><span className="nominal num">{rupiah(d.nominal)}</span><StatusPill status={d.status} /></span>
-                <span className="vendor">{d.vendorNama || '—'}</span>
-                <span className="desk">{[d.noInvoice, d.poNumber !== '-' ? d.poNumber : '', d.description].filter(Boolean).join(' · ')}</span>
+              <a className="dok" href={href(d)}>
+                <div className="dok-h">
+                  <span className="dok-v">{d.vendorNama || '—'}</span>
+                  <span className="dok-id num">{d.id}</span>
+                  <span className="dok-st"><StatusPill status={d.status} /></span>
+                </div>
+                <dl className="dok-b">
+                  <div><dt>Tanggal</dt><dd className="num">{d.tanggal}</dd></div>
+                  <div className="dok-ref"><dt>Referensi</dt><dd>{[d.noInvoice, d.poNumber !== '-' ? d.poNumber : '', d.description].filter(Boolean).join(' · ') || '—'}</dd></div>
+                  <div className="dok-n"><dt>Nominal</dt><dd className="num">{rupiah(d.nominal)}</dd></div>
+                </dl>
               </a>
             </li>
           ))}
