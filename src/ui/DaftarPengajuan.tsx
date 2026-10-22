@@ -6,8 +6,8 @@ import { Chips, StatusPill } from './kit';
 
 const href = (d: DokumenDto): string => (d.editable ? `/pengajuan/${encodeURIComponent(d.id)}/edit` : `/pengajuan/${encodeURIComponent(d.id)}`);
 
-export function DaftarPengajuan({ data }: { data: DokumenDto[] }) {
-  const [kel, setKel] = useState<KunciKelompok>('semua');
+export function DaftarPengajuan({ data, kelompokAwal = 'semua' }: { data: DokumenDto[]; kelompokAwal?: KunciKelompok }) {
+  const [kel, setKel] = useState<KunciKelompok>(kelompokAwal);
   const [q, setQ] = useState('');
   const hitung = useMemo(() => Object.fromEntries(KELOMPOK_STATUS.map((k) => [k.kunci, data.filter((d) => k.cocok(d.status)).length])), [data]);
   const tampil = useMemo(() => {
