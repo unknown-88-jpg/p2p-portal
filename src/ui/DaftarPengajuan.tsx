@@ -23,13 +23,13 @@ export function DaftarPengajuan({ data }: { data: DokumenDto[] }) {
         <div className="cari"><input type="search" aria-label="Cari pengajuan" placeholder="Cari ID, vendor, invoice, P.O" value={q} onChange={(e) => setQ(e.target.value)} /></div>
       </div>
       {tampil.length === 0 ? (
-        <p className="muted pt" role="status">{data.length === 0 ? 'Belum ada pengajuan.' : 'Tidak ada pengajuan yang cocok.'}</p>
+        <div className="kosong" role="status">{data.length === 0 ? <><p>Belum ada pengajuan.</p><div className="cta-row cta-tengah"><a className="btn btn-primary" href="/pengajuan/baru">Buat pengajuan pertama</a></div></> : <p>Tidak ada pengajuan yang cocok dengan filter atau kata kunci.</p>}</div>
       ) : (
         <ul className="daftar">
           {tampil.map((d) => (
             <li key={d.id}>
               <a className="doc" href={href(d)}>
-                <span className="id">{d.id} · {d.tanggal}</span>
+                <span className="id"><span>{d.id}</span> · <span>{d.tanggal}</span></span>
                 <span className="kanan"><span className="nominal num">{rupiah(d.nominal)}</span><StatusPill status={d.status} /></span>
                 <span className="vendor">{d.vendorNama || '—'}</span>
                 <span className="desk">{[d.noInvoice, d.poNumber !== '-' ? d.poNumber : '', d.description].filter(Boolean).join(' · ')}</span>

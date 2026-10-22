@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { api } from './api';
+import { IkonCari } from './icons';
 import { Dialog } from './kit';
 import { rupiah } from '@/domain/pengajuan-form';
 import { labelStatus } from '@/domain/status-label';
@@ -39,7 +40,7 @@ export function PaletPencarian() {
   const tutup = () => { setBuka(false); setQ(''); setHasil([]); };
   return (
     <>
-      <button className="link nav-cari" onClick={() => setBuka(true)} aria-label="Cari dokumen (Ctrl+K)">Cari <kbd>Ctrl K</kbd></button>
+      <button type="button" className="cari-trigger" onClick={() => setBuka(true)} aria-label="Cari dokumen (Ctrl+K)"><IkonCari /><span className="ct-teks">Cari dokumen</span><kbd>Ctrl K</kbd></button>
       <Dialog buka={buka} onTutup={tutup} judul="Cari dokumen">
         <input className="inp" type="search" autoFocus placeholder="ID, vendor, no. invoice, P.O, keperluan" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Kata kunci" />
         <div className="cari-hasil" aria-live="polite">
