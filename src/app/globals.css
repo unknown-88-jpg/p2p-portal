@@ -419,7 +419,7 @@ body:has(> #isi > .sidebar) { background: var(--parchment); }
 .cari-trigger kbd { font: inherit; font-size: 12px; color: var(--muted); border: 1px solid var(--hairline); border-radius: 6px; padding: 1px 6px; background: var(--pearl); letter-spacing: 0; }
 .tb-user { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 14px; }
 .tb-nama { color: var(--ink-80); white-space: nowrap; }
-.tb-menu { display: none; place-items: center; width: 44px; height: 44px; margin-left: -10px; background: none; border: 0; border-radius: var(--r-md); color: var(--ink); cursor: pointer; }
+.tb-menu { display: grid; place-items: center; width: 44px; height: 44px; margin-left: -10px; background: none; border: 0; border-radius: var(--r-md); color: var(--ink); cursor: pointer; }
 .tb-menu:hover { background: rgba(0, 0, 0, 0.05); }
 .topbar dialog { font-size: 17px; letter-spacing: -0.374px; color: var(--ink); }
 .topbar dialog a { color: var(--primary); }
@@ -433,7 +433,6 @@ body:has(> #isi > .sidebar) { background: var(--parchment); }
   .sb-backdrop { display: block; position: fixed; inset: 0; z-index: 35; border: 0; padding: 0; background: rgba(0, 0, 0, 0.45); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
   html[data-nav="open"] .sb-backdrop { opacity: 1; pointer-events: auto; }
   html[data-nav="open"] body { overflow: hidden; }
-  .tb-menu { display: grid; }
   .topbar { padding: 0 16px; }
 }
 @media (max-width: 640px) { .tb-nama, .cari-trigger kbd { display: none; } .cari-trigger { max-width: none; } }
@@ -447,7 +446,7 @@ body:has(> #isi > .sidebar) { background: var(--parchment); }
 .dash-head .muted { margin-top: 4px; }
 .dash-aksi { display: flex; flex-wrap: wrap; gap: 12px; }
 .metrik { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.metrik-kartu { background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: 24px; }
+.metrik-kartu { display: block; color: inherit; transition: border-color .12s; background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: 24px; }
 .metrik-ikon { display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: var(--r-md); background: var(--parchment); color: var(--ink); }
 .metrik-n { margin-top: 20px; font-size: 40px; line-height: 1.1; font-weight: 600; letter-spacing: -0.28px; }
 .metrik-n.metrik-uang { font-size: 28px; line-height: 1.3; }
@@ -480,3 +479,30 @@ body:has(> #isi > .sidebar) { background: var(--parchment); }
 .auth-panel h2 { font-size: 28px; line-height: 1.14; letter-spacing: -0.28px; }
 .auth-panel p { color: #cccccc; font-size: 17px; }
 @media (max-width: 760px) { .auth { grid-template-columns: minmax(0, 1fr); border: 0; background: transparent; } .auth-panel { display: none; } .auth-form { padding: 0; } .auth-form .card { border: 1px solid var(--hairline); padding: 28px 24px; max-width: 400px; background: var(--canvas); } }
+
+/* ---- Penyesuaian di atas latar parchment (hasil pemeriksaan visual) ---- */
+/* Kartu penekanan sebelumnya parchment di atas parchment (hilang); jadikan putih berborder hairline seperti kartu lain. */
+.kartu.parchment, .hero-nominal { background: var(--canvas); border: 1px solid var(--hairline); }
+.hero-nominal { max-width: none; }
+.aksi-in .btn { white-space: nowrap; }
+@media (max-width: 480px) {
+  .aksi-in { flex-wrap: wrap; row-gap: 8px; }
+  .aksi-in .ringkas { flex: 1 0 100%; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-right: 0; }
+  .aksi-in .ringkas .l { display: block; font-size: 12px; }
+  .aksi-in .ringkas .v { font-size: 17px; white-space: nowrap; }
+  .aksi-in .btn { flex: 1 1 0; }
+  .aksi-spacer { height: 150px; }
+}
+.kartu > dl.kv { margin: 0; }
+.kartu > .kartu-h + dl.kv { margin-top: 4px; }
+a.metrik-kartu:hover { border-color: var(--primary); text-decoration: none; }
+a.metrik-kartu:active { transform: scale(0.98); }
+
+/* ---- Sidebar bisa ditutup di layar lebar; isi menyesuaikan ---- */
+#isi:has(> .sidebar) { transition: grid-template-columns .2s ease; }
+@media (min-width: 1024px) {
+  html[data-sb="tutup"] #isi:has(> .sidebar) { grid-template-columns: 0 minmax(0, 1fr); }
+  html[data-sb="tutup"] .sidebar { visibility: hidden; overflow: hidden; }
+  html[data-sb="tutup"] body:has(> #isi > .sidebar) .aksi-bar { left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { #isi:has(> .sidebar) { transition: none; } }

@@ -44,11 +44,11 @@ export default async function Home() {
         {bisa ? (
           <div className="metrik">
             {metrik.map((m) => (
-              <div key={m.k} className={`metrik-kartu${m.merah ? ' merah' : ''}`}>
+              <a key={m.k} className={`metrik-kartu${m.merah ? ' merah' : ''}`} href={`/pengajuan?status=${m.k}`} aria-label={`${m.label}: ${n(m.k)}. Buka daftar`}>
                 <span className="metrik-ikon">{m.ikon}</span>
                 <div className="metrik-n num">{n(m.k)}</div>
                 <div className="metrik-l">{m.label}</div>
-              </div>
+              </a>
             ))}
           </div>
         ) : <div className="kartu"><p className="muted">Fitur Finance menyusul di milestone berikutnya.</p></div>}
@@ -57,7 +57,7 @@ export default async function Home() {
           <>
             <h2 className="sec-h">Antrean Manager</h2>
             <div className="metrik">
-              <div className={`metrik-kartu${dash.manager.antrean ? ' merah' : ''}`}><span className="metrik-ikon"><IkonSetuju /></span><div className="metrik-n num">{dash.manager.antrean}</div><div className="metrik-l">Menunggu persetujuan</div></div>
+              <a className={`metrik-kartu${dash.manager.antrean ? ' merah' : ''}`} href="/persetujuan" aria-label={`Menunggu persetujuan: ${dash.manager.antrean}. Buka persetujuan`}><span className="metrik-ikon"><IkonSetuju /></span><div className="metrik-n num">{dash.manager.antrean}</div><div className="metrik-l">Menunggu persetujuan</div></a>
               <div className="metrik-kartu"><span className="metrik-ikon"><IkonUang /></span><div className="metrik-n metrik-uang num">{rupiah(dash.manager.totalNominal)}</div><div className="metrik-l">Total nominal antrean</div></div>
               <div className="metrik-kartu"><span className="metrik-ikon"><IkonProses /></span><div className="metrik-n num">{dash.manager.tertuaHari === null ? '—' : `${dash.manager.tertuaHari} hr`}</div><div className="metrik-l">Tertua di antrean</div></div>
             </div>
