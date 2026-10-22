@@ -95,6 +95,28 @@ export function Pesan({ jenis, children, role }: { jenis: 'err' | 'ok' | 'warn' 
   return <div className={`msg ${jenis}`} role={role ?? (jenis === 'err' ? 'alert' : 'status')}><Ikon /><div className="msg-isi">{children}</div></div>;
 }
 
+/**
+ * Pemuat di tengah: cincin berputar (ukuran belum diketahui) atau cincin progres + persentase (ukuran diketahui).
+ * Cincin memakai atribut SVG (bukan style inline) supaya lolos CSP. Animasi berhenti bila pengguna memilih "kurangi gerakan".
+ */
+export function Pemuat({ teks, persen }: { teks: string; persen?: number | null }) {
+  const KELILING = 2 * Math.PI * 26;
+  const pasti = typeof persen === 'number';
+  return (
+    <div className="pemuat" role="status" aria-live="polite" aria-busy="true">
+      <div className="pemuat-cincin">
+        <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true" focusable="false" className={pasti ? 'pasti' : 'putar'}>
+          <circle className="lintasan" cx="32" cy="32" r="26" fill="none" strokeWidth="6" />
+          <circle className="isi" cx="32" cy="32" r="26" fill="none" strokeWidth="6" strokeLinecap="round" transform="rotate(-90 32 32)"
+            strokeDasharray={KELILING} strokeDashoffset={pasti ? KELILING * (1 - Math.max(0, Math.min(100, persen)) / 100) : KELILING * 0.72} />
+        </svg>
+        {pasti && <span className="pemuat-angka num">{Math.round(persen)}%</span>}
+      </div>
+      <p className="pemuat-teks">{teks}</p>
+    </div>
+  );
+}
+
 export function Skeleton({ baris = 3 }: { baris?: number }) {
   return <div aria-busy="true" aria-label="Memuat">{Array.from({ length: baris }, (_, i) => <div key={i} className="skel baris" />)}</div>;
 }

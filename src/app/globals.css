@@ -637,3 +637,16 @@ dialog .chips.tombol-baris { flex-direction: column; align-items: stretch; gap: 
 dialog .chips.tombol-baris .chip { text-align: left; border-radius: var(--r-md); }
 @media (max-width: 420px) { .nominal-besar { font-size: 28px; line-height: 1.2; } .hero-nominal { padding: 24px 12px; } }
 @media (max-width: 340px) { .nominal-besar { font-size: 24px; } }
+
+/* ---- Pemuat di tengah (cincin berputar / persentase) ---- */
+.pemuat { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 220px; width: 100%; padding: 24px 12px; }
+.pemuat-cincin { position: relative; width: 64px; height: 64px; display: grid; place-items: center; }
+.pemuat-cincin svg { position: absolute; inset: 0; }
+.pemuat .lintasan { stroke: var(--hairline); }
+.pemuat .isi { stroke: var(--primary); }
+.pemuat svg.pasti .isi { transition: stroke-dashoffset .15s linear; }
+.pemuat svg.putar { animation: pemuat-putar 1s linear infinite; }
+@keyframes pemuat-putar { to { transform: rotate(360deg); } }
+.pemuat-angka { position: relative; font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: 0; }
+.pemuat-teks { font-size: 15px; color: var(--muted); letter-spacing: -0.224px; }
+@media (prefers-reduced-motion: reduce) { .pemuat svg.putar { animation: none; } .pemuat svg.pasti .isi { transition: none; } }
