@@ -16,3 +16,4 @@ export const IkonProses = () => <Ikon><circle cx="12" cy="12" r="9" /><path d="M
 export const IkonPerhatian = () => <Ikon><path d="M12 3 2.5 20h19z" /><path d="M12 10v4M12 17.2v.1" /></Ikon>;
 export const IkonUang = () => <Ikon><rect x="3" y="6" width="18" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /></Ikon>;
 export const IkonSelesai = () => <Ikon><path d="M5 12.5 10 17.5 19 7" /></Ikon>;
+export const IkonPanah = () => <Ikon><path d="m9 6 6 6-6 6" /></Ikon>;

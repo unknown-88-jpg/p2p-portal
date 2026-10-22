@@ -555,3 +555,19 @@ dialog.lebar .dlg { max-height: calc(100vh - 32px); display: flex; flex-directio
 @media (max-width: 640px) { dialog.lebar .dlg-aksi { flex-wrap: wrap; } }
 dialog.lebar .dlg-aksi .btn { white-space: nowrap; }
 @media (max-width: 480px) { dialog.lebar .dlg-aksi .btn { padding-left: 12px; padding-right: 12px; font-size: 15px; } }
+
+/* ---- Kartu statistik: ikon besar di kiri, angka + label, tombol panah bulat di kanan (mengikuti referensi desain dari pengguna).
+   Catatan: referensi memakai bayangan lembut; DESIGN.md awal melarang bayangan di UI, jadi bayangan HANYA dipakai di kartu ini. ---- */
+.metrik { gap: 20px; }
+.metrik-kartu { display: flex; align-items: center; gap: 16px; padding: 20px; border-radius: 28px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06); min-width: 0; }
+.metrik-kartu.merah { border-color: #f1c4c8; }
+.metrik-ikon { width: 58px; height: 58px; border-radius: 18px; flex: none; }
+.metrik-ikon .ikon { width: 30px; height: 30px; }
+.metrik-teks { flex: 1; min-width: 0; }
+.metrik-n { margin-top: 0; font-size: 40px; line-height: 1.05; font-weight: 700; }
+.metrik-n.metrik-uang { font-size: 24px; line-height: 1.25; overflow-wrap: anywhere; }
+.metrik-l { margin-top: 4px; font-size: 16px; color: var(--ink-80); letter-spacing: -0.224px; }
+.metrik-panah { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--parchment); color: var(--ink-80); flex: none; transition: background .12s, color .12s; }
+a.metrik-kartu:hover .metrik-panah { background: var(--primary); color: #fff; }
+a.metrik-kartu:focus-visible { outline-offset: 3px; border-radius: 28px; }
+@media (max-width: 760px) { .metrik-kartu { display: flex; padding: 16px 18px; gap: 16px; border-radius: 24px; } .metrik-ikon { width: 56px; height: 56px; grid-row: auto; } .metrik-n { font-size: 32px; } .metrik-l { margin-top: 2px; font-size: 16px; } }
