@@ -161,3 +161,5 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 
 ## Deploy (nanti, saat ada fitur)
 `vercel.json` memaksa region `sin1`. Env Preview & Production terpisah. Jangan kirim isi `.env`/`GOOGLE_SA_JSON`/token ke siapa pun.
+
+edit
