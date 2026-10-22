@@ -537,3 +537,7 @@ a.metrik-kartu:active { transform: scale(0.98); }
 .vc-bayar td:nth-child(1), .vc-bayar td:nth-child(2) { white-space: nowrap; }
 @media (max-width: 640px) { .vc-bayar { display: block; overflow-x: auto; } }
 @media print { .vc-bayar { display: table; } }
+.vc-invoice-h { font-size: 17px; font-weight: 600; text-align: left; margin-bottom: 12px; }
+.vc-invoice { margin: 12px 0 0; }
+.vc-invoice img { max-height: 80vh; width: auto; max-width: 100%; object-fit: contain; }
+@media print { .vc-invoice { margin-top: 0; } .vc-invoice img { max-height: 1000px; } }

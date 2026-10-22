@@ -1,12 +1,12 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 type Mode = 'voucher' | 'invoice' | 'keduanya';
 /**
  * Tombol cetak (paritas Print_Form lama: voucher / invoice / voucher + invoice). Invoice gambar dimuat sebagai blob lewat proxy ber-otorisasi
  * dan dicetak di halaman yang sama. PDF tidak bisa disematkan (CSP object-src 'none') -> dibuka di tab baru.
  */
-export function VoucherAksi({ id, punyaLampiran }: { id: string; punyaLampiran: boolean }) {
+export function VoucherAksi({ id, punyaLampiran, children }: { id: string; punyaLampiran: boolean; children?: ReactNode }) {
   const [gambar, setGambar] = useState<string | null>(null);
   const [jenis, setJenis] = useState<'gambar' | 'pdf' | 'tidak' | 'gagal' | 'muat'>(punyaLampiran ? 'muat' : 'tidak');
   const url = `/api/pengajuan/${encodeURIComponent(id)}/lampiran`;
@@ -40,7 +40,8 @@ export function VoucherAksi({ id, punyaLampiran }: { id: string; punyaLampiran: 
         <a className="link" href={`/pengajuan/${encodeURIComponent(id)}`}>← Kembali</a>
       </div>
       <p className="muted no-print">{jenis === 'muat' ? 'Memuat invoice…' : jenis === 'tidak' ? 'Dokumen ini tidak punya lampiran invoice.' : jenis === 'gagal' ? 'Invoice tidak dapat dimuat.' : jenis === 'pdf' ? 'Invoice berupa PDF: buka di tab baru, cetak dari sana.' : ''}</p>
-      {gambar && <section className="vc-invoice"><img src={gambar} alt={`Invoice ${id}`} /></section>}
+      {children}
+      {gambar && <section className="vc-invoice"><h2 className="vc-invoice-h no-print">Lampiran invoice</h2><img src={gambar} alt={`Invoice ${id}`} /></section>}
     </>
   );
 }

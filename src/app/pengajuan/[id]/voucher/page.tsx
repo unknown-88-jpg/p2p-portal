@@ -26,7 +26,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <AppNav nama={s.nama} bisaAjukan={can(s.roles, 'pengajuan.write')} bisaSetujui={can(s.roles, 'approve.manager')} aktif="pengajuan" />
     <main className="vc-wrap">
       <h1 className="page-h no-print">Voucher {v.id}</h1>
-      <VoucherAksi id={v.id} punyaLampiran={v.punyaLampiran} />
+      <VoucherAksi id={v.id} punyaLampiran={v.punyaLampiran}>
       <section className="vc">
         <header className="vc-h">
           <div><div className="vc-co">{v.company || '-'}</div><div className="vc-sub">Payment Voucher</div></div>
@@ -66,6 +66,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </div>
         <footer className="vc-f">Dicetak {v.dicetak} WIB</footer>
       </section>
+      </VoucherAksi>
     </main>
     </>
   );
