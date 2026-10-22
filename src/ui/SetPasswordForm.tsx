@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, errMessage } from './api';
+import { Pesan } from './kit';
 
 export function SetPasswordForm() {
   const [token, setToken] = useState('');
@@ -37,7 +38,7 @@ export function SetPasswordForm() {
     <form className="card" onSubmit={submit} noValidate>
       <h1>Atur password</h1>
       <p className="sub">Link berlaku 60 menit dan hanya bisa dipakai sekali.</p>
-      {!token && <div className="msg err" role="alert">Link tidak lengkap. Buka ulang link dari WhatsApp, atau minta link baru.</div>}
+      {!token && <Pesan jenis="err">Link tidak lengkap. Buka ulang link dari WhatsApp, atau minta link baru.</Pesan>}
       <label htmlFor="pw">Password baru</label>
       <div className="pw-wrap">
         <input id="pw" type={lihat ? 'text' : 'password'} autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} required />
@@ -47,7 +48,7 @@ export function SetPasswordForm() {
       <label htmlFor="pw2">Ulangi password</label>
       <input id="pw2" type={lihat ? 'text' : 'password'} autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} required />
       <button className="primary" disabled={busy || !token || !pw || !pw2}>{busy ? 'Menyimpan…' : 'Simpan password'}</button>
-      {msg && <div className="msg err" role="alert">{msg}</div>}
+      {msg && <Pesan jenis="err">{msg}</Pesan>}
     </form>
   );
 }
