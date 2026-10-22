@@ -6,6 +6,7 @@ export function LoginForm() {
   const [mode, setMode] = useState<'login' | 'forgot'>('login');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [lihat, setLihat] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'err' | 'ok'; text: string } | null>(null);
 
@@ -33,7 +34,10 @@ export function LoginForm() {
       <input id="phone" inputMode="tel" autoComplete="username" placeholder="0812xxxxxxxx" value={phone} onChange={(e) => setPhone(e.target.value)} required />
       {mode === 'login' && (<>
         <label htmlFor="pw">Password</label>
-        <input id="pw" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <div className="pw-wrap">
+          <input id="pw" type={lihat ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <button type="button" className="link pw-toggle" aria-pressed={lihat} onClick={() => setLihat(!lihat)}>{lihat ? 'Sembunyikan' : 'Tampilkan'}</button>
+        </div>
       </>)}
       <button className="primary" disabled={busy || !phone || (mode === 'login' && !password)}>{busy ? 'Memproses…' : mode === 'login' ? 'Masuk' : 'Kirim link'}</button>
       {msg && <div className={`msg ${msg.kind}`} role={msg.kind === 'err' ? 'alert' : 'status'}>{msg.text}</div>}

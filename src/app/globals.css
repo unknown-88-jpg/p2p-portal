@@ -391,3 +391,32 @@ input.sr-only:focus-visible + * , input.sr-only:focus-visible ~ .dropzone { outl
 .nav .brand { margin-right: auto; }
 @media (max-width: 640px) { .nav-in { gap: 10px; } .nav .brand { font-size: 13px; } }
 @media (max-width: 640px) { .nav .nav-beranda { display: none; } }
+
+/* ---- Perbaikan UX hasil audit tampilan ---- */
+/* Class yang dipakai komponen tetapi sebelumnya belum punya gaya. */
+.cta-tengah { justify-content: center; }
+.dlg-kv { margin-top: 14px; }
+.vc-bayar th, .vc-bayar td { width: auto; }
+.wrap-form { padding-bottom: 8px; }
+
+/* Tanggal/ID tidak terpecah di tengah ("2026-10-\n20"); baris meta boleh turun per bagian. */
+.doc .id span { white-space: nowrap; }
+
+/* Kolom password dengan tombol tampilkan/sembunyikan. */
+.pw-wrap { position: relative; }
+.pw-wrap input { padding-right: 104px; }
+.pw-toggle { position: absolute; right: 6px; top: 2px; height: 44px; padding: 0 12px; }
+
+/* Nav di HP: dua baris (baris 1: merek + Cari + Keluar, baris 2: tautan) supaya "Keluar" tidak terpotong
+   dan semua target sentuh >= 44px. Nav satu baris tetap dipakai di layar > 640px. */
+@media (max-width: 640px) {
+  .nav { height: auto; }
+  .nav-in { flex-wrap: wrap; overflow: visible; gap: 0 14px; padding: 0 14px; height: auto; }
+  .nav .brand { order: 1; min-height: 44px; display: inline-flex; align-items: center; }
+  .nav-in > button { order: 2; min-height: 44px; font-size: 13px; }
+  .nav-in::after { content: ''; order: 3; flex-basis: 100%; height: 0; }
+  .nav-in > a:not(.brand) { order: 4; display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; }
+  .nav .nav-beranda { display: inline-flex; }
+  .nav-in > a.nav-cta { min-height: 36px; padding: 0 16px; margin: 0 0 0 auto; }
+  .nav .who { display: none; }
+}
