@@ -4,6 +4,9 @@ import { rupiah, type DokumenDto } from '@/domain/pengajuan-form';
 import { KELOMPOK_STATUS, type KunciKelompok } from '@/domain/status-label';
 import { Chips, StatusPill } from './kit';
 
+// Warna filter selaras dengan kartu statistik beranda (merah = perlu tindakan, biru = diproses, hijau = selesai).
+const NADA = { semua: 'netral', 'perlu-tindakan': 'merah', diproses: 'biru', selesai: 'hijau' } as const satisfies Record<KunciKelompok, 'netral' | 'merah' | 'biru' | 'hijau'>;
+
 const href = (d: DokumenDto): string => (d.editable ? `/pengajuan/${encodeURIComponent(d.id)}/edit` : `/pengajuan/${encodeURIComponent(d.id)}`);
 
 export function DaftarPengajuan({ data, kelompokAwal = 'semua' }: { data: DokumenDto[]; kelompokAwal?: KunciKelompok }) {
@@ -18,8 +21,8 @@ export function DaftarPengajuan({ data, kelompokAwal = 'semua' }: { data: Dokume
   return (
     <>
       <div className="toolbar">
-        <Chips label="Filter status" kecil nilai={kel} onPilih={setKel}
-          pilihan={KELOMPOK_STATUS.map((k) => ({ nilai: k.kunci, teks: `${k.label} (${hitung[k.kunci]})` }))} />
+        <Chips label="Filter status" labelTersembunyi kecil nilai={kel} onPilih={setKel}
+          pilihan={KELOMPOK_STATUS.map((k) => ({ nilai: k.kunci, teks: k.label, nada: NADA[k.kunci], jumlah: hitung[k.kunci] ?? 0 }))} />
         <div className="cari"><input type="search" aria-label="Cari pengajuan" placeholder="Cari ID, vendor, invoice, P.O" value={q} onChange={(e) => setQ(e.target.value)} /></div>
       </div>
       {tampil.length === 0 ? (

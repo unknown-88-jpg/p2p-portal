@@ -579,3 +579,15 @@ a.metrik-kartu:focus-visible { outline-offset: 3px; border-radius: 28px; }
 .nada-kuning .metrik-ikon { background: #fff4d6; color: #8a5a00; } .nada-kuning .metrik-n { color: #8a5a00; } .nada-kuning { border-color: #f0d9a0; }
 .nada-biru .metrik-ikon { background: #e8f2fd; color: #0066cc; } .nada-biru .metrik-n { color: #0066cc; }
 .nada-hijau .metrik-ikon { background: #e6f5ea; color: #1b7a36; } .nada-hijau .metrik-n { color: #1b7a36; }
+
+/* ---- Filter status berwarna (selaras dengan kartu statistik): titik warna + jumlah sebagai lencana; terpilih = terisi penuh ---- */
+.chip .cn { min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--parchment); color: var(--ink-80); font-size: 12px; font-weight: 600; line-height: 1.5; text-align: center; letter-spacing: 0; }
+.chip[class*="fl-"] { display: inline-flex; align-items: center; gap: 8px; }
+.fl-netral { --fl: #1d1d1f; } .fl-merah { --fl: #d70015; } .fl-biru { --fl: #0066cc; } .fl-hijau { --fl: #1b7a36; }
+.chip.fl-merah::before, .chip.fl-biru::before, .chip.fl-hijau::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--fl); flex: none; }
+.chip.nol:not([aria-checked="true"]) { color: var(--muted); }
+.chip.nol:not([aria-checked="true"])::before { opacity: 0.45; }
+.chips .chip[class*="fl-"][aria-checked="true"] { background: var(--fl); border-color: var(--fl); color: #fff; }
+.chip[class*="fl-"][aria-checked="true"]::before { background: #fff; }
+.chip[class*="fl-"][aria-checked="true"] .cn { background: rgba(255, 255, 255, 0.24); color: #fff; }
+.chip[class*="fl-"]:not([aria-checked="true"]):hover { border-color: var(--fl); }
