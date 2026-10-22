@@ -313,11 +313,6 @@ input.sr-only:focus-visible + * , input.sr-only:focus-visible ~ .dropzone { outl
 .alur li.sekarang { border-top-color: var(--primary); color: var(--ink); font-weight: 600; background: var(--parchment); }
 .alur-pj { font-size: 11px; color: var(--muted); font-weight: 400; }
 @media (max-width: 640px) { .alur { grid-template-columns: 1fr; } .alur li { border-top: 0; border-left: 3px solid var(--hairline); } .alur li.selesai, .alur li.sekarang { border-left-color: var(--primary); } }
-.tl { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 2px solid var(--hairline); display: grid; gap: 14px; }
-.tl li { position: relative; }
-.tl li::before { content: ''; position: absolute; left: -20px; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: var(--hairline); }
-.tl li.persetujuan::before { background: var(--primary); }
-.tl-j { font-weight: 600; } .tl-m { font-size: 12px; color: var(--muted); } .tl-c { font-size: 13px; margin-top: 2px; }
 .sec-h { margin-top: 28px; font-size: 21px; }
 .n-uang { font-size: 20px; }
 .ringkas { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
@@ -701,3 +696,33 @@ dialog .chips.tombol-baris .chip { text-align: left; border-radius: var(--r-md);
 .alur-ringkas { display: none; margin: 16px 0 4px; }
 .alur-ringkas p { font-size: 14px; color: var(--ink-80); margin-top: 8px; }
 @media (max-width: 640px) { .alur-ringkas { display: block; } .alur { display: none; } }
+
+/* ---- Riwayat: linimasa vertikal (mengikuti mockup; vertikal dipilih karena jumlah peristiwa tidak tetap) ---- */
+.rw-kartu .kartu-judul { margin-bottom: 14px; }
+.rw { list-style: none; margin: 0; padding: 0; }
+.rw li { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; padding-bottom: 20px; }
+.rw li:last-child { padding-bottom: 0; }
+.rw li:not(:last-child)::before { content: ''; position: absolute; left: 13px; top: 30px; bottom: 2px; width: 2px; background: var(--hairline); }
+.rw-mk { width: 28px; height: 28px; border-radius: 50%; display: inline-grid; place-items: center; flex: none; }
+.rw-mk .ikon { width: 16px; height: 16px; }
+.rw-mk.ok { background: #e6f5ea; color: #1b7a36; }
+.rw-mk.bad { background: #fff0ef; color: #d70015; }
+.rw-mk.now { background: var(--canvas); border: 2px solid var(--primary); box-shadow: 0 0 0 4px #e8f2fd; }
+.rw-mk.lm { background: var(--parchment); color: var(--muted); font-size: 13px; letter-spacing: 1px; }
+.rw-baris { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-height: 28px; }
+.rw-j { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; overflow-wrap: anywhere; }
+.rw-chip { font-size: 11px; font-weight: 700; letter-spacing: 0.3px; color: #0a6277; background: #e1f3f7; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; }
+.rw-m { font-size: 13px; color: var(--muted); margin-top: 0; }
+.rw-c { font-size: 14px; color: var(--ink-80); background: var(--parchment); border-radius: var(--r-md); padding: 8px 12px; margin-top: 8px; overflow-wrap: anywhere; }
+.rw li[aria-current="step"] .rw-j { color: var(--primary); }
+.rw-lama { margin-bottom: 0; }
+.rw-lama > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; align-items: center; min-height: 44px; padding-bottom: 8px; position: relative; }
+.rw-lama > summary::-webkit-details-marker { display: none; }
+.rw-lama > summary::after { content: ''; position: absolute; left: 13px; top: 34px; bottom: -2px; width: 2px; background: var(--hairline); }
+.rw-lama[open] > summary::after { display: none; }
+.rw-lama > .rw li:last-child { padding-bottom: 20px; }
+.rw-lama > .rw li:last-child::before { content: ''; position: absolute; left: 13px; top: 30px; bottom: 2px; width: 2px; background: var(--hairline); }
+.rw-sum { font-size: 14px; color: var(--primary); }
+.rw-lama > summary:hover .rw-sum { text-decoration: underline; }
+.rw-lama[open] .rw-sum::after { content: ' (tutup)'; color: var(--muted); }
+@media (max-width: 640px) { .rw li { gap: 10px; } }
