@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useId, useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { bacaKetikan, formatRibuan } from '@/domain/pengajuan-form';
-import { labelStatus } from '@/domain/status-label';
+import { labelStatus, type Nada } from '@/domain/status-label';
+import { IkonDokumen, IkonInfo, IkonPerhatian, IkonProses, IkonSelesai, IkonSilang } from './icons';
 
 // Komponen dasar (gaya: lihat globals.css). Presentasional; tanpa pemanggilan API.
 
@@ -82,10 +83,16 @@ export function UangInput({ nilai, onUbah, onBlur, fp, placeholder }: { nilai: s
   );
 }
 
-export const StatusPill = ({ status }: { status: string }) => { const l = labelStatus(status); return <span className={`pill-st ${l.nada}`}>{l.label}</span>; };
+// Ikon status: jam = sedang menunggu/berjalan, centang = selesai/siap, segitiga = perlu perhatian, silang = ditolak. Warna bukan satu-satunya penanda.
+const IKON_STATUS: Record<Nada, () => ReactNode> = {
+  abu: () => <IkonDokumen />, biru: () => <IkonProses />, cyan: () => <IkonProses />, kuning: () => <IkonProses />, oranye: () => <IkonProses />,
+  'hijau-muda': () => <IkonSelesai />, hijau: () => <IkonSelesai />, merah: () => <IkonPerhatian />, 'merah-tua': () => <IkonSilang />,
+};
+export const StatusPill = ({ status }: { status: string }) => { const l = labelStatus(status); return <span className={`pill-st ${l.nada}`}>{IKON_STATUS[l.nada]()}{l.label}</span>; };
 
 export function Pesan({ jenis, children, role }: { jenis: 'err' | 'ok' | 'warn' | 'info'; children: ReactNode; role?: 'alert' | 'status' }) {
-  return <div className={`msg ${jenis}`} role={role ?? (jenis === 'err' ? 'alert' : 'status')}>{children}</div>;
+  const Ikon = jenis === 'ok' ? IkonSelesai : jenis === 'info' ? IkonInfo : IkonPerhatian;
+  return <div className={`msg ${jenis}`} role={role ?? (jenis === 'err' ? 'alert' : 'status')}><Ikon /><div className="msg-isi">{children}</div></div>;
 }
 
 export function Skeleton({ baris = 3 }: { baris?: number }) {
