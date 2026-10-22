@@ -22,9 +22,9 @@ export default async function Home() {
   const n = (k: string) => daftar.filter((d) => KELOMPOK_STATUS.find((x) => x.kunci === k)!.cocok(d.status)).length;
   const total = daftar.length;
   const metrik = [
-    { k: 'perlu-tindakan', label: 'Perlu tindakan', ikon: <IkonPerhatian />, merah: n('perlu-tindakan') > 0 },
-    { k: 'diproses', label: 'Sedang diproses', ikon: <IkonProses />, merah: false },
-    { k: 'selesai', label: 'Selesai', ikon: <IkonSelesai />, merah: false },
+    { k: 'perlu-tindakan', label: 'Perlu tindakan', ikon: <IkonPerhatian />, nada: 'merah' },
+    { k: 'diproses', label: 'Sedang diproses', ikon: <IkonProses />, nada: 'biru' },
+    { k: 'selesai', label: 'Selesai', ikon: <IkonSelesai />, nada: 'hijau' },
   ] as const;
   return (
     <>
@@ -44,7 +44,7 @@ export default async function Home() {
         {bisa ? (
           <div className="metrik">
             {metrik.map((m) => (
-              <a key={m.k} className={`metrik-kartu${m.merah ? ' merah' : ''}`} href={`/pengajuan?status=${m.k}`} aria-label={`${m.label}: ${n(m.k)}. Buka daftar`}>
+              <a key={m.k} className={`metrik-kartu${n(m.k) > 0 ? ` nada-${m.nada}` : ''}`} href={`/pengajuan?status=${m.k}`} aria-label={`${m.label}: ${n(m.k)}. Buka daftar`}>
                 <span className="metrik-ikon">{m.ikon}</span>
                 <div className="metrik-teks"><div className="metrik-n num">{n(m.k)}</div><div className="metrik-l">{m.label}</div></div>
                 <span className="metrik-panah" aria-hidden="true"><IkonPanah /></span>
@@ -57,7 +57,7 @@ export default async function Home() {
           <>
             <h2 className="sec-h">Antrean Manager</h2>
             <div className="metrik">
-              <a className={`metrik-kartu${dash.manager.antrean ? ' merah' : ''}`} href="/persetujuan" aria-label={`Menunggu persetujuan: ${dash.manager.antrean}. Buka persetujuan`}><span className="metrik-ikon"><IkonSetuju /></span><div className="metrik-teks"><div className="metrik-n num">{dash.manager.antrean}</div><div className="metrik-l">Menunggu persetujuan</div></div><span className="metrik-panah" aria-hidden="true"><IkonPanah /></span></a>
+              <a className={`metrik-kartu${dash.manager.antrean ? ' nada-kuning' : ''}`} href="/persetujuan" aria-label={`Menunggu persetujuan: ${dash.manager.antrean}. Buka persetujuan`}><span className="metrik-ikon"><IkonSetuju /></span><div className="metrik-teks"><div className="metrik-n num">{dash.manager.antrean}</div><div className="metrik-l">Menunggu persetujuan</div></div><span className="metrik-panah" aria-hidden="true"><IkonPanah /></span></a>
               <div className="metrik-kartu"><span className="metrik-ikon"><IkonUang /></span><div className="metrik-teks"><div className="metrik-n metrik-uang num">{rupiah(dash.manager.totalNominal)}</div><div className="metrik-l">Total nominal antrean</div></div></div>
               <div className="metrik-kartu"><span className="metrik-ikon"><IkonProses /></span><div className="metrik-teks"><div className="metrik-n num">{dash.manager.tertuaHari === null ? '—' : `${dash.manager.tertuaHari} hr`}</div><div className="metrik-l">Tertua di antrean</div></div></div>
             </div>
