@@ -451,8 +451,6 @@ body:has(> #isi > .sidebar) { background: var(--parchment); }
 .metrik-n { margin-top: 20px; font-size: 40px; line-height: 1.1; font-weight: 600; letter-spacing: -0.28px; }
 .metrik-n.metrik-uang { font-size: 28px; line-height: 1.3; }
 .metrik-l { margin-top: 6px; font-size: 14px; color: var(--muted); letter-spacing: -0.224px; }
-.metrik-kartu.merah .metrik-ikon { background: var(--danger-bg); color: var(--danger); }
-.metrik-kartu.merah .metrik-n { color: var(--danger); }
 .dash .sec-h { margin: 32px 0 14px; }
 .kartu-gap { margin-top: 16px; }
 .dash-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; align-items: start; }
@@ -555,3 +553,29 @@ dialog.lebar .dlg { max-height: calc(100vh - 32px); display: flex; flex-directio
 @media (max-width: 640px) { dialog.lebar .dlg-aksi { flex-wrap: wrap; } }
 dialog.lebar .dlg-aksi .btn { white-space: nowrap; }
 @media (max-width: 480px) { dialog.lebar .dlg-aksi .btn { padding-left: 12px; padding-right: 12px; font-size: 15px; } }
+
+/* ---- Kartu statistik: ikon besar di kiri, angka + label, tombol panah bulat di kanan (mengikuti referensi desain dari pengguna).
+   Catatan: referensi memakai bayangan lembut; DESIGN.md awal melarang bayangan di UI, jadi bayangan HANYA dipakai di kartu ini. ---- */
+.metrik { gap: 20px; }
+.metrik-kartu { display: flex; align-items: center; gap: 16px; padding: 20px; border-radius: 28px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06); min-width: 0; }
+.metrik-ikon { width: 58px; height: 58px; border-radius: 18px; flex: none; }
+.metrik-ikon .ikon { width: 30px; height: 30px; }
+.metrik-teks { flex: 1; min-width: 0; }
+.metrik-n { margin-top: 0; font-size: 40px; line-height: 1.05; font-weight: 700; }
+.metrik-n.metrik-uang { font-size: 24px; line-height: 1.25; overflow-wrap: anywhere; }
+.metrik-l { margin-top: 4px; font-size: 16px; color: var(--ink-80); letter-spacing: -0.224px; }
+.metrik-panah { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--parchment); color: var(--ink-80); flex: none; transition: background .12s, color .12s; }
+a.metrik-kartu:hover .metrik-panah { background: var(--primary); color: #fff; }
+a.metrik-kartu:focus-visible { outline-offset: 3px; border-radius: 28px; }
+@media (max-width: 760px) { .metrik-kartu { display: flex; padding: 16px 18px; gap: 16px; border-radius: 24px; } .metrik-ikon { width: 56px; height: 56px; grid-row: auto; } .metrik-n { font-size: 32px; } .metrik-l { margin-top: 2px; font-size: 16px; } }
+
+/* ---- Warna kartu statistik (semantik; hanya aktif bila angka > 0, angka 0 tetap netral) ----
+   merah  = butuh tindakan Anda (draf / revisi)      -> border ikut berwarna (sinyal mendesak)
+   kuning = menunggu keputusan Anda (antrean Manager) -> border ikut berwarna
+   biru   = sedang berjalan (sama dengan bar progres)
+   hijau  = selesai (sama dengan bar progres)
+   Semua warna teks >= 4.5:1 di atas putih. Warna tidak pernah satu-satunya penanda: label dan angka tetap tertulis. */
+.nada-merah .metrik-ikon { background: #fff0ef; color: #d70015; } .nada-merah .metrik-n { color: #d70015; } .nada-merah { border-color: #f1c4c8; }
+.nada-kuning .metrik-ikon { background: #fff4d6; color: #8a5a00; } .nada-kuning .metrik-n { color: #8a5a00; } .nada-kuning { border-color: #f0d9a0; }
+.nada-biru .metrik-ikon { background: #e8f2fd; color: #0066cc; } .nada-biru .metrik-n { color: #0066cc; }
+.nada-hijau .metrik-ikon { background: #e6f5ea; color: #1b7a36; } .nada-hijau .metrik-n { color: #1b7a36; }
