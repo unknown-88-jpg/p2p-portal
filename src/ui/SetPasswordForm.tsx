@@ -6,6 +6,7 @@ export function SetPasswordForm() {
   const [token, setToken] = useState('');
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
+  const [lihat, setLihat] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -38,10 +39,13 @@ export function SetPasswordForm() {
       <p className="sub">Link berlaku 60 menit dan hanya bisa dipakai sekali.</p>
       {!token && <div className="msg err" role="alert">Link tidak lengkap. Buka ulang link dari WhatsApp, atau minta link baru.</div>}
       <label htmlFor="pw">Password baru</label>
-      <input id="pw" type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} required />
+      <div className="pw-wrap">
+        <input id="pw" type={lihat ? 'text' : 'password'} autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} required />
+        <button type="button" className="link pw-toggle" aria-pressed={lihat} onClick={() => setLihat(!lihat)}>{lihat ? 'Sembunyikan' : 'Tampilkan'}</button>
+      </div>
       <div className="hint">Minimal 8 karakter, bukan nomor HP, bukan password umum.</div>
       <label htmlFor="pw2">Ulangi password</label>
-      <input id="pw2" type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} required />
+      <input id="pw2" type={lihat ? 'text' : 'password'} autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} required />
       <button className="primary" disabled={busy || !token || !pw || !pw2}>{busy ? 'Menyimpan…' : 'Simpan password'}</button>
       {msg && <div className="msg err" role="alert">{msg}</div>}
     </form>

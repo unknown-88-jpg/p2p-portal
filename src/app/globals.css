@@ -506,3 +506,8 @@ a.metrik-kartu:active { transform: scale(0.98); }
   html[data-sb="tutup"] body:has(> #isi > .sidebar) .aksi-bar { left: 0; }
 }
 @media (prefers-reduced-motion: reduce) { #isi:has(> .sidebar) { transition: none; } }
+
+/* ---- Halaman masuk / atur password di HP ---- */
+.card h1 { line-height: 1.15; }
+.auth-brand { display: none; align-items: center; gap: 10px; font-size: 19px; font-weight: 600; letter-spacing: -0.28px; margin-bottom: 20px; }
+@media (max-width: 760px) { .auth-form { display: block; } .auth-brand { display: flex; max-width: 400px; margin-left: auto; margin-right: auto; } .auth-form .card { margin-left: auto; margin-right: auto; } }
