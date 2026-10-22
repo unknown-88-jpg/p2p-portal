@@ -7,6 +7,7 @@ import { detail } from '@/server/dokumen';
 import { authDeps } from '@/server/runtime';
 import { AppNav } from '@/ui/AppNav';
 import { StatusPill } from '@/ui/kit';
+import { LampiranPopup } from '@/ui/LampiranPopup';
 import { wajibSesi } from '../../_lib/sesi';
 
 export const dynamic = 'force-dynamic';
@@ -65,7 +66,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <div className="cta-row">
           {d.editable && d.milikSaya && <a className="btn btn-primary" href={`/pengajuan/${encodeURIComponent(d.id)}/edit`}>{d.status === 'Revision Needed' ? 'Revisi' : 'Lanjutkan draft'}</a>}
           <a className="btn btn-secondary" href={`/pengajuan/${encodeURIComponent(d.id)}/voucher`}>Voucher</a>
-          {d.punyaLampiran && <a className="btn btn-secondary" href={`/api/pengajuan/${encodeURIComponent(d.id)}/lampiran`} target="_blank" rel="noopener noreferrer">Lihat lampiran</a>}
+          {d.punyaLampiran && <LampiranPopup id={d.id} />}
         </div>
       </main>
     </>

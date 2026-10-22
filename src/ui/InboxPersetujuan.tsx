@@ -5,6 +5,7 @@ import { CATATAN_MAX, ALASAN_MAX, TEMPLATE_ALASAN } from '@/domain/approval';
 import { rupiah, pilihKunci, type KunciIdem } from '@/domain/pengajuan-form';
 import { api, errMessage, isApiError, type ApiError } from './api';
 import { Dialog, Pesan, Skeleton } from './kit';
+import { LampiranPopup } from './LampiranPopup';
 
 interface Item extends ItemInbox {
   tanggal: string; company: string; brand: string; departement: string; tipe: string; pic: string; description: string; eventProject: string;
@@ -206,7 +207,7 @@ export function InboxPersetujuan({ idAwal }: { idAwal?: string | undefined }) {
                   {tampilCur.ppnAmount ? <Baris l="PPN" v={rupiah(tampilCur.ppnAmount)} /> : null}
                 </dl>
                 <p>{tampilCur.punyaLampiran
-                  ? <a className="btn btn-secondary btn-sm" href={`/api/pengajuan/${encodeURIComponent(tampilCur.id)}/lampiran`} target="_blank" rel="noopener noreferrer">Lihat lampiran invoice</a>
+                  ? <LampiranPopup id={tampilCur.id} label="Lihat lampiran invoice" kelas="btn btn-secondary btn-sm" />
                   : <span className="muted">Tidak ada lampiran.</span>}</p>
                 <div className="aksi-detail">
                   <button type="button" className="btn btn-secondary" disabled={sibuk} onClick={() => { setGalat(null); setAlasan(''); setDlg('tolak'); }}>Kembalikan</button>

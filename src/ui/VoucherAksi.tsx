@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, type ReactNode } from 'react';
+import { Dialog } from './kit';
 
 type Mode = 'voucher' | 'invoice' | 'keduanya';
 /**
@@ -29,11 +30,13 @@ export function VoucherAksi({ id, punyaLampiran, children }: { id: string; punya
     window.addEventListener('afterprint', bersih);
     window.print();
   };
+  const [popup, setPopup] = useState(false);
   const bisaInv = jenis === 'gambar';
   return (
     <>
       <div className="vc-aksi no-print">
         <button className="btn btn-primary" onClick={() => cetak('voucher')}>Cetak voucher</button>
+        <button className="btn btn-secondary" disabled={!bisaInv} onClick={() => setPopup(true)}>Lihat invoice</button>
         <button className="btn btn-secondary" disabled={!bisaInv} onClick={() => cetak('invoice')}>Cetak invoice</button>
         <button className="btn btn-secondary" disabled={!bisaInv} onClick={() => cetak('keduanya')}>Voucher + invoice</button>
         {jenis === 'pdf' && <a className="btn btn-secondary" href={url} target="_blank" rel="noopener noreferrer">Buka invoice PDF</a>}
@@ -41,7 +44,11 @@ export function VoucherAksi({ id, punyaLampiran, children }: { id: string; punya
       </div>
       <p className="muted no-print">{jenis === 'muat' ? 'Memuat invoice…' : jenis === 'tidak' ? 'Dokumen ini tidak punya lampiran invoice.' : jenis === 'gagal' ? 'Invoice tidak dapat dimuat.' : jenis === 'pdf' ? 'Invoice berupa PDF: buka di tab baru, cetak dari sana.' : ''}</p>
       {children}
-      {gambar && <section className="vc-invoice"><h2 className="vc-invoice-h no-print">Lampiran invoice</h2><img src={gambar} alt={`Invoice ${id}`} /></section>}
+      {gambar && <section className="vc-invoice"><img src={gambar} alt={`Invoice ${id}`} /></section>}
+      <Dialog buka={popup && !!gambar} onTutup={() => setPopup(false)} judul={`Invoice ${id}`} lebar>
+        <div className="lampiran-isi">{gambar && <img src={gambar} alt={`Invoice ${id}`} />}</div>
+        <div className="dlg-aksi"><button type="button" className="btn btn-primary" onClick={() => setPopup(false)}>Tutup</button></div>
+      </Dialog>
     </>
   );
 }
