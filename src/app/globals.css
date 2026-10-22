@@ -656,3 +656,48 @@ dialog .chips.tombol-baris .chip { text-align: left; border-radius: var(--r-md);
 .pemuat-angka { position: relative; font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: 0; }
 .pemuat-teks { font-size: 15px; color: var(--muted); letter-spacing: -0.224px; }
 @media (prefers-reduced-motion: reduce) { .pemuat svg.putar { animation: none; } .pemuat svg.pasti .isi { transition: none; } }
+
+/* ---- Detail pengajuan: satu kartu, dua panel (mengikuti mockup pengguna) ----
+   Desktop: kepala (vendor | nominal akhir) -> info transaksi 3 kolom + panel "Pajak & nominal" -> strip keperluan.
+   HP: satu kolom; nominal akhir menjadi kotak berwarna; info 2 kolom; pajak sebagai bagian terpisah. */
+.det { background: var(--canvas); border: 1px solid var(--hairline); border-radius: 24px; padding: 28px; margin-top: 16px; }
+.det-l { display: block; font-size: 12px; color: var(--muted); letter-spacing: 0; }
+.det-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.det-nama { font-size: 28px; line-height: 1.15; font-weight: 700; letter-spacing: -0.28px; margin-top: 2px; overflow-wrap: anywhere; }
+.det-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.det-nominal { text-align: right; flex: none; }
+.det-nominal .det-l { color: #0a6277; font-weight: 600; }
+.det-angka { font-size: 36px; line-height: 1.1; font-weight: 700; letter-spacing: -0.4px; color: #0a4f60; }
+.det-body { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(260px, 1fr); gap: 24px; margin-top: 24px; align-items: start; }
+.det-h { font-size: 13px; font-weight: 700; letter-spacing: 0; margin-bottom: 14px; }
+.det-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 24px; margin: 0; }
+.det-grid dt { font-size: 12px; color: var(--muted); letter-spacing: 0; }
+.det-grid dd { margin: 2px 0 0; font-size: 15px; line-height: 1.35; font-weight: 600; letter-spacing: -0.2px; overflow-wrap: anywhere; }
+.det-pajak { background: var(--parchment); border-radius: 18px; padding: 18px 20px; }
+.det-pj { margin: 0; }
+.det-pj > div { display: flex; justify-content: space-between; gap: 16px; padding: 7px 0; font-size: 14px; }
+.det-pj dt { color: var(--muted); }
+.det-pj dd { margin: 0; font-weight: 600; text-align: right; }
+.det-perlu { margin-top: 24px; background: var(--parchment); border-radius: 14px; padding: 14px 18px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; font-size: 14px; }
+.det-perlu .det-l { flex: none; }
+.det-perlu .muted { flex-basis: 100%; font-size: 13px; }
+@media (max-width: 899px) {
+  .det-body { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .det-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .det-pajak { background: none; border-radius: 0; padding: 18px 0 0; border-top: 1px solid var(--divider); }
+}
+@media (max-width: 640px) {
+  .det { padding: 18px 16px; border-radius: 20px; }
+  .det-head { flex-direction: column; align-items: stretch; gap: 14px; }
+  .det-nama { font-size: 22px; }
+  .det-nominal { text-align: left; background: #e1f3f7; border-radius: 14px; padding: 12px 16px; }
+  .det-angka { font-size: 30px; }
+  .det-grid { gap: 16px 16px; }
+  .det-grid dd { font-size: 14px; }
+  .det-perlu { padding: 12px 14px; }
+}
+
+/* Alur persetujuan di HP: ringkasan satu baris (bar progres + tahap sekarang); daftar 7 langkah penuh hanya di layar lebar. */
+.alur-ringkas { display: none; margin: 16px 0 4px; }
+.alur-ringkas p { font-size: 14px; color: var(--ink-80); margin-top: 8px; }
+@media (max-width: 640px) { .alur-ringkas { display: block; } .alur { display: none; } }

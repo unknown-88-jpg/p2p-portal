@@ -1,6 +1,7 @@
 'use client';
 import { useState, type FormEvent } from 'react';
 import { api, errMessage } from './api';
+import { Pesan } from './kit';
 
 export function LoginForm() {
   const [mode, setMode] = useState<'login' | 'forgot'>('login');
@@ -40,7 +41,7 @@ export function LoginForm() {
         </div>
       </>)}
       <button className="primary" disabled={busy || !phone || (mode === 'login' && !password)}>{busy ? 'Memproses…' : mode === 'login' ? 'Masuk' : 'Kirim link'}</button>
-      {msg && <div className={`msg ${msg.kind}`} role={msg.kind === 'err' ? 'alert' : 'status'}>{msg.text}</div>}
+      {msg && <Pesan jenis={msg.kind}>{msg.text}</Pesan>}
       <div className="row">
         <button type="button" className="link" onClick={() => { setMode(mode === 'login' ? 'forgot' : 'login'); setMsg(null); }}>
           {mode === 'login' ? 'Atur / lupa password' : 'Kembali ke masuk'}
