@@ -172,7 +172,7 @@ export function InboxPersetujuan({ idAwal }: { idAwal?: string | undefined }) {
                   {bisaBulk(i) && <input type="checkbox" className="pilih-cb" aria-label={`Pilih ${i.id} untuk persetujuan massal`} checked={pilih.has(i.id)}
                     onChange={(e) => setPilih((p) => { const n = new Set(p); if (e.target.checked) n.add(i.id); else n.delete(i.id); return n; })} />}
                   <button type="button" className="doc" aria-current={tampilCur?.id === i.id ? 'true' : undefined} onClick={() => pilihItem(i.id)}>
-                    <span className="id">{i.id} · {i.tanggal}</span>
+                    <span className="id"><span>{i.id}</span> · <span>{i.tanggal}</span></span>
                     <span className="kanan"><span className="nominal num">{rupiah(i.nominal)}</span>{i.perluCFO && <span className="badge-cfo">CFO</span>}</span>
                     <span className="vendor">{i.vendorNama || '—'}</span>
                     <span className="desk">{[i.pic, i.brand, i.departement].filter(Boolean).join(' · ')}</span>

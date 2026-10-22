@@ -480,3 +480,19 @@ body:has(> #isi > .sidebar) { background: var(--parchment); }
 .auth-panel h2 { font-size: 28px; line-height: 1.14; letter-spacing: -0.28px; }
 .auth-panel p { color: #cccccc; font-size: 17px; }
 @media (max-width: 760px) { .auth { grid-template-columns: minmax(0, 1fr); border: 0; background: transparent; } .auth-panel { display: none; } .auth-form { padding: 0; } .auth-form .card { border: 1px solid var(--hairline); padding: 28px 24px; max-width: 400px; background: var(--canvas); } }
+
+/* ---- Penyesuaian di atas latar parchment (hasil pemeriksaan visual) ---- */
+/* Kartu penekanan sebelumnya parchment di atas parchment (hilang); jadikan putih berborder hairline seperti kartu lain. */
+.kartu.parchment, .hero-nominal { background: var(--canvas); border: 1px solid var(--hairline); }
+.hero-nominal { max-width: none; }
+.aksi-in .btn { white-space: nowrap; }
+@media (max-width: 480px) {
+  .aksi-in { flex-wrap: wrap; row-gap: 8px; }
+  .aksi-in .ringkas { flex: 1 0 100%; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-right: 0; }
+  .aksi-in .ringkas .l { display: block; font-size: 12px; }
+  .aksi-in .ringkas .v { font-size: 17px; white-space: nowrap; }
+  .aksi-in .btn { flex: 1 1 0; }
+  .aksi-spacer { height: 150px; }
+}
+.kartu > dl.kv { margin: 0; }
+.kartu > .kartu-h + dl.kv { margin-top: 4px; }
