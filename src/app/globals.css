@@ -624,3 +624,16 @@ a.metrik-kartu:focus-visible { outline-offset: 3px; border-radius: 28px; }
 .msg.warn { background: #fff4d6; border-color: #f0d9a0; color: #7a5000; }
 .msg.ok { background: #e6f5ea; border-color: #bfe3c9; color: #17622f; }
 .msg.info { background: #e8f2fd; border-color: #c4dcf5; color: #00509e; }
+/* ---- Halaman Persetujuan di HP (hasil pemeriksaan visual) ---- */
+/* Di daftar (belum membuka detail) tidak ada baris yang tampak terpilih. */
+@media (max-width: 899px) { .inbox:not(.hp-detail) .inbox-row.aktif .doc { border-color: var(--hairline); background: var(--canvas); } }
+/* Kotak centang lebih besar (target sentuh >= 28px) dan tidak menimpa nominal. */
+.inbox-row .pilih-cb { width: 28px; height: 28px; top: 12px; right: 12px; }
+.inbox-row .doc .kanan { padding-right: 38px; }
+/* Tombol dialog tidak memecah teks; template alasan berupa daftar rapi, bukan pil bertingkat. */
+dialog .dlg-aksi .btn { white-space: nowrap; }
+@media (max-width: 480px) { dialog .dlg-aksi .btn { padding-left: 14px; padding-right: 14px; } }
+dialog .chips.tombol-baris { flex-direction: column; align-items: stretch; gap: 8px; }
+dialog .chips.tombol-baris .chip { text-align: left; border-radius: var(--r-md); }
+@media (max-width: 420px) { .nominal-besar { font-size: 28px; line-height: 1.2; } .hero-nominal { padding: 24px 12px; } }
+@media (max-width: 340px) { .nominal-besar { font-size: 24px; } }
