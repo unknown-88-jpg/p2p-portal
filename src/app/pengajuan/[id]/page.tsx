@@ -2,12 +2,14 @@ import { catatanTampil } from '@/domain/approval';
 import { can } from '@/domain/capabilities';
 import { notFound } from 'next/navigation';
 import { rupiah, samarkanRekening } from '@/domain/pengajuan-form';
+import { labelStatus } from '@/domain/status-label';
 import { AppError } from '@/lib/errors';
 import { detail } from '@/server/dokumen';
 import { authDeps } from '@/server/runtime';
 import { AppNav } from '@/ui/AppNav';
 import { Pesan, StatusPill } from '@/ui/kit';
 import { LampiranPopup } from '@/ui/LampiranPopup';
+import { RiwayatTimeline } from '@/ui/RiwayatTimeline';
 import { wajibSesi } from '../../_lib/sesi';
 
 export const dynamic = 'force-dynamic';
@@ -86,14 +88,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </section>
         {d.coa && <div className="kartu"><span className="kartu-h">Jurnal COA</span><p>{d.coa.kategori} › {d.coa.head} › {d.coa.sub}</p></div>}
 
-        <div className="kartu">
-          <span className="kartu-h">Riwayat</span>
-          {d.timeline.length === 0 ? <p className="muted">Belum ada riwayat.</p> : (
-            <ol className="tl">{d.timeline.map((t, i) => (
-              <li key={i} className={t.jenis}><div className="tl-j">{t.judul}</div><div className="tl-m">{t.waktu} · {t.oleh}{t.metode ? ` · ${t.metode}` : ''}</div>{t.catatan && <div className="tl-c">{t.catatan}</div>}</li>
-            ))}</ol>
-          )}
-        </div>
+        <RiwayatTimeline timeline={d.timeline} sekarang={kini ? { label: labelStatus(d.status).label, pj: kini.pj } : null} />
 
         <div className="cta-row">
           {d.editable && d.milikSaya && <a className="btn btn-primary" href={`/pengajuan/${encodeURIComponent(d.id)}/edit`}>{d.status === 'Revision Needed' ? 'Revisi' : 'Lanjutkan draft'}</a>}
