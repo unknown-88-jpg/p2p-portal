@@ -1,12 +1,13 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Dialog } from './kit';
 
 type Mode = 'voucher' | 'invoice' | 'keduanya';
 /**
  * Tombol cetak (paritas Print_Form lama: voucher / invoice / voucher + invoice). Invoice gambar dimuat sebagai blob lewat proxy ber-otorisasi
  * dan dicetak di halaman yang sama. PDF tidak bisa disematkan (CSP object-src 'none') -> dibuka di tab baru.
  */
-export function VoucherAksi({ id, punyaLampiran }: { id: string; punyaLampiran: boolean }) {
+export function VoucherAksi({ id, punyaLampiran, children }: { id: string; punyaLampiran: boolean; children?: ReactNode }) {
   const [gambar, setGambar] = useState<string | null>(null);
   const [jenis, setJenis] = useState<'gambar' | 'pdf' | 'tidak' | 'gagal' | 'muat'>(punyaLampiran ? 'muat' : 'tidak');
   const url = `/api/pengajuan/${encodeURIComponent(id)}/lampiran`;
@@ -29,18 +30,25 @@ export function VoucherAksi({ id, punyaLampiran }: { id: string; punyaLampiran: 
     window.addEventListener('afterprint', bersih);
     window.print();
   };
+  const [popup, setPopup] = useState(false);
   const bisaInv = jenis === 'gambar';
   return (
     <>
       <div className="vc-aksi no-print">
         <button className="btn btn-primary" onClick={() => cetak('voucher')}>Cetak voucher</button>
+        <button className="btn btn-secondary" disabled={!bisaInv} onClick={() => setPopup(true)}>Lihat invoice</button>
         <button className="btn btn-secondary" disabled={!bisaInv} onClick={() => cetak('invoice')}>Cetak invoice</button>
         <button className="btn btn-secondary" disabled={!bisaInv} onClick={() => cetak('keduanya')}>Voucher + invoice</button>
         {jenis === 'pdf' && <a className="btn btn-secondary" href={url} target="_blank" rel="noopener noreferrer">Buka invoice PDF</a>}
         <a className="link" href={`/pengajuan/${encodeURIComponent(id)}`}>← Kembali</a>
       </div>
       <p className="muted no-print">{jenis === 'muat' ? 'Memuat invoice…' : jenis === 'tidak' ? 'Dokumen ini tidak punya lampiran invoice.' : jenis === 'gagal' ? 'Invoice tidak dapat dimuat.' : jenis === 'pdf' ? 'Invoice berupa PDF: buka di tab baru, cetak dari sana.' : ''}</p>
+      {children}
       {gambar && <section className="vc-invoice"><img src={gambar} alt={`Invoice ${id}`} /></section>}
+      <Dialog buka={popup && !!gambar} onTutup={() => setPopup(false)} judul={`Invoice ${id}`} lebar>
+        <div className="lampiran-isi">{gambar && <img src={gambar} alt={`Invoice ${id}`} />}</div>
+        <div className="dlg-aksi"><button type="button" className="btn btn-primary" onClick={() => setPopup(false)}>Tutup</button></div>
+      </Dialog>
     </>
   );
 }

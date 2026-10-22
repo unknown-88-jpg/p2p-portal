@@ -93,7 +93,7 @@ export function Skeleton({ baris = 3 }: { baris?: number }) {
 }
 
 /** Dialog modal bawaan <dialog>: fokus terkunci & Esc menutup (perilaku peramban), tanpa pustaka. */
-export function Dialog({ buka, onTutup, judul, children }: { buka: boolean; onTutup: () => void; judul: string; children: ReactNode }) {
+export function Dialog({ buka, onTutup, judul, children, lebar }: { buka: boolean; onTutup: () => void; judul: string; children: ReactNode; lebar?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
   const id = useId();
   useEffect(() => {
@@ -102,7 +102,7 @@ export function Dialog({ buka, onTutup, judul, children }: { buka: boolean; onTu
     if (!buka && d.open) d.close();
   }, [buka]);
   return (
-    <dialog ref={ref} aria-labelledby={id} onClose={onTutup} onCancel={(e) => { e.preventDefault(); onTutup(); }}>
+    <dialog ref={ref} className={lebar ? 'lebar' : undefined} aria-labelledby={id} onClose={onTutup} onCancel={(e) => { e.preventDefault(); onTutup(); }}>
       <div className="dlg"><h2 id={id}>{judul}</h2>{children}</div>
     </dialog>
   );

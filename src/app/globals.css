@@ -511,3 +511,47 @@ a.metrik-kartu:active { transform: scale(0.98); }
 .card h1 { line-height: 1.15; }
 .auth-brand { display: none; align-items: center; gap: 10px; font-size: 19px; font-weight: 600; letter-spacing: -0.28px; margin-bottom: 20px; }
 @media (max-width: 760px) { .auth-form { display: block; } .auth-brand { display: flex; max-width: 400px; margin-left: auto; margin-right: auto; } .auth-form .card { margin-left: auto; margin-right: auto; } }
+
+/* ---- Voucher: tampilan layar mengikuti kerangka dashboard; hasil cetak (A4) tidak berubah ---- */
+.vc-wrap { max-width: 880px; margin: 0 auto; width: 100%; padding: 0 24px; }
+.vc-wrap .page-h { margin-bottom: 16px; }
+.vc-aksi { background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: 14px 16px; margin-bottom: 12px; }
+.vc-aksi .link { margin-left: auto; }
+.vc { font-size: 13px; line-height: 1.45; letter-spacing: 0; border-radius: var(--r-lg); padding: 32px; }
+.vc-total th, .vc-total td { background: var(--parchment); }
+.vc-box { border-radius: var(--r-sm); }
+.vc-kotak { border-radius: var(--r-sm); }
+.vc-invoice { background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: 16px; margin: 0 0 12px; }
+.vc-invoice img { border-radius: var(--r-sm); }
+.vc-t td, .vc-t th { overflow-wrap: anywhere; }
+@media (max-width: 640px) { .vc-wrap { padding: 0 16px; } .vc { padding: 18px 16px; } .vc-h { flex-direction: column; gap: 8px; } .vc-id { text-align: left; } .vc-aksi .btn { flex: 1 1 auto; } .vc-aksi .link { margin-left: 0; flex: 1 0 100%; } }
+@media print {
+  #isi:has(> .sidebar) { display: block; min-height: 0; }
+  #isi:has(> .sidebar) > :not(.sidebar):not(.topbar):not(.sb-backdrop) { padding: 0; }
+  .vc-wrap { max-width: none; padding: 0; }
+  .vc { font-size: 12px; line-height: normal; border-radius: 0; padding: 0; }
+  .vc-total th, .vc-total td { background: none; }
+  .vc-box, .vc-kotak, .vc-invoice, .vc-invoice img { border-radius: 0; }
+  .vc-invoice { border: 0; padding: 0; margin-top: 16px; }
+}
+.vc-bayar td:nth-child(1), .vc-bayar td:nth-child(2) { white-space: nowrap; }
+@media (max-width: 640px) { .vc-bayar { display: block; overflow-x: auto; } }
+@media print { .vc-bayar { display: table; } }
+.vc-invoice-h { font-size: 17px; font-weight: 600; text-align: left; margin-bottom: 12px; }
+.vc-invoice { margin: 12px 0 0; }
+.vc-invoice img { max-height: 80vh; width: auto; max-width: 100%; object-fit: contain; }
+@media print { .vc-invoice { margin-top: 0; } .vc-invoice img { max-height: 1000px; } }
+
+/* ---- Pratinjau lampiran di popup; invoice di halaman voucher hanya untuk cetak ---- */
+dialog.lebar { width: min(960px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
+dialog.lebar .dlg { max-height: calc(100vh - 32px); display: flex; flex-direction: column; }
+.lampiran-isi { margin-top: 14px; overflow: auto; background: var(--parchment); border-radius: var(--r-md); min-height: 120px; display: grid; place-items: center; padding: 12px; }
+.lampiran-isi img { max-width: 100%; height: auto; display: block; border-radius: var(--r-sm); }
+.lampiran-isi .skel { width: 100%; }
+.lampiran-isi p { padding: 24px 12px; text-align: center; }
+.err-teks { color: var(--danger); }
+.vc-invoice { display: none; }
+@media print { .vc-invoice { display: block; } }
+@media (max-width: 640px) { dialog.lebar .dlg-aksi { flex-wrap: wrap; } }
+dialog.lebar .dlg-aksi .btn { white-space: nowrap; }
+@media (max-width: 480px) { dialog.lebar .dlg-aksi .btn { padding-left: 12px; padding-right: 12px; font-size: 15px; } }

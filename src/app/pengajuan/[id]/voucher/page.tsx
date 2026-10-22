@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation';
+import { can } from '@/domain/capabilities';
 import { rupiah } from '@/domain/pengajuan-form';
 import { AppError } from '@/lib/errors';
 import { voucher } from '@/server/dokumen';
 import { authDeps } from '@/server/runtime';
+import { AppNav } from '@/ui/AppNav';
 import { VoucherAksi } from '@/ui/VoucherAksi';
 import { wajibSesi } from '../../../_lib/sesi';
 
@@ -20,8 +22,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   catch (e) { if (e instanceof AppError && e.code === 'NOT_FOUND') notFound(); throw e; }
   const pph = v.pphAmount > 0 ? `${v.jenisPPh} — ${rupiah(v.pphAmount)}` : '-';
   return (
+    <>
+      <AppNav nama={s.nama} bisaAjukan={can(s.roles, 'pengajuan.write')} bisaSetujui={can(s.roles, 'approve.manager')} aktif="pengajuan" />
     <main className="vc-wrap">
-      <VoucherAksi id={v.id} punyaLampiran={v.punyaLampiran} />
+      <h1 className="page-h no-print">Voucher {v.id}</h1>
+      <VoucherAksi id={v.id} punyaLampiran={v.punyaLampiran}>
       <section className="vc">
         <header className="vc-h">
           <div><div className="vc-co">{v.company || '-'}</div><div className="vc-sub">Payment Voucher</div></div>
@@ -61,6 +66,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </div>
         <footer className="vc-f">Dicetak {v.dicetak} WIB</footer>
       </section>
+      </VoucherAksi>
     </main>
+    </>
   );
 }
