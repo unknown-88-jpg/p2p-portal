@@ -17,12 +17,13 @@ export function AppNav({ nama, bisaAjukan, bisaSetujui = false, jumlahMenunggu, 
     <>
       <aside className="sidebar" id="sidebar">
         <a className="sb-brand" href="/"><span className="sb-logo" aria-hidden="true">P</span><span>P2P Finance</span></a>
-        {bisaAjukan && <a className="btn btn-primary sb-cta" href="/pengajuan/baru" {...cur('baru')}><IkonTambah />Ajukan</a>}
         <nav className="sb-nav" aria-label="Navigasi utama">
           <a href="/" {...cur('beranda')}><IkonBeranda />Beranda</a>
           {bisaAjukan && <a href="/pengajuan" {...cur('pengajuan')}><IkonDokumen />Pengajuan saya</a>}
           {bisaSetujui && <a href="/persetujuan" {...cur('persetujuan')}><IkonSetuju />Persetujuan{jumlahMenunggu ? ` (${jumlahMenunggu})` : ''}</a>}
         </nav>
+        {/* Di bawah daftar menu (bukan di atas) supaya posisi menu sama untuk semua peran. */}
+        {bisaAjukan && <a className="btn btn-primary sb-cta" href="/pengajuan/baru" {...cur('baru')}><IkonTambah />Ajukan</a>}
         <div className="sb-foot">
           <span className="avatar" aria-hidden="true">{inisial(nama)}</span>
           <span className="sb-who">{nama}</span>
