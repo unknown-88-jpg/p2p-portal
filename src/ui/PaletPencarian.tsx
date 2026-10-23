@@ -16,6 +16,9 @@ export function PaletPencarian() {
   const [muat, setMuat] = useState(false);
   const [gagal, setGagal] = useState(false);
   const seq = useRef(0);
+  const kolom = useRef<HTMLInputElement>(null);
+  // autoFocus React tidak berlaku untuk isi <dialog> yang dibuka belakangan (showModal memfokuskan tombol pertama): fokuskan kolom cari sendiri.
+  useEffect(() => { if (buka) requestAnimationFrame(() => kolom.current?.focus()); }, [buka]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setBuka(true); } };
@@ -40,9 +43,9 @@ export function PaletPencarian() {
   const tutup = () => { setBuka(false); setQ(''); setHasil([]); };
   return (
     <>
-      <button type="button" className="cari-trigger" onClick={() => setBuka(true)} aria-label="Cari dokumen (Ctrl+K)"><IkonCari /><span className="ct-teks">Cari dokumen</span><kbd>Ctrl K</kbd></button>
+      <button type="button" className="cari-trigger" onClick={() => setBuka(true)} aria-keyshortcuts="Control+K Meta+K"><IkonCari /><span className="ct-teks">Cari dokumen</span><kbd>Ctrl K</kbd></button>
       <Dialog buka={buka} onTutup={tutup} judul="Cari dokumen">
-        <input className="inp" type="search" autoFocus placeholder="ID, vendor, no. invoice, P.O, keperluan" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Kata kunci" />
+        <input ref={kolom} className="inp" type="search" placeholder="ID, vendor, no. invoice, P.O, keperluan" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Kata kunci" />
         <div className="cari-hasil" aria-live="polite">
           {q.trim().length < 2 ? <p className="muted">Ketik minimal 2 huruf.</p>
             : gagal ? <p className="muted">Pencarian gagal. Coba lagi.</p>

@@ -46,7 +46,7 @@ export function VoucherAksi({ id, punyaLampiran, children }: { id: string; punya
       {children}
       {gambar && <section className="vc-invoice"><img src={gambar} alt={`Invoice ${id}`} /></section>}
       <Dialog buka={popup && !!gambar} onTutup={() => setPopup(false)} judul={`Invoice ${id}`} lebar>
-        <div className="lampiran-isi">{gambar && <img src={gambar} alt={`Invoice ${id}`} />}</div>
+        <div className="lampiran-isi" tabIndex={0} role="region" aria-label="Pratinjau invoice">{gambar && <img src={gambar} alt={`Invoice ${id}`} />}</div>
         <div className="dlg-aksi"><button type="button" className="btn btn-primary" onClick={() => setPopup(false)}>Tutup</button></div>
       </Dialog>
     </>

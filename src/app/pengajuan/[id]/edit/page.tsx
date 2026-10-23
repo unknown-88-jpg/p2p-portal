@@ -8,6 +8,7 @@ import { wajibSesi } from '../../../_lib/sesi';
 import { propsNav } from '../../../_lib/nav';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Ubah pengajuan' };
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const s = await wajibSesi('pengajuan.write');
