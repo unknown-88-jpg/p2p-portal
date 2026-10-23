@@ -440,12 +440,6 @@ body:has(> #isi > .sidebar) { background: var(--parchment); }
 .dash-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
 .dash-head .muted { margin-top: 4px; }
 .dash-aksi { display: flex; flex-wrap: wrap; gap: 12px; }
-.metrik { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.metrik-kartu { display: block; color: inherit; transition: border-color .12s; background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: 24px; }
-.metrik-ikon { display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: var(--r-md); background: var(--parchment); color: var(--ink); }
-.metrik-n { margin-top: 20px; font-size: 40px; line-height: 1.1; font-weight: 600; letter-spacing: -0.28px; }
-.metrik-n.metrik-uang { font-size: 28px; line-height: 1.3; }
-.metrik-l { margin-top: 6px; font-size: 14px; color: var(--muted); letter-spacing: -0.224px; }
 .dash .sec-h { margin: 32px 0 14px; }
 .kartu-gap { margin-top: 16px; }
 .dash-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; align-items: start; }
@@ -462,7 +456,7 @@ body:has(> #isi > .sidebar) { background: var(--parchment); }
 .bar-list { display: grid; gap: 18px; margin-top: 18px; }
 .bar-ket { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 8px; }
 @media (max-width: 1100px) { .dash-grid { grid-template-columns: minmax(0, 1fr); } }
-@media (max-width: 760px) { .metrik { grid-template-columns: minmax(0, 1fr); gap: 12px; } .metrik-kartu { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 16px; padding: 18px 20px; } .metrik-ikon { grid-row: 1 / span 2; } .metrik-n { margin-top: 0; font-size: 32px; } .metrik-l { margin-top: 0; } .dash { padding-left: 16px; padding-right: 16px; } .tbl .tbl-wkt { display: none; } }
+@media (max-width: 760px) { .dash { padding-left: 16px; padding-right: 16px; } .tbl .tbl-wkt { display: none; } }
 
 /* ---- Halaman masuk: formulir + panel merek ---- */
 .auth { width: 100%; max-width: 920px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); overflow: hidden; }
@@ -549,20 +543,22 @@ dialog.lebar .dlg { max-height: calc(100vh - 32px); display: flex; flex-directio
 dialog.lebar .dlg-aksi .btn { white-space: nowrap; }
 @media (max-width: 480px) { dialog.lebar .dlg-aksi .btn { padding-left: 12px; padding-right: 12px; font-size: 15px; } }
 
-/* ---- Kartu statistik: ikon besar di kiri, angka + label, tombol panah bulat di kanan (mengikuti referensi desain dari pengguna).
+/* ---- Kartu statistik (kompak): ikon kiri, angka + label, panah bulat kanan (mengikuti referensi pengguna).
+   Ukuran daftar-ringkas: ikon 40px, angka 26px, label 13px, padding 12x16 => tinggi ~64px (sebelumnya ~120px).
    Catatan: referensi memakai bayangan lembut; DESIGN.md awal melarang bayangan di UI, jadi bayangan HANYA dipakai di kartu ini. ---- */
-.metrik { gap: 20px; }
-.metrik-kartu { display: flex; align-items: center; gap: 16px; padding: 20px; border-radius: 28px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06); min-width: 0; }
-.metrik-ikon { width: 58px; height: 58px; border-radius: 18px; flex: none; }
-.metrik-ikon .ikon { width: 30px; height: 30px; }
+.metrik { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.metrik-kartu { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 12px 16px; color: inherit; background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04); transition: border-color .12s; }
+.metrik-ikon { display: inline-grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 12px; background: var(--parchment); color: var(--ink); }
+.metrik-ikon .ikon { width: 20px; height: 20px; }
 .metrik-teks { flex: 1; min-width: 0; }
-.metrik-n { margin-top: 0; font-size: 40px; line-height: 1.05; font-weight: 700; }
-.metrik-n.metrik-uang { font-size: 24px; line-height: 1.25; overflow-wrap: anywhere; }
-.metrik-l { margin-top: 4px; font-size: 16px; color: var(--ink-80); letter-spacing: -0.224px; }
-.metrik-panah { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--parchment); color: var(--ink-80); flex: none; transition: background .12s, color .12s; }
+.metrik-n { font-size: 26px; line-height: 1.1; font-weight: 700; letter-spacing: -0.3px; }
+.metrik-n.metrik-uang { font-size: 20px; line-height: 1.25; overflow-wrap: anywhere; }
+.metrik-l { margin-top: 1px; font-size: 13px; line-height: 1.3; color: var(--ink-80); letter-spacing: -0.1px; }
+.metrik-panah { display: inline-grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 50%; background: var(--parchment); color: var(--ink-80); transition: background .12s, color .12s; }
+.metrik-panah .ikon { width: 16px; height: 16px; }
 a.metrik-kartu:hover .metrik-panah { background: var(--primary); color: #fff; }
-a.metrik-kartu:focus-visible { outline-offset: 3px; border-radius: 28px; }
-@media (max-width: 760px) { .metrik-kartu { display: flex; padding: 16px 18px; gap: 16px; border-radius: 24px; } .metrik-ikon { width: 56px; height: 56px; grid-row: auto; } .metrik-n { font-size: 32px; } .metrik-l { margin-top: 2px; font-size: 16px; } }
+a.metrik-kartu:focus-visible { outline-offset: 3px; border-radius: var(--r-lg); }
+@media (max-width: 760px) { .metrik { grid-template-columns: minmax(0, 1fr); gap: 8px; } .metrik-kartu { padding: 10px 14px; } .metrik-n { font-size: 24px; } }
 
 /* ---- Warna kartu statistik (semantik; hanya aktif bila angka > 0, angka 0 tetap netral) ----
    merah  = butuh tindakan Anda (draf / revisi)      -> border ikut berwarna (sinyal mendesak)
