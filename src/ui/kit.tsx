@@ -2,7 +2,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { bacaKetikan, formatRibuan } from '@/domain/pengajuan-form';
 import { labelStatus, type Nada } from '@/domain/status-label';
-import { IkonDokumen, IkonInfo, IkonPerhatian, IkonProses, IkonSelesai, IkonSilang } from './icons';
+import { IkonDokumen, IkonInfo, IkonPerhatian, IkonProses, IkonSelesai, IkonSilang, IkonTutup } from './icons';
 
 // Komponen dasar (gaya: lihat globals.css). Presentasional; tanpa pemanggilan API.
 
@@ -122,7 +122,7 @@ export function Skeleton({ baris = 3 }: { baris?: number }) {
 }
 
 /** Dialog modal bawaan <dialog>: fokus terkunci & Esc menutup (perilaku peramban), tanpa pustaka. */
-export function Dialog({ buka, onTutup, judul, children, lebar }: { buka: boolean; onTutup: () => void; judul: string; children: ReactNode; lebar?: boolean }) {
+export function Dialog({ buka, onTutup, judul, children, lebar, langkah }: { buka: boolean; onTutup: () => void; judul: string; children: ReactNode; lebar?: boolean; langkah?: string }) {
   const ref = useRef<HTMLDialogElement>(null);
   const id = useId();
   useEffect(() => {
@@ -132,7 +132,13 @@ export function Dialog({ buka, onTutup, judul, children, lebar }: { buka: boolea
   }, [buka]);
   return (
     <dialog ref={ref} className={lebar ? 'lebar' : undefined} aria-labelledby={id} onClose={onTutup} onCancel={(e) => { e.preventDefault(); onTutup(); }}>
-      <div className="dlg"><h2 id={id}>{judul}</h2>{children}</div>
+      <div className="dlg">
+        <div className="dlg-kepala">
+          <div>{langkah && <span className="dlg-langkah">{langkah}</span>}<h2 id={id}>{judul}</h2></div>
+          <button type="button" className="dlg-x" aria-label="Tutup" onClick={onTutup}><IkonTutup /></button>
+        </div>
+        {children}
+      </div>
     </dialog>
   );
 }

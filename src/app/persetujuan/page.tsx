@@ -13,8 +13,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ i
   return (
     <>
       <AppNav nama={s.nama} {...await propsNav(s)} aktif="persetujuan" />
-      <main className="wrap-wide pt">
-        <h1 className="page-h">Persetujuan</h1>
+      <main className="wrap-xl pt">
         <InboxPersetujuan idAwal={id} />
       </main>
     </>

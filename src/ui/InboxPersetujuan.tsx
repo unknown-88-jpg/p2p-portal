@@ -1,10 +1,11 @@
 'use client';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { bisaBulk, alasanValid, catatanValid, itemBerikutnya, perluMuatUlang, pertahankanKunci, type ItemInbox } from '@/domain/approval-ui';
 import { CATATAN_MAX, ALASAN_MAX, TEMPLATE_ALASAN } from '@/domain/approval';
 import { rupiah, pilihKunci, type KunciIdem } from '@/domain/pengajuan-form';
 import { api, errMessage, isApiError, type ApiError } from './api';
 import { Dialog, Pesan, Skeleton } from './kit';
+import { IkonKlip, IkonKunci, IkonMata, IkonMataCoret, IkonSelesai } from './icons';
 import { LampiranPopup } from './LampiranPopup';
 
 interface Item extends ItemInbox {
@@ -17,7 +18,11 @@ type Dlg = null | 'setuju' | 'tolak' | 'stepup' | 'bulk';
 interface HasilBulk { id: string; ok: boolean; pesan: string }
 
 const baru = (): string => crypto.randomUUID();
-const Baris = ({ l, v }: { l: string; v: string }) => (v ? <div className="kvr"><dt>{l}</dt><dd>{v}</dd></div> : null);
+const Info = ({ l, v }: { l: string; v: string }) => (v ? <div><dt>{l}</dt><dd>{v}</dd></div> : null);
+const RingkasanDok = ({ it }: { it: Pick<Item, 'id' | 'vendorNama' | 'nominal'> }) => (
+  <div className="dlg-ringkas"><span className="num">{it.id} · {it.vendorNama || '—'}</span><strong className="num">{rupiah(it.nominal)}</strong></div>
+);
+const Kepala = ({ meta }: { meta?: ReactNode }) => <div className="inbox-top"><h1 className="page-h">Persetujuan</h1>{meta}</div>;
 
 export function InboxPersetujuan({ idAwal }: { idAwal?: string | undefined }) {
   const [items, setItems] = useState<Item[] | null>(null);
@@ -28,6 +33,7 @@ export function InboxPersetujuan({ idAwal }: { idAwal?: string | undefined }) {
   const [notes, setNotes] = useState('');
   const [alasan, setAlasan] = useState('');
   const [pw, setPw] = useState('');
+  const [lihatPw, setLihatPw] = useState(false);
   const [sibuk, setSibuk] = useState(false);
   const [galat, setGalat] = useState<string | null>(null);
   const [info, setInfo] = useState<{ jenis: 'ok' | 'warn'; teks: string } | null>(null);
@@ -56,7 +62,7 @@ export function InboxPersetujuan({ idAwal }: { idAwal?: string | undefined }) {
     try { window.history.replaceState(null, '', id ? `/persetujuan?id=${encodeURIComponent(id)}` : '/persetujuan'); } catch { /* abaikan */ }
   };
   // Event 'close' <dialog> juga terpicu saat ditutup lewat kode (buka=false); hanya dialog yang masih AKTIF yang boleh mereset state.
-  const tutup = (k: Dlg) => () => { if (!sibuk && dlg === k) { setDlg(null); setGalat(null); setPw(''); } };
+  const tutup = (k: Dlg) => () => { if (!sibuk && dlg === k) { setDlg(null); setGalat(null); setPw(''); setLihatPw(false); } };
 
   /** Setelah aksi sukses/konflik: muat ulang & pindah ke item berikutnya. */
   const sesudah = async (idSelesai: string, pesan: { jenis: 'ok' | 'warn'; teks: string }) => {
@@ -141,14 +147,17 @@ export function InboxPersetujuan({ idAwal }: { idAwal?: string | undefined }) {
     pilihItem(null);
   };
 
-  if (galatMuat && !items) return <Pesan jenis="err">{galatMuat} <button type="button" className="link" onClick={() => { setGalatMuat(null); void muat(); }}>Coba lagi</button></Pesan>;
-  if (!items) return <Skeleton baris={4} />;
+  if (galatMuat && !items) return <><Kepala /><Pesan jenis="err">{galatMuat} <button type="button" className="link" onClick={() => { setGalatMuat(null); void muat(); }}>Coba lagi</button></Pesan></>;
+  if (!items) return <><Kepala /><Skeleton baris={4} /></>;
 
   const nPilih = [...pilih].length;
   const kosong = items.length === 0;
+  const totalNominal = items.reduce((t, i) => t + i.nominal, 0);
+  const adaBulk = items.some(bisaBulk);
 
   return (
     <>
+      <Kepala meta={kosong ? null : <><span className="muted">{items.length} dokumen menunggu</span><span className="inbox-total num">Total {rupiah(totalNominal)}</span></>} />
       {info && <Pesan jenis={info.jenis}>{info.teks}</Pesan>}
       {hasilBulk && !sibuk && hasilBulk.length > 0 && (
         <Pesan jenis={hasilBulk.every((h) => h.ok) ? 'ok' : 'warn'}>
@@ -161,95 +170,132 @@ export function InboxPersetujuan({ idAwal }: { idAwal?: string | undefined }) {
       {kosong ? (
         <div className="kosong" role="status"><h2>Tidak ada yang menunggu persetujuan</h2><p className="muted">Pengajuan baru dari tim Anda akan muncul di sini.</p></div>
       ) : (
-        <div className={`inbox${detailHP ? ' hp-detail' : ''}`}>
+        <div className="inbox-wrap"><div className={`inbox${detailHP ? ' hp-detail' : ''}`}>
           <section className="inbox-list" aria-label="Menunggu persetujuan">
             <div className="inbox-head">
-              <span className="muted">{items.length} dokumen menunggu</span>
-              {nPilih > 0 && <button type="button" className="btn btn-primary btn-sm" disabled={sibuk} onClick={() => { setGalat(null); setDlg('bulk'); }}>Setujui {nPilih} terpilih</button>}
+              {nPilih > 0
+                ? <button type="button" className="btn btn-primary btn-sm" disabled={sibuk} onClick={() => { setGalat(null); setDlg('bulk'); }}>Setujui {nPilih} terpilih</button>
+                : adaBulk && <span className="muted cap">Centang dokumen untuk menyetujui sekaligus</span>}
             </div>
-            <ul className="daftar">
+            <ul className="ib-daftar">
               {items.map((i) => (
                 <li key={i.id} className={`inbox-row${tampilCur?.id === i.id ? ' aktif' : ''}`}>
+                  <button type="button" className="ib-kartu" aria-current={tampilCur?.id === i.id ? 'true' : undefined} onClick={() => pilihItem(i.id)}>
+                    <span className="ib-top"><span className="ib-id num"><span>{i.id}</span> · <span>{i.tanggal}</span></span>{i.perluCFO && <span className="badge-cfo">CFO</span>}</span>
+                    <span className="ib-v">{i.vendorNama || '—'}</span>
+                    <span className="ib-n num">{rupiah(i.nominal)}</span>
+                    <span className="ib-jt">{i.dueDate ? `Jatuh tempo ${i.dueDate}` : '\u00a0'}</span>
+                  </button>
                   {bisaBulk(i) && <input type="checkbox" className="pilih-cb" aria-label={`Pilih ${i.id} untuk persetujuan massal`} checked={pilih.has(i.id)}
                     onChange={(e) => setPilih((p) => { const n = new Set(p); if (e.target.checked) n.add(i.id); else n.delete(i.id); return n; })} />}
-                  <button type="button" className="doc" aria-current={tampilCur?.id === i.id ? 'true' : undefined} onClick={() => pilihItem(i.id)}>
-                    <span className="id"><span>{i.id}</span> · <span>{i.tanggal}</span></span>
-                    <span className="kanan"><span className="nominal num">{rupiah(i.nominal)}</span>{i.perluCFO && <span className="badge-cfo">CFO</span>}</span>
-                    <span className="vendor">{i.vendorNama || '—'}</span>
-                    <span className="desk">{[i.pic, i.brand, i.departement].filter(Boolean).join(' · ')}</span>
-                  </button>
                 </li>
               ))}
             </ul>
           </section>
 
-          <section className="inbox-detail" aria-label="Detail dokumen">
-            {tampilCur ? (
-              <>
+          {tampilCur ? (
+            <>
+              <section className="inbox-detail" aria-label="Detail dokumen">
                 <button type="button" className="link kembali" onClick={() => pilihItem(null)}>← Kembali ke daftar</button>
-                <h2 className="det-h">{tampilCur.vendorNama || '—'}</h2>
-                <p className="muted num">{tampilCur.id} · {tampilCur.tanggal}</p>
-                <div className="hero-nominal card">
-                  <div className="nominal-besar num">{rupiah(tampilCur.nominal)}</div>
-                  <div className="cfo-baris">{tampilCur.perluCFO && <span className="badge-cfo">Perlu persetujuan CFO</span>}{tampilCur.butuhStepUp && <span className="pill-st kuning">Perlu konfirmasi password</span>}</div>
+                <div className="ds-kepala">
+                  <div className="ds-vendor">
+                    <h2 className="ds-nama">{tampilCur.vendorNama || '—'}</h2>
+                    <p className="ds-sub num">{tampilCur.id} · {tampilCur.tanggal}</p>
+                  </div>
+                  {tampilCur.punyaLampiran
+                    ? <LampiranPopup id={tampilCur.id} label="Lihat lampiran invoice" kelas="btn btn-secondary btn-sm" ikon={<IkonKlip />} />
+                    : <span className="muted cap">Tidak ada lampiran</span>}
                 </div>
                 {tampilCur.terkunci && <Pesan jenis="warn">{tampilCur.terkunci}</Pesan>}
-                <dl className="kvs">
-                  <Baris l="Diajukan oleh" v={tampilCur.pic} /><Baris l="Perusahaan / Brand" v={[tampilCur.company, tampilCur.brand].filter(Boolean).join(' / ')} />
-                  <Baris l="Departemen" v={tampilCur.departement} /><Baris l="Tipe" v={tampilCur.tipe} /><Baris l="Keperluan" v={tampilCur.description} />
-                  <Baris l="Event / Project" v={tampilCur.eventProject} /><Baris l="Catatan PIC" v={tampilCur.notesUser} />
-                  <Baris l="No. P.O" v={tampilCur.poNumber !== '-' ? tampilCur.poNumber : ''} /><Baris l="No. Invoice" v={tampilCur.noInvoice} />
-                  <Baris l="Tanggal invoice" v={tampilCur.dateInvoice} /><Baris l="Jatuh tempo" v={tampilCur.dueDate} /><Baris l="Jenis pembayaran" v={tampilCur.jenisPembayaran} />
-                  <Baris l="Nilai invoice" v={rupiah(tampilCur.invoiceAmount)} />
-                  {tampilCur.diskon ? <Baris l="Diskon" v={rupiah(tampilCur.diskon)} /> : null}
-                  {tampilCur.biayaLainnya ? <Baris l="Biaya lainnya" v={rupiah(tampilCur.biayaLainnya)} /> : null}
-                  <Baris l="Status PPN" v={tampilCur.statusPPN} />
-                  {tampilCur.ppnAmount ? <Baris l="PPN" v={rupiah(tampilCur.ppnAmount)} /> : null}
-                </dl>
-                <p>{tampilCur.punyaLampiran
-                  ? <LampiranPopup id={tampilCur.id} label="Lihat lampiran invoice" kelas="btn btn-secondary btn-sm" />
-                  : <span className="muted">Tidak ada lampiran.</span>}</p>
-                <div className="aksi-detail">
-                  <button type="button" className="btn btn-secondary" disabled={sibuk} onClick={() => { setGalat(null); setAlasan(''); setDlg('tolak'); }}>Kembalikan</button>
+                <div className="ds">
+                  <h3 className="ds-h">Pengaju</h3>
+                  <dl className="ds-grid">
+                    <Info l="Diajukan oleh" v={tampilCur.pic} /><Info l="Perusahaan / Brand" v={[tampilCur.company, tampilCur.brand].filter(Boolean).join(' / ')} />
+                    <Info l="Departemen" v={tampilCur.departement} /><Info l="Tipe" v={tampilCur.tipe} />
+                  </dl>
+                </div>
+                <div className="ds">
+                  <h3 className="ds-h">Dokumen</h3>
+                  <dl className="ds-grid">
+                    <Info l="Keperluan" v={tampilCur.description} /><Info l="Event / Project" v={tampilCur.eventProject} />
+                    <Info l="No. P.O" v={tampilCur.poNumber !== '-' ? tampilCur.poNumber : ''} /><Info l="No. Invoice" v={tampilCur.noInvoice} />
+                    <Info l="Tanggal invoice" v={tampilCur.dateInvoice} /><Info l="Catatan PIC" v={tampilCur.notesUser} />
+                  </dl>
+                </div>
+                <div className="ds">
+                  <h3 className="ds-h">Pembayaran</h3>
+                  <dl className="ds-grid"><Info l="Jenis pembayaran" v={tampilCur.jenisPembayaran} /><Info l="Jatuh tempo" v={tampilCur.dueDate} /></dl>
+                </div>
+              </section>
+
+              <aside className="inbox-aksi" aria-label="Keputusan">
+                <span className="ds-l">Nilai invoice</span>
+                <div className="ip-angka num">{rupiah(tampilCur.invoiceAmount)}</div>
+                <p className="ip-sub">{[tampilCur.statusPPN, tampilCur.dueDate ? `Jatuh tempo ${tampilCur.dueDate}` : ''].filter(Boolean).join(' · ')}</p>
+                {(tampilCur.diskon > 0 || tampilCur.biayaLainnya > 0 || tampilCur.ppnAmount > 0 || tampilCur.nominal !== tampilCur.invoiceAmount) && (
+                  <dl className="ip-rincian">
+                    {tampilCur.diskon > 0 && <div><dt>Diskon</dt><dd className="num">- {rupiah(tampilCur.diskon)}</dd></div>}
+                    {tampilCur.biayaLainnya > 0 && <div><dt>Biaya lainnya</dt><dd className="num">{rupiah(tampilCur.biayaLainnya)}</dd></div>}
+                    {tampilCur.ppnAmount > 0 && <div><dt>PPN</dt><dd className="num">{rupiah(tampilCur.ppnAmount)}</dd></div>}
+                    <div className="ip-total"><dt>Nominal akhir</dt><dd className="num">{rupiah(tampilCur.nominal)}</dd></div>
+                  </dl>
+                )}
+                <h3 className="ds-h ip-h">Yang dibutuhkan</h3>
+                <ul className="ip-syarat">
+                  {tampilCur.perluCFO && <li><span className="ip-ik bad" aria-hidden="true">!</span>Persetujuan CFO</li>}
+                  {tampilCur.butuhStepUp && <li><span className="ip-ik warn" aria-hidden="true"><IkonKunci /></span>Konfirmasi password saat menyetujui</li>}
+                  {!tampilCur.perluCFO && !tampilCur.butuhStepUp && <li><span className="ip-ik ok" aria-hidden="true"><IkonSelesai /></span>Tidak ada persyaratan tambahan</li>}
+                </ul>
+                <div className="ip-aksi">
                   <button type="button" className="btn btn-primary" disabled={sibuk || !!tampilCur.terkunci} aria-disabled={!!tampilCur.terkunci || undefined}
                     onClick={() => { setGalat(null); setNotes(''); setDlg('setuju'); }}>Setujui</button>
+                  <button type="button" className="btn btn-secondary" disabled={sibuk} onClick={() => { setGalat(null); setAlasan(''); setDlg('tolak'); }}>Kembalikan<span className="ip-lanjut"> ke pengaju</span></button>
                 </div>
-              </>
-            ) : <p className="muted">Pilih dokumen di daftar.</p>}
-          </section>
-        </div>
+              </aside>
+            </>
+          ) : <section className="inbox-detail"><p className="muted">Pilih dokumen di daftar.</p></section>}
+        </div></div>
       )}
 
-      <Dialog buka={dlg === 'setuju'} onTutup={tutup('setuju')} judul="Setujui pengajuan?">
+      <Dialog buka={dlg === 'setuju'} onTutup={tutup('setuju')} judul="Setujui pengajuan?" {...(tampilCur?.butuhStepUp ? { langkah: 'Langkah 1 dari 2' } : {})}>
         {tampilCur && (
           <form onSubmit={(e) => { e.preventDefault(); void setuju(); }}>
-            <p>{tampilCur.id} · {tampilCur.vendorNama} · <strong className="num">{rupiah(tampilCur.nominal)}</strong></p>
-            <div className="f"><label htmlFor="ib-notes">Catatan (opsional)</label>
-              <textarea id="ib-notes" maxLength={CATATAN_MAX} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+            <RingkasanDok it={tampilCur} />
+            <div className="f">
+              <div className="dlg-lbl"><label htmlFor="ib-notes">Catatan <span className="opt">(opsional)</span></label><span className="muted cap num">{notes.length}/{CATATAN_MAX}</span></div>
+              <textarea id="ib-notes" maxLength={CATATAN_MAX} placeholder="Tambahkan catatan untuk pengaju" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            </div>
             {galat && <Pesan jenis="err">{galat}</Pesan>}
             <div className="dlg-aksi">
               <button type="button" className="btn btn-secondary" onClick={tutup('setuju')} disabled={sibuk}>Batal</button>
-              <button type="submit" className="btn btn-primary" disabled={sibuk}>{sibuk ? 'Memproses…' : 'Setujui'}</button>
+              <button type="submit" className="btn btn-primary" disabled={sibuk}>{sibuk ? 'Memproses…' : tampilCur.butuhStepUp ? 'Lanjut' : 'Setujui'}</button>
             </div>
           </form>
         )}
       </Dialog>
 
-      <Dialog buka={dlg === 'stepup'} onTutup={tutup('stepup')} judul="Konfirmasi password">
+      <Dialog buka={dlg === 'stepup'} onTutup={tutup('stepup')} judul="Konfirmasi password" langkah="Langkah 2 dari 2">
         <form onSubmit={(e) => { e.preventDefault(); void konfirmasiStepUp(); }}>
-          <p className="muted">Nominal ≥ Rp 5.000.000 butuh konfirmasi password Anda. Berlaku 5 menit.</p>
-          <div className="f"><label htmlFor="ib-pw">Password</label>
-            <input id="ib-pw" type="password" autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} /></div>
+          {tampilCur && <RingkasanDok it={tampilCur} />}
+          <div className="f">
+            <div className="dlg-lbl"><label htmlFor="ib-pw">Password</label></div>
+            <div className="pw-wrap">
+              <input id="ib-pw" type={lihatPw ? 'text' : 'password'} autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} />
+              <button type="button" className="pw-mata" aria-label={lihatPw ? 'Sembunyikan password' : 'Tampilkan password'} aria-pressed={lihatPw} onClick={() => setLihatPw(!lihatPw)}>{lihatPw ? <IkonMataCoret /> : <IkonMata />}</button>
+            </div>
+            <div className="hint">Nominal Rp 5.000.000 ke atas memerlukan password. Setelah dikonfirmasi, tidak perlu diulang selama 5 menit.</div>
+          </div>
           {galat && <Pesan jenis="err">{galat}</Pesan>}
           <div className="dlg-aksi">
-            <button type="button" className="btn btn-secondary" onClick={tutup('stepup')} disabled={sibuk}>Batal</button>
-            <button type="submit" className="btn btn-primary" disabled={sibuk || !pw}>{sibuk ? 'Memproses…' : 'Konfirmasi & setujui'}</button>
+            <button type="button" className="btn btn-secondary" onClick={() => { setDlg('setuju'); setPw(''); setGalat(null); }} disabled={sibuk}>Kembali</button>
+            <button type="submit" className="btn btn-primary" disabled={sibuk || !pw}>{sibuk ? 'Memproses…' : 'Setujui pengajuan'}</button>
           </div>
         </form>
       </Dialog>
 
-      <Dialog buka={dlg === 'tolak'} onTutup={tutup('tolak')} judul="Kembalikan ke PIC">
+      <Dialog buka={dlg === 'tolak'} onTutup={tutup('tolak')} judul="Kembalikan ke pengaju">
         <form onSubmit={(e) => { e.preventDefault(); void tolak(); }}>
+          {tampilCur && <RingkasanDok it={tampilCur} />}
           <p className="muted">Dokumen kembali ke status perlu revisi. Alasan akan dibaca PIC.</p>
           <div className="chips tombol-baris" role="group" aria-label="Template alasan">
             {TEMPLATE_ALASAN.map((t) => <button type="button" key={t} className="chip" onClick={() => setAlasan(t)}>{t}</button>)}

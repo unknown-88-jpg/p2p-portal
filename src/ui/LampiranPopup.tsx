@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Dialog, Pemuat } from './kit';
 
 /** Baca isi respons sambil melaporkan persentase (hanya bila ukuran diketahui lewat content-length; dibatasi 99 sampai benar-benar selesai). */
@@ -26,7 +26,7 @@ type Keadaan = 'diam' | 'muat' | 'gambar' | 'pdf' | 'gagal';
  * Tombol "Lihat lampiran" yang membuka pratinjau di popup (tanpa pindah halaman). Gambar dimuat sebagai blob lewat proxy ber-otorisasi
  * (CSP mengizinkan img-src blob:). PDF tidak bisa disematkan (CSP object-src 'none') -> tombol buka di tab baru.
  */
-export function LampiranPopup({ id, label = 'Lihat lampiran', kelas = 'btn btn-secondary' }: { id: string; label?: string; kelas?: string }) {
+export function LampiranPopup({ id, label = 'Lihat lampiran', kelas = 'btn btn-secondary', ikon }: { id: string; label?: string; kelas?: string; ikon?: ReactNode }) {
   const [buka, setBuka] = useState(false);
   const [keadaan, setKeadaan] = useState<Keadaan>('diam');
   const [src, setSrc] = useState<string | null>(null);
@@ -61,7 +61,7 @@ export function LampiranPopup({ id, label = 'Lihat lampiran', kelas = 'btn btn-s
 
   return (
     <>
-      <button type="button" className={kelas} onClick={() => { setBuka(true); setPercobaan((n) => (n === 0 ? 1 : n)); }}>{label}</button>
+      <button type="button" className={kelas} onClick={() => { setBuka(true); setPercobaan((n) => (n === 0 ? 1 : n)); }}>{ikon}{label}</button>
       <Dialog buka={buka} onTutup={() => setBuka(false)} judul={`Lampiran ${id}`} lebar>
         <div className="lampiran-isi" aria-live="polite">
           {keadaan === 'muat' && <Pemuat teks="Memuat lampiran…" persen={persen} />}
