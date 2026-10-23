@@ -392,7 +392,7 @@ body:has(> #isi > .sidebar) { background: var(--parchment); }
 .sb-brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 12px; color: #fff; font-size: 19px; font-weight: 600; letter-spacing: -0.28px; }
 .sb-brand:hover { text-decoration: none; }
 .sb-logo { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: var(--r-sm); background: var(--primary); color: #fff; font-weight: 600; font-size: 17px; flex: none; }
-.sidebar .sb-cta { width: 100%; justify-content: flex-start; gap: 10px; min-height: 44px; padding: 10px 16px; font-size: 15px; margin-bottom: 8px; }
+.sidebar .sb-cta { width: 100%; justify-content: flex-start; gap: 10px; min-height: 44px; padding: 10px 16px; font-size: 15px; margin-top: 12px; }
 .sb-nav { display: flex; flex-direction: column; gap: 2px; }
 .sb-nav a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 10px 14px; border-radius: var(--r-md); color: #cccccc; font-size: 15px; letter-spacing: -0.224px; }
 .sb-nav a:hover { background: rgba(255, 255, 255, 0.08); color: #fff; text-decoration: none; }
