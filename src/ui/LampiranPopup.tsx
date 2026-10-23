@@ -63,7 +63,7 @@ export function LampiranPopup({ id, label = 'Lihat lampiran', kelas = 'btn btn-s
     <>
       <button type="button" className={kelas} onClick={() => { setBuka(true); setPercobaan((n) => (n === 0 ? 1 : n)); }}>{ikon}{label}</button>
       <Dialog buka={buka} onTutup={() => setBuka(false)} judul={`Lampiran ${id}`} lebar>
-        <div className="lampiran-isi" aria-live="polite">
+        <div className="lampiran-isi" aria-live="polite" tabIndex={0} role="region" aria-label="Pratinjau lampiran">
           {keadaan === 'muat' && <Pemuat teks="Memuat lampiran…" persen={persen} />}
           {keadaan === 'gambar' && src && <img src={src} alt={`Lampiran ${id}`} />}
           {keadaan === 'pdf' && <p className="muted">Lampiran berupa PDF. Buka di tab baru untuk melihatnya.</p>}

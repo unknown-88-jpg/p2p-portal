@@ -186,8 +186,8 @@ export function InboxPersetujuan({ idAwal }: { idAwal?: string | undefined }) {
                     <span className="ib-n num">{rupiah(i.nominal)}</span>
                     <span className="ib-jt">{i.dueDate ? `Jatuh tempo ${i.dueDate}` : '\u00a0'}</span>
                   </button>
-                  {bisaBulk(i) && <input type="checkbox" className="pilih-cb" aria-label={`Pilih ${i.id} untuk persetujuan massal`} checked={pilih.has(i.id)}
-                    onChange={(e) => setPilih((p) => { const n = new Set(p); if (e.target.checked) n.add(i.id); else n.delete(i.id); return n; })} />}
+                  {bisaBulk(i) && <label className="pilih-tap"><input type="checkbox" className="pilih-cb" aria-label={`Pilih ${i.id} untuk persetujuan massal`} checked={pilih.has(i.id)}
+                    onChange={(e) => setPilih((p) => { const n = new Set(p); if (e.target.checked) n.add(i.id); else n.delete(i.id); return n; })} /></label>}
                 </li>
               ))}
             </ul>

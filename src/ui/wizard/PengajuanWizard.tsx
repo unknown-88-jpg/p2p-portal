@@ -315,7 +315,8 @@ export function PengajuanWizard({ roles, email, nama, awal }: WizardProps) {
   const judul = awal ? `Ubah ${awal.id}` : 'Pengajuan baru';
 
   return (
-    <div className="wrap wrap-form">
+    <main className="wrap wrap-form">
+      <h1 className="sr-only">{judul}</h1>
       <div className="stepper">
         <div className="seg" aria-hidden="true">{LANGKAH.map((l, i) => <span key={l} className={i <= idx ? 'on' : ''} />)}</div>
         <div className="judul">{judul} · Langkah {idx + 1} dari {LANGKAH.length}</div>
@@ -387,7 +388,7 @@ export function PengajuanWizard({ roles, email, nama, awal }: WizardProps) {
           <button type="button" className="btn btn-primary" onClick={() => void ajukan()} disabled={busy === 'ajukan'}>{busy === 'ajukan' ? 'Mengajukan…' : galatAjukan ? 'Coba lagi' : 'Ya, ajukan'}</button>
         </div>
       </Dialog>
-    </div>
+    </main>
   );
 }
 
@@ -405,16 +406,18 @@ function sidikBody(f: FormPengajuan): string { return sidikJari(keInputServer(f)
 function Sukses({ hasil, manager }: { hasil: HasilAjukan; manager: string }) {
   const st = labelStatus(hasil.status);
   return (
-    <div className="wrap wrap-form sukses" role="status">
-      <div className="centang" aria-hidden="true">✓</div>
-      <h1 className="page-h">Pengajuan terkirim</h1>
-      <p className="hero-sub">{hasil.id} · <span className="num">{rupiah(hasil.finalAmount)}</span></p>
-      <p className="hint pt"><span className={`pill-st ${st.nada}`}>{st.label}</span>{manager ? ` · menunggu persetujuan ${manager}` : ''}</p>
-      {hasil.perluCFO && <p className="pt"><span className="badge-cfo">Butuh TTD CFO</span></p>}
-      <div className="cta-row cta-tengah">
-        <a className="btn btn-primary" href="/pengajuan">Lihat pengajuan saya</a>
-        <a className="btn btn-secondary" href="/pengajuan/baru">Buat pengajuan lain</a>
+    <main className="wrap wrap-form sukses">
+      <div role="status">
+        <div className="centang" aria-hidden="true">✓</div>
+        <h1 className="page-h">Pengajuan terkirim</h1>
+        <p className="hero-sub">{hasil.id} · <span className="num">{rupiah(hasil.finalAmount)}</span></p>
+        <p className="hint pt"><span className={`pill-st ${st.nada}`}>{st.label}</span>{manager ? ` · menunggu persetujuan ${manager}` : ''}</p>
+        {hasil.perluCFO && <p className="pt"><span className="badge-cfo">Butuh TTD CFO</span></p>}
+        <div className="cta-row cta-tengah">
+          <a className="btn btn-primary" href="/pengajuan">Lihat pengajuan saya</a>
+          <a className="btn btn-secondary" href="/pengajuan/baru">Buat pengajuan lain</a>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

@@ -11,6 +11,7 @@ import { StatusPill } from '@/ui/kit';
 import { wajibSesi } from './_lib/sesi';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Beranda' };
 
 export default async function Home() {
   const s = await wajibSesi();
@@ -44,7 +45,7 @@ export default async function Home() {
         {bisa ? (
           <div className="metrik">
             {metrik.map((m) => (
-              <a key={m.k} className={`metrik-kartu${n(m.k) > 0 ? ` nada-${m.nada}` : ''}`} href={`/pengajuan?status=${m.k}`} aria-label={`${m.label}: ${n(m.k)}. Buka daftar`}>
+              <a key={m.k} className={`metrik-kartu${n(m.k) > 0 ? ` nada-${m.nada}` : ''}`} href={`/pengajuan?status=${m.k}`}>
                 <span className="metrik-ikon">{m.ikon}</span>
                 <div className="metrik-teks"><div className="metrik-n num">{n(m.k)}</div><div className="metrik-l">{m.label}</div></div>
                 <span className="metrik-panah" aria-hidden="true"><IkonPanah /></span>
@@ -57,7 +58,7 @@ export default async function Home() {
           <>
             <h2 className="sec-h">Antrean Manager</h2>
             <div className="metrik">
-              <a className={`metrik-kartu${dash.manager.antrean ? ' nada-kuning' : ''}`} href="/persetujuan" aria-label={`Menunggu persetujuan: ${dash.manager.antrean}. Buka persetujuan`}><span className="metrik-ikon"><IkonSetuju /></span><div className="metrik-teks"><div className="metrik-n num">{dash.manager.antrean}</div><div className="metrik-l">Menunggu persetujuan</div></div><span className="metrik-panah" aria-hidden="true"><IkonPanah /></span></a>
+              <a className={`metrik-kartu${dash.manager.antrean ? ' nada-kuning' : ''}`} href="/persetujuan"><span className="metrik-ikon"><IkonSetuju /></span><div className="metrik-teks"><div className="metrik-n num">{dash.manager.antrean}</div><div className="metrik-l">Menunggu persetujuan</div></div><span className="metrik-panah" aria-hidden="true"><IkonPanah /></span></a>
               <div className="metrik-kartu"><span className="metrik-ikon"><IkonUang /></span><div className="metrik-teks"><div className="metrik-n metrik-uang num">{rupiah(dash.manager.totalNominal)}</div><div className="metrik-l">Total nominal antrean</div></div></div>
               <div className="metrik-kartu"><span className="metrik-ikon"><IkonProses /></span><div className="metrik-teks"><div className="metrik-n num">{dash.manager.tertuaHari === null ? '—' : `${dash.manager.tertuaHari} hr`}</div><div className="metrik-l">Tertua di antrean</div></div></div>
             </div>
