@@ -29,7 +29,8 @@ a:hover { text-decoration: underline; }
 .cap-strong { font-size: 14px; line-height: 1.29; font-weight: 600; letter-spacing: -0.224px; }
 
 /* ---- trial banner + nav ---- */
-.trial-banner { background: #b45309; color: #fff; padding: 4px 12px; font-size: 12px; font-weight: 600; text-align: center; letter-spacing: 0; }
+/* Banner trial menempel di atas dengan tinggi TETAP; sidebar dan bar atas memakai --banner-h supaya tidak terdorong keluar layar. */
+.trial-banner { position: sticky; top: 0; z-index: 60; height: 26px; line-height: 26px; background: #b45309; color: #fff; padding: 0 12px; font-size: 12px; font-weight: 600; text-align: center; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ---- tata letak ---- */
 .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
@@ -354,13 +355,14 @@ input.sr-only:focus-visible + * , input.sr-only:focus-visible ~ .dropzone { outl
    Sidebar = tile gelap #272729, bar atas = parchment frosted, area isi = parchment dengan kartu putih 18px berborder hairline.
    Tidak ada bayangan di chrome. Tanpa gaya inline (CSP); status laci sidebar lewat atribut html[data-nav].
    ============================================================================= */
-:root { --sb-w: 252px; --top-h: 60px; }
+:root { --sb-w: 252px; --top-h: 60px; --banner-h: 0px; }
+body:has(> .trial-banner) { --banner-h: 26px; }
 body:has(> #isi > .sidebar) { background: var(--parchment); }
 #isi:has(> .sidebar) { display: grid; grid-template-columns: var(--sb-w) minmax(0, 1fr); grid-template-rows: auto 1fr; grid-template-areas: "side top" "side main"; min-height: 100vh; }
 #isi:has(> .sidebar) > :not(.sidebar):not(.topbar):not(.sb-backdrop) { grid-area: main; padding-top: 24px; padding-bottom: 96px; min-width: 0; }
 #isi:has(> .sidebar) > .wrap, #isi:has(> .sidebar) > .wrap-wide, #isi:has(> .sidebar) > .wrap-xl, #isi:has(> .sidebar) > .dash { width: 100%; }
 
-.sidebar { grid-area: side; position: sticky; top: 0; align-self: start; height: 100vh; z-index: 40; background: var(--tile-dark); color: #fff; display: flex; flex-direction: column; gap: 8px; padding: 20px 16px; overflow-y: auto; }
+.sidebar { grid-area: side; position: sticky; top: var(--banner-h); align-self: start; height: calc(100vh - var(--banner-h)); z-index: 40; background: var(--tile-dark); color: #fff; display: flex; flex-direction: column; gap: 8px; padding: 20px 16px; overflow-y: auto; }
 .sb-brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 12px; color: #fff; font-size: 19px; font-weight: 600; letter-spacing: -0.28px; }
 .sb-brand:hover { text-decoration: none; }
 .sb-logo { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: var(--r-sm); background: var(--primary); color: #fff; font-weight: 600; font-size: 17px; flex: none; }
@@ -379,7 +381,7 @@ body:has(> #isi > .sidebar) { background: var(--parchment); }
 .avatar { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--chip); color: var(--ink); font-size: 13px; font-weight: 600; letter-spacing: 0; flex: none; }
 .sb-foot .avatar { background: rgba(255, 255, 255, 0.18); color: #fff; }
 
-.topbar { grid-area: top; position: sticky; top: 0; z-index: 30; height: var(--top-h); display: flex; align-items: center; gap: 12px; padding: 0 24px; background: rgba(245, 245, 247, 0.82); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid rgba(0, 0, 0, 0.08); }
+.topbar { grid-area: top; position: sticky; top: var(--banner-h); z-index: 30; height: var(--top-h); display: flex; align-items: center; gap: 12px; padding: 0 24px; background: rgba(245, 245, 247, 0.82); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid rgba(0, 0, 0, 0.08); }
 .cari-trigger { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; max-width: 420px; height: 44px; padding: 0 16px; background: #fff; color: var(--muted); border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 999px; font: inherit; font-size: 15px; letter-spacing: -0.224px; cursor: pointer; text-align: left; }
 .cari-trigger:hover { border-color: var(--chip); }
 .cari-trigger .ct-teks { flex: 1; }
@@ -395,7 +397,7 @@ body:has(> #isi > .sidebar) { background: var(--parchment); }
 
 @media (max-width: 1023px) {
   #isi:has(> .sidebar) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "main"; }
-  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: min(300px, 86vw); transform: translateX(-100%); transition: transform .2s ease; box-shadow: none; }
+  .sidebar { position: fixed; left: 0; top: var(--banner-h); height: calc(100vh - var(--banner-h)); width: min(300px, 86vw); transform: translateX(-100%); transition: transform .2s ease; box-shadow: none; }
   html[data-nav="open"] .sidebar { transform: none; }
   .sb-backdrop { display: block; position: fixed; inset: 0; z-index: 35; border: 0; padding: 0; background: rgba(0, 0, 0, 0.45); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
   html[data-nav="open"] .sb-backdrop { opacity: 1; pointer-events: auto; }
@@ -701,7 +703,7 @@ dialog .chips.tombol-baris .chip { text-align: left; border-radius: var(--r-md);
 .inbox-list { grid-area: l; min-width: 0; }
 .inbox-detail { grid-area: d; min-width: 0; }
 .inbox-aksi { grid-area: a; min-width: 0; }
-@container (min-width: 1020px) { .inbox { grid-template-columns: 340px minmax(0, 1fr) 320px; grid-template-areas: "l d a"; } .inbox-aksi { position: sticky; top: calc(var(--top-h) + 16px); } }
+@container (min-width: 1020px) { .inbox { grid-template-columns: 340px minmax(0, 1fr) 320px; grid-template-areas: "l d a"; } .inbox-aksi { position: sticky; top: calc(var(--banner-h) + var(--top-h) + 16px); } }
 
 .inbox-head { display: flex; align-items: center; min-height: 36px; margin-bottom: 8px; }
 .ib-daftar { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
