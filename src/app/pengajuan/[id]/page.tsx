@@ -1,5 +1,4 @@
 import { catatanTampil } from '@/domain/approval';
-import { can } from '@/domain/capabilities';
 import { notFound } from 'next/navigation';
 import { rupiah, samarkanRekening } from '@/domain/pengajuan-form';
 import { labelStatus } from '@/domain/status-label';
@@ -11,6 +10,7 @@ import { Pesan, StatusPill } from '@/ui/kit';
 import { LampiranPopup } from '@/ui/LampiranPopup';
 import { RiwayatTimeline } from '@/ui/RiwayatTimeline';
 import { wajibSesi } from '../../_lib/sesi';
+import { propsNav } from '../../_lib/nav';
 
 export const dynamic = 'force-dynamic';
 /** Hanya ID dari URL (tak menyentuh data -> tak membocorkan apa pun ke tab/riwayat browser). */
@@ -38,7 +38,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const posisi = kini ? d.alur.indexOf(kini) + 1 : d.alur.filter((a) => a.state === 'selesai').length;
   return (
     <>
-      <AppNav nama={s.nama} bisaAjukan={can(s.roles, 'pengajuan.write')} bisaSetujui={can(s.roles, 'approve.manager')} aktif="pengajuan" />
+      <AppNav nama={s.nama} {...await propsNav(s)} aktif="pengajuan" />
       <main className="wrap pt">
         <a className="link" href={d.milikSaya ? '/pengajuan' : '/'}>← {d.milikSaya ? 'Pengajuan saya' : 'Beranda'}</a>
         <div className="toolbar"><h1 className="page-h">{d.id}</h1><StatusPill status={d.status} /></div>

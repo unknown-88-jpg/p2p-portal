@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation';
-import { can } from '@/domain/capabilities';
 import { rupiah } from '@/domain/pengajuan-form';
 import { AppError } from '@/lib/errors';
 import { voucher } from '@/server/dokumen';
@@ -7,6 +6,7 @@ import { authDeps } from '@/server/runtime';
 import { AppNav } from '@/ui/AppNav';
 import { VoucherAksi } from '@/ui/VoucherAksi';
 import { wajibSesi } from '../../../_lib/sesi';
+import { propsNav } from '../../../_lib/nav';
 
 export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) { return { title: `Voucher ${decodeURIComponent((await params).id).slice(0, 20)}` }; }
@@ -23,7 +23,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const pph = v.pphAmount > 0 ? `${v.jenisPPh} — ${rupiah(v.pphAmount)}` : '-';
   return (
     <>
-      <AppNav nama={s.nama} bisaAjukan={can(s.roles, 'pengajuan.write')} bisaSetujui={can(s.roles, 'approve.manager')} aktif="pengajuan" />
+      <AppNav nama={s.nama} {...await propsNav(s)} aktif="pengajuan" />
     <main className="vc-wrap">
       <h1 className="page-h no-print">Voucher {v.id}</h1>
       <VoucherAksi id={v.id} punyaLampiran={v.punyaLampiran}>
