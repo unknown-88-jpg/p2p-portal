@@ -1,11 +1,12 @@
 import { bisaLihatFinance, isKunciTahap, ringkasTahap, tahapDariStatus, type KunciTahap, type RingkasTahap } from '@/domain/finance';
 import { milikSendiri } from '@/domain/approval';
 import { umurHari } from '@/domain/dokumen';
-import { num, str, upper } from '@/domain/legacy-parse';
+import { clean, num, str, upper } from '@/domain/legacy-parse';
 import { AppError } from '@/lib/errors';
 import { fromSheetSerial, serialToYmd, wibDate } from '@/lib/time';
 import type { CellValue, RawRow } from '@/ports/store';
 import { TRX_PENGAJUAN, colIndex } from '@/repo/schema';
+import { etagOf } from './approval';
 import type { AuthDeps, SessionData } from './auth';
 import { bacaTampilanDetail } from './view-cache';
 
@@ -19,6 +20,8 @@ export interface ItemFinance {
   vendorNama: string; noInvoice: string; poNumber: string; description: string; dueDate: string; jatuhTempoLewat: boolean;
   statusPPN: string; dpp: number; ppnAmount: number; jenisPPh: string; pphAmount: number; nominal: number; totalPaid: number; sisa: number;
   perluCFO: boolean; punyaLampiran: boolean; umurHari: number | null;
+  /** Isian awal form verifikasi pajak (F2-B) + versi dokumen untuk etag. `punyaNPWP` saja (nomornya tidak dikirim) untuk pratinjau tarif PPh. */
+  etag: string; invoiceAmount: number; diskon: number; biayaLainnya: number; punyaNPWP: boolean; jenisPembayaran: string;
   /** Dokumen ini diajukan oleh pengguna yang sedang login (I6: tidak boleh memverifikasi pajaknya sendiri; penjaga di F2-B). */
   ajuanSendiri: boolean;
 }
@@ -45,6 +48,8 @@ function itemOf(r: RawRow, s: SessionData, now: number, hariIni: string): ItemFi
     sisa: Math.max(nominal - totalPaid, 0),
     perluCFO: upper(cell(r, 'REQUIRE_CFO')) === 'YES', punyaLampiran: !!str(cell(r, 'FILE_URL')),
     umurHari: umurHari(msOf(cell(r, 'LAST_UPDATE')), now), ajuanSendiri: milikSendiri(str(cell(r, 'CREATED_BY')), s.email),
+    etag: etagOf(r), invoiceAmount: num(cell(r, 'INV_AMOUNT')), diskon: num(cell(r, 'DISKON')), biayaLainnya: num(cell(r, 'BIAYA_LAIN')),
+    punyaNPWP: !['', '-'].includes(clean(cell(r, 'NPWP_VENDOR'))), jenisPembayaran: str(cell(r, 'JENIS_PEMBAYARAN')), // punyaNPWP: aturan sama dengan hitungPajak
   };
 }
 

@@ -771,6 +771,10 @@ dialog .chips.tombol-baris .chip { text-align: left; border-radius: var(--r-md);
 .ib-jt.lewat { color: #b3261e; font-weight: 600; }
 .fin-st { margin-bottom: 12px; }
 .fin-menyusul { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--hairline); }
+.vp { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hairline); }
+.vp .grid2 { gap: 0 10px; }
+.vp .ip-aksi { display: grid; gap: 8px; margin-top: 12px; }
+.vp .ip-rincian { margin: 4px 0 12px; }
 @media (max-width: 900px) { .fin-tahap { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .fin-alat { flex-direction: column; } .fin-urut select { width: 100%; } }
 .ip-angka { font-size: 30px; line-height: 1.1; font-weight: 700; letter-spacing: -0.4px; margin-top: 4px; }

@@ -46,3 +46,8 @@ export function ringkasTahap(items: readonly ItemRingkas[], roles: readonly Role
     };
   });
 }
+
+/** I6 (perilaku lama, dikonfirmasi pemilik 2026-10-24): pengaju tidak boleh memverifikasi pajak dokumennya sendiri. BLOKIR KERAS. */
+export const PESAN_I6 = 'Anda mengajukan dokumen ini, jadi tidak boleh memverifikasi pajaknya sendiri. Sesuai pemisahan tugas (pengaju ≠ verifikator), minta rekan Finance lain memprosesnya.';
+/** Status yang boleh dikembalikan Finance ke PIC (financeReject lama: semua tahap Finance yang alurnya mengizinkan Revision Needed). */
+export const STATUS_BOLEH_KEMBALI_FINANCE: readonly Status[] = [STATUS.MANAGER_APPROVED, STATUS.TAX_VERIFIED, STATUS.WET_SIGNED, STATUS.COA_POSTED];

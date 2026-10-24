@@ -56,7 +56,7 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 - UI `/finance` + tab tahap, tabel sortir/filter/cari, panel detail kanan.
 - Exit: matriks authz tiap peran × tahap hijau; level tak berwenang 403.
 
-**F2-B — Verifikasi pajak (M)**
+**F2-B — Verifikasi pajak (M)** — ✅ selesai 2026-10-24 (README §F2-B)
 - Form gross/diskon/biaya lain/PPN/PPh; hitung ulang server (`hitungPajak`, golden sudah ada dari M3); CFO flag dihitung ulang (I1).
 - **I6** blokir keras server-side (email dinormalisasi) + UI (badge "Ajuan Anda — minta rekan verifikasi").
 - "Loloskan" dan "Kembalikan ke PIC" (alasan wajib), keduanya idempotent + etag.

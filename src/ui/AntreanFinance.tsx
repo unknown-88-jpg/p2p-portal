@@ -6,12 +6,14 @@ import { api, errMessage } from './api';
 import { Pesan, Skeleton, StatusPill } from './kit';
 import { IkonKlip } from './icons';
 import { LampiranPopup } from './LampiranPopup';
+import { FormVerifikasiPajak } from './FormVerifikasiPajak';
 
 interface Item {
   id: string; tahap: KunciTahap; status: string; tanggal: string; brand: string; departement: string; tipe: string; pic: string;
   vendorNama: string; noInvoice: string; poNumber: string; description: string; dueDate: string; jatuhTempoLewat: boolean;
   statusPPN: string; dpp: number; ppnAmount: number; jenisPPh: string; pphAmount: number; nominal: number; totalPaid: number; sisa: number;
   perluCFO: boolean; punyaLampiran: boolean; umurHari: number | null; ajuanSendiri: boolean;
+  etag: string; invoiceAmount: number; diskon: number; biayaLainnya: number; punyaNPWP: boolean; jenisPembayaran: string;
 }
 interface Data { tahap: RingkasTahap[]; items: Item[]; basi: boolean }
 type Urut = 'umur' | 'jatuh-tempo' | 'nominal';
@@ -26,7 +28,7 @@ const URUT: Record<Urut, (a: Item, b: Item) => number> = {
 };
 /** Langkah aksi tiap tahap dibangun bertahap (F2-B..F2-E); sampai itu panel menampilkan informasi saja. */
 const AKSI_MENYUSUL: Record<KunciTahap, string> = {
-  pajak: 'Verifikasi pajak (loloskan / kembalikan ke PIC)', persetujuan: 'Persetujuan Fin. Mgr / CFO (e-approve)',
+  pajak: 'Verifikasi pajak', persetujuan: 'Persetujuan Fin. Mgr / CFO (e-approve)',
   jurnal: 'Jurnal COA', bayar: 'Pembayaran',
 };
 
@@ -38,6 +40,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
   const [urut, setUrut] = useState<Urut>('umur');
   const [sel, setSel] = useState<string | null>(null);
   const [detailHP, setDetailHP] = useState(false);
+  const [info, setInfo] = useState<{ jenis: 'ok' | 'warn'; teks: string } | null>(null);
 
   const muat = useCallback(async () => {
     try { setData(await api<Data>('/api/finance/queues', { method: 'GET' })); setGalat(null); }
@@ -66,6 +69,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
   return (
     <>
       {kepala}
+      {info && <Pesan jenis={info.jenis}>{info.teks}</Pesan>}
       {data.basi && <Pesan jenis="warn">Data mungkin belum terbaru (Google Sheets sedang lambat). Angka di bawah dari salinan beberapa menit lalu. <button type="button" className="link" onClick={() => void muat()}>Muat ulang</button></Pesan>}
       <div className="fin-tahap" role="tablist" aria-label="Tahap Finance">
         {data.tahap.map((t) => (
@@ -141,15 +145,17 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
                 <div className="fin-st"><StatusPill status={cur.status} /></div>
                 <span className="ds-l">{cur.tahap === 'bayar' ? 'Sisa tagihan' : 'Nominal akhir'}</span>
                 <div className="ip-angka num">{rupiah(angka(cur))}</div>
-                <dl className="ip-rincian">
+                {!(cur.tahap === 'pajak' && ring.bisaAksi) && <dl className="ip-rincian">
                   {cur.dpp > 0 && <div><dt>DPP</dt><dd className="num">{rupiah(cur.dpp)}</dd></div>}
                   {cur.ppnAmount > 0 && <div><dt>PPN</dt><dd className="num">{rupiah(cur.ppnAmount)}</dd></div>}
                   {cur.pphAmount > 0 && <div><dt>PPh {cur.jenisPPh !== '-' ? cur.jenisPPh : ''}</dt><dd className="num">- {rupiah(cur.pphAmount)}</dd></div>}
                   {cur.totalPaid > 0 && <div><dt>Sudah dibayar</dt><dd className="num">{rupiah(cur.totalPaid)}</dd></div>}
                   <div className="ip-total"><dt>Nominal akhir</dt><dd className="num">{rupiah(cur.nominal)}</dd></div>
-                </dl>
+                </dl>}
                 {cur.perluCFO && <p className="cap"><span className="badge-cfo">Butuh persetujuan CFO</span></p>}
-                <p className="muted cap fin-menyusul">Aksi &ldquo;{AKSI_MENYUSUL[cur.tahap]}&rdquo; tersedia di pembaruan berikutnya. Saat ini antrean hanya untuk dilihat.</p>
+                {cur.tahap === 'pajak' && ring.bisaAksi
+                  ? <FormVerifikasiPajak key={`${cur.id}|${cur.etag}`} dok={cur} onSelesai={(p, ulang) => { setInfo(p); setSel(null); setDetailHP(false); if (ulang) void muat(); }} />
+                  : <p className="muted cap fin-menyusul">{ring.bisaAksi ? <>Aksi &ldquo;{AKSI_MENYUSUL[cur.tahap]}&rdquo; tersedia di pembaruan berikutnya.</> : <>Tahap ini dikerjakan {ring.aktor}. Anda hanya melihat.</>}</p>}
               </aside>
             </>
           )}

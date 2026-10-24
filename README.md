@@ -10,7 +10,7 @@ Status per 2026-10-24: **Fase 1 / M8 (UAT & penutupan) berjalan.** Rincian terki
 |---|---|---|
 | **0** Spike | Sheets/Drive/Upstash/Vercel layak dipakai | ✅ Selesai |
 | **1** Auth, Ajukan, Approval | M0 fondasi · M1 lapisan data · M2 auth · M3 master/PO/pajak · M4a–c pengajuan (server, lampiran, UI) · M5 persetujuan Manager · M6 WhatsApp · M7 detail/voucher/dashboard · M8 hardening & UAT | M0–M7 ✅ · **M8 🟡 berjalan** |
-| **2** Finance | Verifikasi pajak, e-approve Fin. Mgr/CFO (O4: menggantikan TTD basah, tanpa transisi), jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | 🟡 Berjalan: F2-A ✅ (antrean & hak akses) |
+| **2** Finance | Verifikasi pajak, e-approve Fin. Mgr/CFO (O4: menggantikan TTD basah, tanpa transisi), jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | 🟡 Berjalan: F2-A ✅ (antrean & hak akses), F2-B ✅ (verifikasi pajak) |
 | **3** Pendukung | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | ⬜ Belum mulai |
 | **4** Go-live | Vercel Pro, `PROD_SHEET_IDS`, Upstash terpisah, cutover dari Apps Script | ⬜ Belum mulai |
 
@@ -200,6 +200,12 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - **`GET /api/finance/queues?stage=pajak|persetujuan|jurnal|bayar`** (port `getFinanceQueues`): pemetaan status sama dengan lama (Manager Approved → pajak, Tax Verified → persetujuan, Wet Signed → jurnal, COA Posted/Partially Paid → bayar), lintas brand/divisi. Ringkasan per tahap: jumlah, total Rp (tahap bayar = sisa tagihan), umur tertua. Kolom ringkas saja: **tanpa NPWP, rekening, email pembuat** (detail lewat `/pengajuan/{id}`, I13). Bacaan tampilan ber-cache; flag `basi` bila salinan lama dipakai. Ajuan sendiri ditandai (`ajuanSendiri`, untuk I6 di F2-B).
 - **UI `/finance`**: tab 4 tahap (jumlah + total), cari, urut (terlama / jatuh tempo / nominal), kartu daftar (badge CFO, "Ajuan Anda", lewat jatuh tempo), panel detail + lampiran, panel rincian. Menu "Finance" di sidebar; beranda Finance menampilkan 4 kartu antrean. Aksi tiap tahap menyusul (F2-B..F2-E).
 - Label status `Tax Verified` kini "Menunggu Fin. Mgr / CFO" (O4).
+
+## Fase 2 / F2-B — Verifikasi pajak (2026-10-24)
+- **`POST /api/finance/{id}/verifikasi-pajak`** (port `verifyTax`, `src/server/finance-aksi.ts`): hanya Finance Staff (L3). Input `{etag, invAmount, diskon, biayaLain, statusPPN, jenisPPh, notes?}` STRICT, rupiah bulat. Di dalam lock dari baca segar: status harus Manager Approved (I3) → etag → **I6 blokir keras** (pengaju = verifikator, email dinormalisasi; percobaan dicatat `TAX_VERIFY_BLOCKED_SOD`) → **I2** DPP/PPN/PPh/nominal akhir dihitung ulang server dengan **tarif PPh SEGAR** (bukan cache) & NPWP vendor dari baris → **I1** `REQUIRE_CFO` dihitung ulang. Satu batch: baris (→ Tax Verified, `OS_BALANCE`) + approval Level 3 atas nama verifikator + `STATUS_CHANGE` (+ `TAX_ADJUST` bila nominal berubah, `CFO_FLAG` bila flag CFO berubah). Idempotency-Key wajib; dua Finance bersamaan → satu berhasil, satu 409.
+- **`POST /api/finance/{id}/kembalikan`** (port `financeReject`): L3, alasan wajib (≥ 3 huruf) → Revision Needed, `NOTES_FINANCE` = `[DITOLAK FINANCE] …` (PIC melihat "Dikembalikan Finance: …"), approval L3 REJECTED. Dari Manager Approved / Tax Verified / Wet Signed / COA Posted. Pengaju sendiri boleh mengembalikan (tidak melepaskan uang, sama dengan lama).
+- **UI** di panel kanan tab Verifikasi pajak: isian gross/diskon/biaya lain, Status PPN, Jenis PPh (Master_PPh), pratinjau DPP/PPN/PPh/nominal akhir (tampilan; angka final dari server), peringatan bila nominal berubah & badge CFO, dialog konfirmasi Loloskan dan dialog Kembalikan (template alasan). Ajuan sendiri: tombol Loloskan dikunci.
+- Notifikasi WA ke PIC saat dikembalikan Finance menyusul di F2-F.
 
 ## Deploy
 - **Trial (sekarang):** repo GitHub privat `unknown-88-jpg/p2p-portal`, branch `main` otomatis ter-deploy ke Vercel (team FAT, Hobby, project `p2p-portal`, URL produksi `https://p2p-portal-flax.vercel.app`). `vercel.json` memaksa region `sin1`. Banner "ENVIRONMENT TRIAL — DATA DUMMY" tampil selama `APP_ENV=trial`.

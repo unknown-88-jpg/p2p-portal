@@ -73,6 +73,8 @@ export function alasanTerkunci(pembuatEmail: string, approverEmail: string, sod:
 // ---- Jalur WhatsApp (M6): penanda & awalan dari WA_Approval.gs ----
 export const CATATAN_WA = '[via WhatsApp]';
 export const PREFIX_TOLAK_WA = '[DITOLAK MANAGER via WA] ';
+/** Penanda NOTES_FINANCE saat Finance mengembalikan ke PIC (financeReject lama). */
+export const PREFIX_TOLAK_FINANCE = '[DITOLAK FINANCE] ';
 export type Via = 'web' | 'wa';
 
 /** Pembuat dokumen = pengguna ini? (email, tanpa beda huruf/spasi). Dipakai menyaring antrean & hitungan Manager (M8 F-05). */
@@ -85,5 +87,6 @@ export const milikSendiri = (pembuatEmail: string, email: string): boolean => {
 export function catatanTampil(catatan: string): string {
   const t = catatan.trim();
   for (const p of [PREFIX_TOLAK_WA, PREFIX_TOLAK]) if (t.startsWith(p.trim())) return `Dikembalikan Manager${p === PREFIX_TOLAK_WA ? ' (via WA)' : ''}: ${t.slice(p.trim().length).trim()}`;
+  if (t.startsWith(PREFIX_TOLAK_FINANCE.trim())) return `Dikembalikan Finance: ${t.slice(PREFIX_TOLAK_FINANCE.trim().length).trim()}`;
   return t;
 }
