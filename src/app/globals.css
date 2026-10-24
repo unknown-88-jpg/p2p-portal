@@ -772,6 +772,7 @@ dialog .chips.tombol-baris .chip { text-align: left; border-radius: var(--r-md);
 .ib-jt.lewat { color: #b3261e; font-weight: 600; }
 .fin-st { margin-bottom: 12px; }
 .fin-menyusul { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--hairline); }
+.by-ringkas { margin-bottom: 12px; }
 .vp { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hairline); }
 .vp .grid2 { gap: 0 10px; }
 .vp .ip-aksi { display: grid; gap: 8px; margin-top: 12px; }

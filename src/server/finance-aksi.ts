@@ -1,24 +1,25 @@
 import { can } from '@/domain/capabilities';
 import { etagCocok, milikSendiri, PREFIX_TOLAK_FINANCE } from '@/domain/approval';
-import { butuhCFO, LEVEL } from '@/domain/config';
+import { butuhCFO, CONFIG, LEVEL } from '@/domain/config';
+import { isValidYmd } from '@/domain/pengajuan';
 import { LEVEL_LABEL } from '@/domain/dokumen';
 import { RuleError } from '@/domain/errors';
-import { cekEApprove, penandaTugasRangkap, persetujuanLengkap, PESAN_I6, statusPersetujuan, STATUS_BOLEH_KEMBALI_FINANCE, validasiJurnal, type Sebagai } from '@/domain/finance';
+import { cekBolehDibayar, cekEApprove, hitungBayar, JENDELA_DUPLIKAT_MS, penandaTugasRangkap, persetujuanLengkap, PESAN_I6, statusPersetujuan, STATUS_BOLEH_KEMBALI_FINANCE, tugasRangkapBayar, validasiJurnal, type Sebagai } from '@/domain/finance';
 import { num, str, upper } from '@/domain/legacy-parse';
 import { rupiah } from '@/domain/pengajuan-form';
 import { checkTransition, STATUS } from '@/domain/status';
 import { hitungPajak } from '@/domain/tax';
 import { AppError } from '@/lib/errors';
-import { toSheetSerial } from '@/lib/time';
+import { fromSheetSerial, serialToYmd, toSheetSerial, wibDate, ymdToSerial } from '@/lib/time';
 import type { Clock } from '@/lib/clock';
 import { FIRST_DATA_ROW, type CellValue, type Mutation, type RawRow } from '@/ports/store';
-import { TRX_APPROVAL, TRX_PENGAJUAN, colIndex } from '@/repo/schema';
+import { TRX_APPROVAL, TRX_PAYMENT_LOG, TRX_PENGAJUAN, colIndex } from '@/repo/schema';
 import type { z } from 'zod';
 import { etagOf } from './approval';
 import { appendAudit, auditMutation } from './audit';
 import { requireStepUp, type AuthDeps, type SessionData } from './auth';
-import type { jurnalSchema, kembalikanFinanceSchema, setujuiFinanceSchema, verifikasiPajakSchema } from './finance-schema';
-import { readCoa, readPph } from './master-read';
+import type { bayarSchema, jurnalSchema, kembalikanFinanceSchema, setujuiFinanceSchema, verifikasiPajakSchema } from './finance-schema';
+import { readCoa, readKas, readPph } from './master-read';
 import { findRowById } from './row-index';
 import { runAction } from './uow';
 
@@ -200,6 +201,86 @@ export async function jurnalCoa(d: AuthDeps, s: SessionData, input: z.infer<type
         hasil.berhasil.push({ id, akun: v.akun });
       }
       if (!hasil.berhasil.length) throw new AppError('RULE_VIOLATION', `Tidak ada dokumen yang bisa dijurnal: ${hasil.gagal.map((g) => `${g.id} (${g.alasan})`).join('; ')}`);
+      return { mutations, result: hasil };
+    },
+  });
+}
+
+export interface HasilBayar {
+  berhasil: { id: string; nominal: number; lunas: boolean; sisa: number; tugasRangkap: string[] }[];
+  gagal: { id: string; alasan: string; duplikat?: boolean }[];
+  total: number;
+}
+
+/**
+ * F2-E (port executePayment / executePaymentBulk): bayar 1..30 dokumen. Finance Staff (L3) + step-up password WAJIB. Idempotency-Key wajib.
+ * Lock semua `trx:` -> SATU baca segar Trx_Pengajuan, Trx_Approval, Trx_Payment_Log, Master_COA -> per dokumen: I4 (cekBolehDibayar),
+ * etag, I5 (total dibayar dari LOG, nominal <= sisa + toleransi), fingerprint kembar 10 menit (R-04). Yang valid: SATU batch
+ * (log pembayaran + ringkasan + status + audit). O5b: pembayar = verifikator/penyetuju -> penanda di audit, bukan blokir.
+ */
+export async function bayar(d: AuthDeps, s: SessionData, token: string, input: z.infer<typeof bayarSchema>, idemKey: string | undefined): Promise<HasilBayar> {
+  if (!can(s.roles, 'payment.execute')) throw new AppError('FORBIDDEN', 'Hanya Finance Staff yang bisa mengeksekusi pembayaran.');
+  if (!isValidYmd(input.tglBayar)) throw new AppError('VALIDATION', 'Tanggal bayar tidak valid.');
+  if (input.tglBayar > wibDate(d.clock.now())) throw new AppError('VALIDATION', 'Tanggal bayar tidak boleh di masa depan.');
+  const ids = input.items.map((i) => i.id.toUpperCase());
+  if (new Set(ids).size !== ids.length) throw new AppError('VALIDATION', 'Ada dokumen yang sama lebih dari sekali dalam satu pembayaran.');
+  const ref = input.refNo?.trim() || '-';
+  return runAction(d, {
+    name: 'finance.bayar', actor: s.email || s.phone, money: true, ...idemOf(idemKey), lockKeys: ids.map((id) => `trx:${id}`),
+    execute: async ({ store, clock }) => {
+      await requireStepUp(d, token);
+      const [rows, apr, log, kas] = await Promise.all([store.readRows(TRX_PENGAJUAN), store.readRows(TRX_APPROVAL), store.readRows(TRX_PAYMENT_LOG), readKas(store)]);
+      if (!kas.some((k) => k.akun === input.sumberRekening.trim())) throw new AppError('VALIDATION', 'Sumber rekening tidak ada di daftar kas (Master_COA).');
+      const A = (x: RawRow, k: string): CellValue => x[colIndex(TRX_APPROVAL, k)] ?? null;
+      const Y = (x: RawRow, k: string): CellValue => x[colIndex(TRX_PAYMENT_LOG, k)] ?? null;
+      const posisi = new Map<string, number[]>();
+      rows.forEach((r, i) => { const id = str(cell(r, 'ID_TRX')).toUpperCase(); if (id) posisi.set(id, [...(posisi.get(id) ?? []), i]); });
+      const now = clock.now(), nowSerial = toSheetSerial(now), tglSerial = ymdToSerial(input.tglBayar);
+      const mutations: Mutation[] = [];
+      const hasil: HasilBayar = { berhasil: [], gagal: [], total: 0 };
+      for (const it of input.items) {
+        const id = it.id.toUpperCase();
+        const idx = posisi.get(id) ?? [];
+        if (idx.length !== 1) { hasil.gagal.push({ id, alasan: idx.length ? 'ID ganda di sheet. Hubungi admin.' : 'Dokumen tidak ditemukan.' }); continue; }
+        const r = rows[idx[0]!]!, dari = str(cell(r, 'STATUS'));
+        const aprDok = apr.filter((x) => str(A(x, 'ID_Trx')).toUpperCase() === id);
+        const st = statusPersetujuan(aprDok.map((x) => ({ level: A(x, 'Level'), action: A(x, 'Action'), nama: A(x, 'Approver_Name'), email: A(x, 'Approver_Email'), timestamp: A(x, 'Timestamp') })));
+        const gerbang = cekBolehDibayar({
+          status: dari, perluCFO: upper(cell(r, 'REQUIRE_CFO')) === 'YES', subCoa: str(cell(r, 'SUB_COA')), budget: str(cell(r, 'BUDGET')), st,
+          manager: aprDok.some((x) => Number(A(x, 'Level')) === LEVEL.MANAGER && upper(A(x, 'Action')) === 'APPROVED'),
+        });
+        if (gerbang) { hasil.gagal.push({ id, alasan: `Pembayaran diblokir: ${gerbang}` }); continue; }
+        if (!etagCocok(it.etag, etagOf(r))) { hasil.gagal.push({ id, alasan: 'Dokumen berubah sejak dibuka. Muat ulang.' }); continue; }
+        const logDok = log.filter((x) => str(Y(x, 'ID_Trx')).toUpperCase() === id);
+        const kembar = logDok.some((x) => num(Y(x, 'Nominal')) === it.nominal && serialToYmd(Y(x, 'Tgl_Bayar')) === input.tglBayar && (str(Y(x, 'Ref_No')) || '-') === ref
+          && now - fromSheetSerial(num(Y(x, 'Timestamp'))) < JENDELA_DUPLIKAT_MS);
+        if (kembar && !input.konfirmasiDuplikat) { hasil.gagal.push({ id, duplikat: true, alasan: 'Pembayaran yang sama (tanggal, nominal, ref) baru saja dicatat. Konfirmasi bila memang pembayaran terpisah.' }); continue; }
+        const h = hitungBayar(num(cell(r, 'FINAL_AMOUNT')), logDok.reduce((t, x) => t + num(Y(x, 'Nominal')), 0), it.nominal, CONFIG.PAYMENT_TOLERANCE);
+        if (!h.ok) { hasil.gagal.push({ id, alasan: h.alasan }); continue; }
+        const ke = h.lunas ? STATUS.PAID : STATUS.PARTIALLY_PAID;
+        const tr = checkTransition(dari, ke);
+        if (tr) { hasil.gagal.push({ id, alasan: tr }); continue; }
+        const rangkap = tugasRangkapBayar(s.email, st);
+        const penanda = rangkap.length ? `[Penanda SoD O5b: pembayar = ${rangkap.join(', ')}]` : '';
+        const ket = `Bayar ${rupiah(it.nominal)} via ${input.sumberRekening.trim()}${ref !== '-' ? ` (Ref: ${ref})` : ''}`;
+        mutations.push(
+          { kind: 'append', schema: TRX_PAYMENT_LOG, cells: {
+            Log_ID: `PAY-${crypto.randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()}`, ID_Trx: id, Tgl_Bayar: tglSerial, Nominal: it.nominal,
+            Sumber_Rekening: input.sumberRekening.trim(), Ref_No: ref, Created_By: s.email.trim(), Timestamp: nowSerial,
+          } },
+          { kind: 'update', schema: TRX_PENGAJUAN, row: idx[0]! + FIRST_DATA_ROW, cells: {
+            LAST_PAY_DATE: tglSerial, TOTAL_PAID: h.totalBaru, OS_BALANCE: h.osBaru, PAY_STATUS: h.lunas ? 'Paid' : 'Partially Paid', STATUS: ke, LAST_UPDATE: nowSerial,
+          } },
+          statusChange(s, id, dari, ke, [ket, penanda].filter(Boolean).join(' · '), clock),
+          auditMutation({ actor: s.email, idTrx: id, action: 'PAYMENT', field: 'Total Paid', oldValue: h.totalBaru - it.nominal, newValue: h.totalBaru, notes: [input.sumberRekening.trim(), penanda].filter(Boolean).join(' · ') }, clock),
+        );
+        hasil.berhasil.push({ id, nominal: it.nominal, lunas: h.lunas, sisa: h.osBaru, tugasRangkap: rangkap });
+        hasil.total += it.nominal;
+      }
+      if (!hasil.berhasil.length) {
+        const dup = hasil.gagal.some((g) => g.duplikat);
+        throw new AppError(dup ? 'CONFLICT' : 'RULE_VIOLATION', `Tidak ada pembayaran yang diproses: ${hasil.gagal.map((g) => `${g.id} (${g.alasan})`).join('; ')}`, dup ? { duplikat: 'konfirmasi' } : undefined);
+      }
       return { mutations, result: hasil };
     },
   });

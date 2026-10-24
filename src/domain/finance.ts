@@ -136,3 +136,51 @@ export function opsiCoa(coa: readonly BarisCoa[], pilihan: readonly string[], n:
   }
   return [...set];
 }
+
+// ------------------------------------------------------------------ F2-E: pembayaran (port executePaymentCore_ + bolehDibayar)
+export const BAYAR_MAKS = 30;
+/** Fingerprint pembayaran kembar (R-04): ID, tanggal, nominal, ref sama dalam jendela ini -> butuh konfirmasi eksplisit. */
+export const JENDELA_DUPLIKAT_MS = 10 * 60_000;
+
+export interface GerbangBayar {
+  status: string; perluCFO: boolean; subCoa: string; budget: string;
+  /** Ada approval Manager (L2) APPROVED. */ manager: boolean;
+  /** Persetujuan siklus verifikasi sekarang (L3/L4/L5). */ st: StatusPersetujuan;
+}
+/**
+ * I4 (bolehDibayar): status COA Posted / Partially Paid; approval Manager, verifikasi pajak, Fin. Mgr (+ CFO bila wajib) tercatat;
+ * Sub COA & budget terisi. O4: syarat "scan TTD basah diunggah" DIHAPUS (diganti e-approve L4/L5 atas nama penandatangan).
+ */
+export function cekBolehDibayar(g: GerbangBayar): string | null {
+  if (g.status !== STATUS.COA_POSTED && g.status !== STATUS.PARTIALLY_PAID) return `Status "${g.status || '-'}" belum boleh dibayar. Harus sudah Siap Dibayar.`;
+  if (!g.manager) return 'Belum ada persetujuan Manager divisi.';
+  if (!g.st.verifikator) return 'Belum diverifikasi pajak oleh Finance Staff.';
+  if (!g.st.finMgr) return 'Belum ada persetujuan Fin. Mgr.';
+  if (g.perluCFO && !g.st.cfo) return 'Nominal ≥ Rp 5.000.000 wajib disetujui CFO.';
+  if (!g.subCoa.trim() || g.subCoa.trim() === '-') return 'Jurnal COA belum diposting.';
+  if (!g.budget.trim()) return 'Plafon budget belum diisi.';
+  return null;
+}
+
+/** I5 anti-overpay: total dibayar dari Trx_Payment_Log (bukan kolom ringkasan); nominal <= sisa + toleransi; sisa dalam toleransi = lunas. */
+export function hitungBayar(finalAmount: number, sudahDibayar: number, nominal: number, toleransi: number):
+  { ok: false; alasan: string } | { ok: true; totalBaru: number; osBaru: number; lunas: boolean } {
+  if (!Number.isInteger(nominal) || nominal <= 0) return { ok: false, alasan: 'Nominal pembayaran harus bilangan bulat lebih dari nol.' };
+  const sisa = finalAmount - sudahDibayar;
+  if (sisa <= toleransi) return { ok: false, alasan: 'Sisa tagihan sudah nol (lunas).' };
+  if (nominal > sisa + toleransi) return { ok: false, alasan: `Melebihi sisa tagihan. Sisa ${fmt(sisa)}, input ${fmt(nominal)}.` };
+  const totalBaru = sudahDibayar + nominal;
+  let osBaru = finalAmount - totalBaru;
+  if (Math.abs(osBaru) <= toleransi) osBaru = 0;
+  return { ok: true, totalBaru, osBaru, lunas: osBaru <= 0 };
+}
+const fmt = (n: number): string => `Rp ${String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
+
+/** O5b (final 2026-10-24): pembayar = verifikator pajak / penyetuju L4/L5 -> PERINGATAN + penanda audit, bukan blokir. */
+export function tugasRangkapBayar(email: string, st: StatusPersetujuan): string[] {
+  const t: string[] = [];
+  if (st.verifikator && samaEmail(st.verifikator.email, email)) t.push('verifikator pajak');
+  if (st.finMgr && samaEmail(st.finMgr.email, email)) t.push('Fin. Mgr');
+  if (st.cfo && samaEmail(st.cfo.email, email)) t.push('CFO');
+  return t;
+}

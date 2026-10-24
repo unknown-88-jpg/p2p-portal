@@ -9,6 +9,7 @@ import { LampiranPopup } from './LampiranPopup';
 import { FormVerifikasiPajak } from './FormVerifikasiPajak';
 import { FormPersetujuanFinance, type Peran } from './FormPersetujuanFinance';
 import { FormJurnal } from './FormJurnal';
+import { FormBayar } from './FormBayar';
 
 interface Item {
   id: string; tahap: KunciTahap; status: string; tanggal: string; brand: string; departement: string; tipe: string; pic: string;
@@ -17,6 +18,7 @@ interface Item {
   perluCFO: boolean; punyaLampiran: boolean; umurHari: number | null; ajuanSendiri: boolean;
   etag: string; invoiceAmount: number; diskon: number; biayaLainnya: number; punyaNPWP: boolean; jenisPembayaran: string;
   persetujuan?: { finMgr: string | null; cfo: string | null; finMgrSaya: boolean };
+  blokirBayar?: string | null; tugasRangkap?: string[];
 }
 interface Data { tahap: RingkasTahap[]; items: Item[]; basi: boolean; peran: Peran }
 type Urut = 'umur' | 'jatuh-tempo' | 'nominal';
@@ -69,7 +71,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
 
   const ring = data.tahap.find((t) => t.kunci === tahap)!;
   const selesai = (p: { jenis: 'ok' | 'warn'; teks: string }, ulang: boolean) => { setInfo(p); setSel(null); setDetailHP(false); setPilih(new Set()); if (ulang) void muat(); };
-  const bisaPilih = tahap === 'jurnal' && ring.bisaAksi;
+  const bisaPilih = (tahap === 'jurnal' || tahap === 'bayar') && ring.bisaAksi;
   const cur = tampil.find((i) => i.id === sel) ?? (!detailHP ? tampil[0] ?? null : null);
 
   return (
@@ -110,12 +112,12 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
                   <li key={i.id} className={`inbox-row${cur?.id === i.id ? ' aktif' : ''}`}>
                     <button type="button" className="ib-kartu" aria-current={cur?.id === i.id ? 'true' : undefined} onClick={() => { setSel(i.id); setDetailHP(true); }}>
                       <span className="ib-top"><span className="ib-id num"><span>{i.id}</span> · <span>{umurTeks(i.umurHari) || i.tanggal}</span></span>
-                        <span className="fin-badges">{i.persetujuan?.finMgr && !i.persetujuan.cfo && i.perluCFO && <span className="badge-tunggu">Menunggu CFO</span>}{i.ajuanSendiri && <span className="badge-saya">Ajuan Anda</span>}{i.perluCFO && <span className="badge-cfo">CFO</span>}</span></span>
+                        <span className="fin-badges">{i.persetujuan?.finMgr && !i.persetujuan.cfo && i.perluCFO && <span className="badge-tunggu">Menunggu CFO</span>}{i.blokirBayar && <span className="badge-saya">Belum boleh dibayar</span>}{i.ajuanSendiri && <span className="badge-saya">Ajuan Anda</span>}{i.perluCFO && <span className="badge-cfo">CFO</span>}</span></span>
                       <span className="ib-v">{i.vendorNama || '—'}</span>
                       <span className="ib-n num">{rupiah(angka(i))}</span>
                       <span className={`ib-jt${i.jatuhTempoLewat ? ' lewat' : ''}`}>{i.dueDate ? `${i.jatuhTempoLewat ? 'Lewat jatuh tempo' : 'Jatuh tempo'} ${i.dueDate}` : ' '}</span>
                     </button>
-                    {bisaPilih && <label className="pilih-tap"><input type="checkbox" className="pilih-cb" aria-label={`Pilih ${i.id} untuk jurnal sekaligus`} checked={pilih.has(i.id)}
+                    {bisaPilih && <label className="pilih-tap"><input type="checkbox" className="pilih-cb" aria-label={`Pilih ${i.id} untuk ${tahap === 'bayar' ? 'dibayar' : 'dijurnal'} sekaligus`} checked={pilih.has(i.id)}
                       onChange={(e) => setPilih((p) => { const n = new Set(p); if (e.target.checked) n.add(i.id); else n.delete(i.id); return n; })} /></label>}
                   </li>
                 ))}
@@ -165,6 +167,8 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
                   ? <FormVerifikasiPajak key={`${cur.id}|${cur.etag}`} dok={cur} onSelesai={selesai} />
                   : cur.tahap === 'jurnal' && ring.bisaAksi
                   ? <FormJurnal key="jurnal" target={pilih.size ? data.items.filter((i) => pilih.has(i.id)) : [cur]} onSelesai={selesai} />
+                  : cur.tahap === 'bayar' && ring.bisaAksi
+                  ? <FormBayar key="bayar" target={pilih.size ? data.items.filter((i) => pilih.has(i.id)) : [cur]} onSelesai={selesai} />
                   : cur.tahap === 'persetujuan' && (data.peran.finMgr || data.peran.cfo || data.peran.staff)
                   ? <FormPersetujuanFinance key={`${cur.id}|${cur.etag}`} dok={cur} peran={data.peran} onSelesai={selesai} />
                   : <p className="muted cap fin-menyusul">{ring.bisaAksi ? <>Aksi &ldquo;{AKSI_MENYUSUL[cur.tahap]}&rdquo; tersedia di pembaruan berikutnya.</> : <>Tahap ini dikerjakan {ring.aktor}. Anda hanya melihat.</>}</p>}

@@ -31,3 +31,16 @@ export const jurnalSchema = z.object({
     budget: z.string().trim().max(60), notes: txt(CATATAN_MAX).optional(),
   }).strict()).min(1, 'Pilih minimal satu dokumen.').max(30, 'Maksimal 30 dokumen sekali jurnal.'),
 }).strict();
+
+/** F2-E: pembayaran 1..30 dokumen. Nominal rupiah bulat; tanggal YYYY-MM-DD; rekening sumber = nama akun kas dari Master_COA. */
+export const bayarSchema = z.object({
+  items: z.array(z.object({
+    id: z.string().regex(/^(TRD|NTR)-\d{5,}$/), etag,
+    nominal: z.number().int('Nominal harus bilangan bulat rupiah.').positive().max(1e13),
+  }).strict()).min(1, 'Pilih minimal satu dokumen.').max(30, 'Maksimal 30 dokumen sekali bayar.'),
+  tglBayar: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Tanggal bayar tidak valid.'),
+  sumberRekening: z.string().trim().min(1, 'Sumber rekening wajib dipilih.').max(120),
+  refNo: z.string().trim().max(60).optional(),
+  /** Pembayaran kembar (ID+tanggal+nominal+ref sama dalam 10 menit) hanya diproses bila dikonfirmasi eksplisit (R-04). */
+  konfirmasiDuplikat: z.boolean().optional(),
+}).strict();

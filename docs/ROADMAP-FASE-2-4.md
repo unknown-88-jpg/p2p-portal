@@ -73,7 +73,7 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 - Bulk: validasi semua item dulu (baca segar sekali), terapkan yang valid dalam **satu batch**, laporan per item (berhasil/gagal + alasan). "Isi sama untuk yang dicentang".
 - Exit: bulk 30 dokumen = 1 panggilan tulis; sebagian gagal tidak menggagalkan sisanya; tidak ada baris setengah berubah (fault injection).
 
-**F2-E — Treasury / pembayaran (L, paling berisiko)**
+**F2-E — Treasury / pembayaran (L, paling berisiko)** — ✅ selesai 2026-10-24 (README §F2-E)
 - `bolehDibayar` (I4): status COA Posted/Partially Paid; approval L2, L3, L4 ada; L5 bila CFO wajib; Sub COA, Budget, Link TTD terisi.
 - **I5 anti-overpay:** `nominal ≤ sisa + PAYMENT_TOLERANCE (1000)`; total dibayar dihitung dari `Trx_Payment_Log`, bukan kolom ringkasan.
 - Cicilan (Partially Paid → Paid), rekening sumber, tanggal bayar; satu batch menulis Payment_Log + ringkasan + status + audit.

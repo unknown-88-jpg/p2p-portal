@@ -1,5 +1,6 @@
 import { can } from '@/domain/capabilities';
-import { bisaLihatFinance, isKunciTahap, ringkasTahap, statusPersetujuan, tahapDariStatus, type KunciTahap, type RingkasTahap } from '@/domain/finance';
+import { bisaLihatFinance, cekBolehDibayar, isKunciTahap, ringkasTahap, statusPersetujuan, tahapDariStatus, tugasRangkapBayar, type KunciTahap, type RingkasTahap } from '@/domain/finance';
+import { LEVEL } from '@/domain/config';
 import { milikSendiri } from '@/domain/approval';
 import { umurHari } from '@/domain/dokumen';
 import { clean, num, str, upper } from '@/domain/legacy-parse';
@@ -27,6 +28,8 @@ export interface ItemFinance {
   ajuanSendiri: boolean;
   /** Tahap persetujuan (F2-C): siapa yang sudah menyetujui di siklus verifikasi sekarang (nama saja). */
   persetujuan?: { finMgr: string | null; cfo: string | null; finMgrSaya: boolean };
+  /** Tahap bayar (F2-E): alasan gerbang I4 bila belum boleh dibayar (tampilan), dan peran rangkap pengguna ini (peringatan O5b). */
+  blokirBayar?: string | null; tugasRangkap?: string[];
 }
 /** Peran Finance pengguna (untuk tombol yang ditampilkan; penjaga sebenarnya di server). */
 export interface PeranFinance { staff: boolean; finMgr: boolean; cfo: boolean }
@@ -70,8 +73,9 @@ export async function antreanFinance(d: AuthDeps, s: SessionData, tahap?: string
   const now = d.clock.now(), hariIni = wibDate(now);
   const semua = rows.map((r) => itemOf(r, s, now, hariIni)).filter((x): x is ItemFinance => x !== null)
     .sort((a, b) => (b.umurHari ?? -1) - (a.umurHari ?? -1));
-  const tunggu = semua.filter((i) => i.tahap === 'persetujuan');
+  const tunggu = semua.filter((i) => i.tahap === 'persetujuan' || i.tahap === 'bayar');
   if (tunggu.length) {
+    const baris = new Map(rows.map((r) => [str(cell(r, 'ID_TRX')).toUpperCase(), r]));
     const A = (x: RawRow, k: string): CellValue => x[colIndex(TRX_APPROVAL, k)] ?? null;
     const per = new Map<string, RawRow[]>();
     for (const x of await bacaTampilanDetail(d, TRX_APPROVAL).then((h) => h.rows)) {
@@ -80,7 +84,12 @@ export async function antreanFinance(d: AuthDeps, s: SessionData, tahap?: string
     }
     for (const i of tunggu) {
       const st = statusPersetujuan((per.get(i.id.toUpperCase()) ?? []).map((x) => ({ level: A(x, 'Level'), action: A(x, 'Action'), nama: A(x, 'Approver_Name'), email: A(x, 'Approver_Email'), timestamp: A(x, 'Timestamp') })));
-      i.persetujuan = { finMgr: st.finMgr?.nama ?? null, cfo: st.cfo?.nama ?? null, finMgrSaya: !!st.finMgr && milikSendiri(st.finMgr.email, s.email) };
+      if (i.tahap === 'persetujuan') { i.persetujuan = { finMgr: st.finMgr?.nama ?? null, cfo: st.cfo?.nama ?? null, finMgrSaya: !!st.finMgr && milikSendiri(st.finMgr.email, s.email) }; continue; }
+      const r = baris.get(i.id.toUpperCase());
+      const apr = per.get(i.id.toUpperCase()) ?? [];
+      i.blokirBayar = r ? cekBolehDibayar({ status: i.status, perluCFO: i.perluCFO, subCoa: str(cell(r, 'SUB_COA')), budget: str(cell(r, 'BUDGET')), st,
+        manager: apr.some((x) => Number(A(x, 'Level')) === LEVEL.MANAGER && upper(A(x, 'Action')) === 'APPROVED') }) : null;
+      i.tugasRangkap = tugasRangkapBayar(s.email, st);
     }
   }
   const peran = { staff: can(s.roles, 'tax.verify'), finMgr: can(s.roles, 'sign.eapprove.finmgr'), cfo: can(s.roles, 'sign.eapprove.cfo') };
