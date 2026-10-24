@@ -176,7 +176,7 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 
 **F4-B — Keamanan & kualitas**
 - Review keamanan menyeluruh + pen-test ringan (CSP, CSRF, enumerasi nomor, throttle, redaksi log, authz matriks).
-- Perbaiki desain throttle `setpass` global (satu IP bisa mengunci semua orang 15 menit) sebelum publik.
+- ~~Perbaiki desain throttle `setpass` global~~ — selesai 2026-10-24 (`SETPASS_RULE`: per IP 10, plafon global 500 / 15 mnt).
 - Uji beban ulang dengan Pro, region sin1.
 - Ukuran bundle, a11y dasar, cek F-02 (cetak gabungan invoice PDF), F-13 (iOS print) tuntas.
 
