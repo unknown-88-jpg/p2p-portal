@@ -70,7 +70,7 @@ export function maskRekening(no: string): string {
 export interface LangkahAlur { status: string; label: string; pj: string; state: 'selesai' | 'sekarang' | 'menunggu' }
 const ALUR: readonly { status: string; pj: string }[] = [
   { status: STATUS.DRAFT, pj: 'PIC' }, { status: STATUS.SUBMITTED, pj: 'Manager' }, { status: STATUS.MANAGER_APPROVED, pj: 'Finance (pajak)' },
-  { status: STATUS.TAX_VERIFIED, pj: 'Fin. Mgr / CFO (TTD)' }, { status: STATUS.WET_SIGNED, pj: 'Finance (jurnal)' }, { status: STATUS.COA_POSTED, pj: 'Treasury' }, { status: STATUS.PAID, pj: 'Selesai' },
+  { status: STATUS.TAX_VERIFIED, pj: 'Fin. Mgr / CFO' }, { status: STATUS.WET_SIGNED, pj: 'Finance (jurnal)' }, { status: STATUS.COA_POSTED, pj: 'Treasury' }, { status: STATUS.PAID, pj: 'Selesai' },
 ];
 /**
  * Posisi dokumen di alur. Revision Needed = kembali ke PIC (langkah Draft jadi "sekarang"); Rejected = alur berhenti (tak ada langkah "sekarang").

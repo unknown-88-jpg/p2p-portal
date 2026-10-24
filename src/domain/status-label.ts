@@ -8,7 +8,7 @@ const PETA: Readonly<Record<string, LabelStatus>> = {
   [STATUS.DRAFT]: { label: 'Draft', nada: 'abu' },
   [STATUS.SUBMITTED]: { label: 'Menunggu Manager', nada: 'biru' },
   [STATUS.MANAGER_APPROVED]: { label: 'Menunggu Verifikasi Pajak', nada: 'cyan' },
-  [STATUS.TAX_VERIFIED]: { label: 'Menunggu TTD Basah', nada: 'kuning' },
+  [STATUS.TAX_VERIFIED]: { label: 'Menunggu Fin. Mgr / CFO', nada: 'kuning' }, // O4: e-approve menggantikan TTD basah
   [STATUS.WET_SIGNED]: { label: 'Menunggu Jurnal COA', nada: 'cyan' },
   [STATUS.COA_POSTED]: { label: 'Siap Dibayar', nada: 'hijau-muda' },
   [STATUS.PARTIALLY_PAID]: { label: 'Dibayar Sebagian', nada: 'oranye' },

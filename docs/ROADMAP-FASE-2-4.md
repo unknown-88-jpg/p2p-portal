@@ -50,7 +50,7 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 
 ### 2.2 Milestone
 
-**F2-A — Fondasi Finance & antrean (S–M)**
+**F2-A — Fondasi Finance & antrean (S–M)** — ✅ selesai 2026-10-24 (README §F2-A)
 - Capability matrix L3/L4/L5 di service layer (bukan `requireLevel` sama-persis seperti lama).
 - `GET /api/finance/queues` per tahap (hitungan, total Rp, aging), kolom ringkas saja (hemat kuota).
 - UI `/finance` + tab tahap, tabel sortir/filter/cari, panel detail kanan.

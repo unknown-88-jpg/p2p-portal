@@ -10,7 +10,7 @@ Status per 2026-10-24: **Fase 1 / M8 (UAT & penutupan) berjalan.** Rincian terki
 |---|---|---|
 | **0** Spike | Sheets/Drive/Upstash/Vercel layak dipakai | ✅ Selesai |
 | **1** Auth, Ajukan, Approval | M0 fondasi · M1 lapisan data · M2 auth · M3 master/PO/pajak · M4a–c pengajuan (server, lampiran, UI) · M5 persetujuan Manager · M6 WhatsApp · M7 detail/voucher/dashboard · M8 hardening & UAT | M0–M7 ✅ · **M8 🟡 berjalan** |
-| **2** Finance | Verifikasi pajak, e-approve Fin. Mgr/CFO (O4: menggantikan TTD basah, tanpa transisi), jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | ⬜ Belum mulai. Gerbang O4/O5 terbuka 2026-10-24 |
+| **2** Finance | Verifikasi pajak, e-approve Fin. Mgr/CFO (O4: menggantikan TTD basah, tanpa transisi), jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | 🟡 Berjalan: F2-A ✅ (antrean & hak akses) |
 | **3** Pendukung | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | ⬜ Belum mulai |
 | **4** Go-live | Vercel Pro, `PROD_SHEET_IDS`, Upstash terpisah, cutover dari Apps Script | ⬜ Belum mulai |
 
@@ -194,6 +194,12 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - **Patch 2** (F-11…F-14): pesan kunci login menyebut durasi; `POST /api/auth/set-password/cek` (rute publik, hanya mengintip validitas link tanpa menghanguskan atau membocorkan data akun; pembatas sendiri 20 kegagalan/IP/15 mnt, terpisah dari `setpass`); CSS cetak voucher dipaksa tata letak A4 agar 1 halaman; parser WA mengabaikan penanda format WhatsApp di sekitar perintah/kode.
 - **Bukti kapasitas (Vercel Hobby sin1, 2026-10-22):** Sheets API puncak ±15% dari batas baca, Vercel 0% error/timeout, Upstash ±19K dari 500K command/bulan, bundle client 748 KB; load test CONC=10/30 tanpa 5xx dan tanpa persetujuan ganda.
 - **Pembatas `setpass` (diperbaiki 2026-10-24):** dulu plafon global 10 kegagalan (dari IP mana pun) mengunci set-password semua orang 15 menit. Sekarang `SETPASS_RULE`: 10 link tak valid / 15 mnt **per IP**, plafon global longgar 500 / 15 mnt (rem penyalahgunaan massal). Token 256-bit.
+
+## Fase 2 / F2-A — Fondasi Finance & antrean (2026-10-24)
+- **Hak akses** (`src/domain/finance.ts`, capability `finance.view`): melihat antrean = Finance Staff (L3), Fin. Mgr (L4), CFO (L5); PIC/Manager/Admin → 403 (halaman: diarahkan ke beranda). Bertindak per tahap mengikuti level persis seperti lama: L3 pajak/jurnal/bayar, L4 & L5 persetujuan. Capability `sign.upload` dihapus (O4: tanpa TTD basah).
+- **`GET /api/finance/queues?stage=pajak|persetujuan|jurnal|bayar`** (port `getFinanceQueues`): pemetaan status sama dengan lama (Manager Approved → pajak, Tax Verified → persetujuan, Wet Signed → jurnal, COA Posted/Partially Paid → bayar), lintas brand/divisi. Ringkasan per tahap: jumlah, total Rp (tahap bayar = sisa tagihan), umur tertua. Kolom ringkas saja: **tanpa NPWP, rekening, email pembuat** (detail lewat `/pengajuan/{id}`, I13). Bacaan tampilan ber-cache; flag `basi` bila salinan lama dipakai. Ajuan sendiri ditandai (`ajuanSendiri`, untuk I6 di F2-B).
+- **UI `/finance`**: tab 4 tahap (jumlah + total), cari, urut (terlama / jatuh tempo / nominal), kartu daftar (badge CFO, "Ajuan Anda", lewat jatuh tempo), panel detail + lampiran, panel rincian. Menu "Finance" di sidebar; beranda Finance menampilkan 4 kartu antrean. Aksi tiap tahap menyusul (F2-B..F2-E).
+- Label status `Tax Verified` kini "Menunggu Fin. Mgr / CFO" (O4).
 
 ## Deploy
 - **Trial (sekarang):** repo GitHub privat `unknown-88-jpg/p2p-portal`, branch `main` otomatis ter-deploy ke Vercel (team FAT, Hobby, project `p2p-portal`, URL produksi `https://p2p-portal-flax.vercel.app`). `vercel.json` memaksa region `sin1`. Banner "ENVIRONMENT TRIAL — DATA DUMMY" tampil selama `APP_ENV=trial`.
