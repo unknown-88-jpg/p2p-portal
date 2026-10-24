@@ -10,6 +10,6 @@
 | M5 Approval web | ✅ kode + UAT (U9–U11, U15–U19) | claude/m5-hasil.md |
 | M6 WhatsApp | ✅ kode + gateway nyata (U12–U14, U16). Digest terjadwal via GitHub Actions aktif | claude/m6-hasil.md |
 | M7 Detail/voucher/dashboard | ✅ kode; menunggu perbandingan 5 voucher vs sistem lama | claude/m7-hasil.md |
-| M8 Hardening & UAT | 🟡 Patch 1 & Patch 2 di kode; uji beban lokal + Vercel lulus. Sisa: verifikasi F-13 di iPhone, uji ulang U6 (aturan baru), U21 Android, U23, cek audit U3/U18, pembersihan data dummy, konfirmasi O4/O5 | m8-uat-hasil.md, m8-uat-runbook.md, `docs/STATUS-DAN-ROADMAP.md` |
+| M8 Hardening & UAT | 🟡 Patch 1 & Patch 2 di kode; uji beban lokal + Vercel lulus. Sisa: verifikasi F-13 di iPhone, uji ulang U6 (aturan baru), U21 Android, U23, cek audit U3/U18, pembersihan data dummy (O4/O5 dikonfirmasi 2026-10-24) | m8-uat-hasil.md, m8-uat-runbook.md, `docs/STATUS-DAN-ROADMAP.md` |
 
 Catatan: `phase1-implementation-plan.md` masih berisi status lama (✅ hanya sampai M2/M3); tabel ini yang terbaru.

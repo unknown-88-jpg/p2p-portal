@@ -94,4 +94,4 @@ Temuan uang/keamanan terbuka: tidak ada. Tidak ada temuan kontrol uang terbuka.
 - **Keputusan pemilik (final):** #16 retensi 10% dihapus (plafon = grand total P.O penuh); #17 I11 dihapus (Trade non-DP tetap bisa diajukan walau SJ belum lengkap; Tinjau hanya menampilkan info) + klik Full Payment mengisi nilai invoice = sisa tagihan P.O. Tercatat di README §M3, design doc I10/I11, runbook U6.
 - Patch 1 (F-01, F-04–F-07, F-09) dan Patch 2 (F-11–F-14) terverifikasi ada di kode `main`.
 - F-15 selesai: tombol Kirim WA (1x/hari/dokumen) + digest terjadwal.
-- Masih terbuka: F-02 (cetak gabungan PDF), F-16 (data uji), throttle `setpass` global, U6 uji ulang, U21 Android, U23, audit U3/U18, verifikasi F-13 di iPhone, pembersihan data dummy, konfirmasi O4/O5.
+- Masih terbuka: F-02 (cetak gabungan PDF), F-16 (data uji), throttle `setpass` global, U6 uji ulang, U21 Android, U23, audit U3/U18, verifikasi F-13 di iPhone, pembersihan data dummy. (Throttle `setpass` diperbaiki PR #24; O4/O5 dikonfirmasi 2026-10-24.)
