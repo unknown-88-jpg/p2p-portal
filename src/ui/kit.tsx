@@ -90,6 +90,32 @@ const IKON_STATUS: Record<Nada, () => ReactNode> = {
 };
 export const StatusPill = ({ status }: { status: string }) => { const l = labelStatus(status); return <span className={`pill-st ${l.nada}`}>{IKON_STATUS[l.nada]()}{l.label}</span>; };
 
+export interface IsiToast { jenis: 'ok' | 'warn' | 'err'; teks: ReactNode }
+/** Lama tampil sebelum hilang sendiri: sukses singkat; peringatan/galat lebih lama karena sering memuat rincian (tetap bisa ditutup manual). */
+export const DURASI_TOAST: Readonly<Record<IsiToast['jenis'], number>> = { ok: 5_000, warn: 12_000, err: 12_000 };
+
+/**
+ * Notifikasi pop-up (toast) hasil aksi: melayang di atas halaman (kanan atas; HP: bawah), hilang sendiri, bisa ditutup.
+ * Diumumkan ke pembaca layar lewat role status/alert. Tanpa gaya inline (CSP).
+ */
+export function Toast({ isi, onTutup }: { isi: IsiToast | null; onTutup: () => void }) {
+  const tutup = useRef(onTutup);
+  useEffect(() => { tutup.current = onTutup; });
+  useEffect(() => {
+    if (!isi) return;
+    const t = setTimeout(() => tutup.current(), DURASI_TOAST[isi.jenis]);
+    return () => clearTimeout(t);
+  }, [isi]);
+  if (!isi) return null;
+  const Ikon = isi.jenis === 'ok' ? IkonSelesai : IkonPerhatian;
+  return (
+    <div className={`toast ${isi.jenis}`} role={isi.jenis === 'err' ? 'alert' : 'status'}>
+      <Ikon /><div className="toast-isi">{isi.teks}</div>
+      <button type="button" className="toast-x" aria-label="Tutup notifikasi" onClick={() => tutup.current()}><IkonTutup /></button>
+    </div>
+  );
+}
+
 export function Pesan({ jenis, children, role }: { jenis: 'err' | 'ok' | 'warn' | 'info'; children: ReactNode; role?: 'alert' | 'status' }) {
   const Ikon = jenis === 'ok' ? IkonSelesai : jenis === 'info' ? IkonInfo : IkonPerhatian;
   return <div className={`msg ${jenis}`} role={role ?? (jenis === 'err' ? 'alert' : 'status')}><Ikon /><div className="msg-isi">{children}</div></div>;

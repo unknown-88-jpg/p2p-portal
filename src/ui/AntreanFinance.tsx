@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { KunciTahap, RingkasTahap } from '@/domain/finance';
 import { rupiah } from '@/domain/pengajuan-form';
 import { api, errMessage } from './api';
-import { Pesan, Skeleton, StatusPill } from './kit';
+import { Pesan, Skeleton, StatusPill, Toast } from './kit';
 import { IkonKlip } from './icons';
 import { LampiranPopup } from './LampiranPopup';
 import { FormVerifikasiPajak } from './FormVerifikasiPajak';
@@ -77,7 +77,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
   return (
     <>
       {kepala}
-      {info && <Pesan jenis={info.jenis}>{info.teks}</Pesan>}
+      <div className="toast-wadah"><Toast isi={info} onTutup={() => setInfo(null)} /></div>
       {data.basi && <Pesan jenis="warn">Data mungkin belum terbaru (Google Sheets sedang lambat). Angka di bawah dari salinan beberapa menit lalu. <button type="button" className="link" onClick={() => void muat()}>Muat ulang</button></Pesan>}
       <div className="fin-tahap" role="tablist" aria-label="Tahap Finance">
         {data.tahap.map((t) => (

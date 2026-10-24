@@ -12,7 +12,7 @@ import {
 import type { Role } from '@/domain/roles';
 import { labelStatus } from '@/domain/status-label';
 import { api, errMessage, isApiError } from '../api';
-import { Dialog, Pesan } from '../kit';
+import { Dialog, Pesan, Toast, type IsiToast } from '../kit';
 import { kompresGambar } from '../kompres-gambar';
 import { putKeDrive } from '../put-drive';
 import { GalatUnggah, unggahLampiran, type TahapUnggah } from '../unggah-lampiran';
@@ -61,6 +61,7 @@ export function PengajuanWizard({ roles, email, nama, awal }: WizardProps) {
   const [busy, setBusy] = useState<null | 'simpan' | 'ajukan'>(null);
   const [galatServer, setGalatServer] = useState<string | null>(null);
   const [infoSimpan, setInfoSimpan] = useState<string | null>(null);
+  const toastSimpan = useMemo<IsiToast | null>(() => (infoSimpan ? { jenis: infoSimpan.startsWith('Draft ') ? 'ok' : 'warn', teks: infoSimpan } : null), [infoSimpan]);
   const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
   const [dicoba, setDicoba] = useState<ReadonlySet<Langkah>>(new Set());
   const [konfirmasi, setKonfirmasi] = useState(false);
@@ -356,7 +357,7 @@ export function PengajuanWizard({ roles, email, nama, awal }: WizardProps) {
       )}
 
       {galatServer && <Pesan jenis="err">{galatServer}</Pesan>}
-      {infoSimpan && <Pesan jenis="ok">{infoSimpan}</Pesan>}
+      <div className="toast-wadah"><Toast isi={toastSimpan} onTutup={() => setInfoSimpan(null)} /></div>
       {(langkah === 'tagihan' || langkah === 'tinjau') && (
         <div className="tombol-baris pt"><button type="button" className="link" onClick={() => void simpanDraft()} disabled={sibuk}>{busy === 'simpan' && !unggah ? 'Menyimpan…' : 'Simpan sebagai draft'}</button></div>
       )}
