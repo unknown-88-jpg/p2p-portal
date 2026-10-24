@@ -1,9 +1,37 @@
-# P2P Finance Portal — Next.js (Vercel) · Fase 1 / M0 Fondasi
+# P2P Finance Portal — Next.js (Vercel)
 
-Status: **M0** (fondasi). Belum ada fitur bisnis. Rencana: `claude/phase1-implementation-plan.md` di project.
-**Trial = DATA DUMMY saja** (Vercel Hobby non-komersial). Jangan pernah mengarahkan ke spreadsheet produksi.
+Pengganti sistem Google Apps Script: web app Next.js 16 di Vercel, **Google Sheets sebagai database**, Google Drive (Shared Drive) untuk file, Upstash Redis untuk sesi/lock/idempotensi/rate-limit, login nomor HP + password, WhatsApp lewat gateway Lixus.
+**Trial = DATA DUMMY saja** (Vercel Hobby non-komersial; Pro saat go-live). Jangan pernah mengarahkan ke spreadsheet produksi.
+Status per 2026-10-24: **Fase 1 / M8 (UAT & penutupan) berjalan.** Rincian terkini: [`docs/STATUS-DAN-ROADMAP.md`](docs/STATUS-DAN-ROADMAP.md). Dokumen desain, hasil UAT, dan risiko ada di Project "P2P Finance Portal" di claude.ai (`claude/phase1-implementation-plan.md`, `claude/m8-uat-hasil.md`, dst.).
 
-## Isi M0
+## Peta tahapan
+
+| Fase | Isi | Status |
+|---|---|---|
+| **0** Spike | Sheets/Drive/Upstash/Vercel layak dipakai | ✅ Selesai |
+| **1** Auth, Ajukan, Approval | M0 fondasi · M1 lapisan data · M2 auth · M3 master/PO/pajak · M4a–c pengajuan (server, lampiran, UI) · M5 persetujuan Manager · M6 WhatsApp · M7 detail/voucher/dashboard · M8 hardening & UAT | M0–M7 ✅ · **M8 🟡 berjalan** |
+| **2** Finance | Verifikasi pajak, TTD basah CFO/Fin. Mgr, jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | ⬜ Belum mulai. **Butuh konfirmasi eksplisit O4/O5 sebelum mulai** |
+| **3** Pendukung | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | ⬜ Belum mulai |
+| **4** Go-live | Vercel Pro, `PROD_SHEET_IDS`, Upstash terpisah, cutover dari Apps Script | ⬜ Belum mulai |
+
+Detail rencana Fase 2–4 (lingkup, milestone, exit criteria, risiko, keputusan terbuka): [`docs/ROADMAP-FASE-2-4.md`](docs/ROADMAP-FASE-2-4.md).
+
+Alur status dokumen (stepper di UI): Draft → Menunggu Manager → Menunggu Verifikasi Pajak → Menunggu TTD Basah (Fin. Mgr / CFO) → Menunggu Jurnal COA → Siap Dibayar → Lunas. Fase 1 mencakup dua tahap pertama (sampai Manager Approved); tahap sesudahnya dikerjakan di Fase 2.
+
+### Sisa M8 (penutupan Fase 1)
+1. Terapkan & deploy Patch 2 (F-11 durasi kunci login, F-12 cek link set-password saat dibuka, F-13 voucher cetak 1 halaman di iOS, F-14 parser WA abaikan `*`/`_`/`~`); verifikasi ulang F-13 di iPhone.
+2. Uji ulang U6/U8 terhadap aturan P.O baru (retensi dihapus, I11 dihapus; lihat M3) atau catat hasil lama berlaku untuk kode sebelum 2026-10-24.
+3. U21 Android, U23 (unggah PDF besar dari ponsel), cek baris audit di sheet (U3/U18).
+4. Pembersihan data dummy (nomor Dummy 002 dikembalikan, baris peran tambahan, dokumen uji, reset password) dan cek akun Manager bernomor lama.
+5. Perbarui `m8-hasil.md` & `phase1-status.md`; konfirmasi eksplisit O4/O5.
+
+### Aturan kerja bersama
+- **Data dummy saja** selama trial. Jangan menempel `.env*`, kunci, token, atau secret di chat/PR/screenshot.
+- Perubahan kontrol uang/keamanan (plafon, SoD, step-up, ambang Rp 5 jt, jalur WA) dijelaskan dan dikonfirmasi pemilik sebelum merge.
+- Kerja lewat branch + PR; `npm run check` hijau (typecheck + lint + test) sebelum merge.
+- Rute tanpa sesi (`session: 'none'`) dikunci oleh `tests/m8-security.test.ts`; menambahnya harus disengaja dan diberi alasan.
+
+## M0 — Fondasi
 - `src/domain` status flow (I3), ambang CFO (I1) & ambang WA (D9/I14) — murni, tanpa I/O.
 - `src/repo/schema.ts` registry kolom (paritas `Config.gs`, 48 kolom Trx_Pengajuan) + `header-validator.ts` (header bergeser → read-only).
 - `src/lib` env tervalidasi zod, error seragam + requestId, logger dengan **redaksi**, trial guard (tolak spreadsheet non-DUMMY).
@@ -15,7 +43,7 @@ Status: **M0** (fondasi). Belum ada fitur bisnis. Rencana: `claude/phase1-implem
 ## Jalankan lokal
 ```bash
 npm install
-npm run check          # typecheck + lint + test (157 test)
+npm run check          # typecheck + lint + test (581 test per Patch 2)
 cp .env.example .env.local   # isi nilai DUMMY; JANGAN commit
 npm run dev
 ```
@@ -145,6 +173,8 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - **Notif PIC** saat disetujui/dikembalikan (web & WA), setelah respons, dedup per transisi. Notifikasi gagal tidak pernah menggagalkan transaksi (I15).
 - Uji tanpa gateway: `npm run wa-webhook-test -- 6281200000001 "SETUJU 4821"` (menandatangani sendiri). Housekeeping `bersihkanWAPending` tidak diperlukan: semua state ber-TTL di Redis.
 - Digest Finance ditunda ke Fase 2 (tahap Finance belum ada di web).
+- **Terbukti dengan gateway nyata (UAT 2026-10-23):** consumer khusus `p2p-portal-trial` di Ops Panel Lixus (API key & webhook secret sendiri; consumer lain tidak disentuh), webhook ke `/api/webhooks/wa`, allowlist trial hanya nomor penguji. Digest → balas `SETUJU <kode>` → status maju, badge **WA**, konfirmasi terkirim; kode sekali pakai ditolak; 10 kode salah → kunci; WA lalu web dari tampilan basi → 409, tepat satu baris persetujuan. Event gema/status dari gateway (`bukan message.received`, `pesan sendiri`) diabaikan dengan sengaja.
+- **WA ke Manager hanya lewat digest**, bukan otomatis saat submit. Pemicu otomatis: GitHub Actions `digest-approval` (hari kerja 09/12/15/17 WIB; secret repo `APP_URL` & `CRON_SECRET`; juga bisa dijalankan manual dari tab Actions). Akun yang nomornya di luar allowlist trial tercatat `gagal` di hasil digest (diharapkan).
 
 ## M7 — Detail dokumen, voucher, dashboard, Ctrl+K
 - **Detail** `/pengajuan/[id]` (+ `GET /api/pengajuan/[id]/detail`): ringkasan, pajak, stepper alur, umur di tahap, timeline (Audit_Log `STATUS_CHANGE` + Trx_Approval, email → nama). **I13** lewat `canViewDocument`: pemilik, Manager berwenang, Level ≥ 3 (bukan 99). Selain itu **404** (sama dengan ID tak ada). Rekening disamarkan di layar; link Drive mentah & email pembuat tidak dikirim ke klien.
@@ -158,7 +188,16 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - **Keamanan:** pagar inventaris route (`tests/m8-security.test.ts`: route baru wajib lewat `route()`, `session:'none'` hanya auth publik & cron ber-Bearer), header COOP/CORP, CSP `sandbox` untuk gambar lampiran, batas 40 pencarian/menit/pengguna, cookie rusak = 401 (bukan 500).
 - **A11y:** skip link, landmark `main`, judul halaman, axe-core (WCAG 2.0/2.1 A+AA) bersih di login, beranda, persetujuan, detail, voucher, palet cari (Chromium harness); nav mobile bisa digeser.
 - **Uji beban** `npm run load-test` (lihat header skrip): fase baca + fase 10 approve paralel per dokumen. Menolak host selain `*.vercel.app`/localhost.
-- **UAT**: runbook di project docs `claude/m8-uat-runbook.md`.
+- **UAT**: runbook di project docs `claude/m8-uat-runbook.md`; hasil berjalan di `claude/m8-uat-hasil.md` (temuan F-01…F-16).
+- **Patch 1** (F-01…F-09): label revisi, SoD di label antrean, antrean/ringkasan hanya dokumen relevan, pesan upload, cache vendor 15 dtk + single-flight (submit tetap validasi vendor segar).
+- **Patch 2** (F-11…F-14): pesan kunci login menyebut durasi; `POST /api/auth/set-password/cek` (rute publik, hanya mengintip validitas link tanpa menghanguskan atau membocorkan data akun; pembatas sendiri 20 kegagalan/IP/15 mnt, terpisah dari `setpass`); CSS cetak voucher dipaksa tata letak A4 agar 1 halaman; parser WA mengabaikan penanda format WhatsApp di sekitar perintah/kode.
+- **Bukti kapasitas (Vercel Hobby sin1, 2026-10-22):** Sheets API puncak ±15% dari batas baca, Vercel 0% error/timeout, Upstash ±19K dari 500K command/bulan, bundle client 748 KB; load test CONC=10/30 tanpa 5xx dan tanpa persetujuan ganda.
+- **Catatan desain terbuka:** pembatas `setpass` memakai kunci nomor `'-'` yang global (10 kegagalan dari IP mana pun mengunci pengiriman password semua orang 15 menit); perlu dirancang ulang per IP/per token.
 
-## Deploy (nanti, saat ada fitur)
-`vercel.json` memaksa region `sin1`. Env Preview & Production terpisah. Jangan kirim isi `.env`/`GOOGLE_SA_JSON`/token ke siapa pun.
+## Deploy
+- **Trial (sekarang):** repo GitHub privat `unknown-88-jpg/p2p-portal`, branch `main` otomatis ter-deploy ke Vercel (team FAT, Hobby, project `p2p-portal`, URL produksi `https://p2p-portal-flax.vercel.app`). `vercel.json` memaksa region `sin1`. Banner "ENVIRONMENT TRIAL — DATA DUMMY" tampil selama `APP_ENV=trial`.
+- **Environment variable** (nama saja; nilai jangan pernah masuk repo/chat): `APP_ENV`, `APP_BASE_URL` (harus sama dengan URL yang dibuka; dipakai cek origin/CSRF, jadi login di URL preview akan ditolak), `SHEET_ID`, `PROD_SHEET_IDS`, `DRIVE_ROOT_ID`, `GOOGLE_SA_JSON`, `JWT_SECRET`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `CRON_SECRET`, `HEALTH_TOKEN`, `WA_GATEWAY_URL`, `WA_API_KEY`, `WA_WEBHOOK_SECRET`, `WA_TRIAL_ALLOWLIST`. Perubahan variabel butuh redeploy.
+- **GitHub Actions:** secret repo `APP_URL` dan `CRON_SECRET` untuk `digest.yml`.
+- **Memindahkan nilai rahasia tanpa menampilkannya:** salin lewat clipboard (`... | clip.exe`), jangan `cat` file env di layar/screenshot. Jika terlanjur tampil, anggap bocor dan rotasi (kunci service account, `JWT_SECRET`, token Upstash, `CRON_SECRET`, `HEALTH_TOKEN`, API key gateway).
+- **Alur perubahan:** branch → PR → `npm run check` hijau → review → merge ke `main` → Vercel deploy → uji di Production.
+- **Go-live (Fase 4):** upgrade ke Vercel Pro (cron & batas Hobby), `PROD_SHEET_IDS`/spreadsheet produksi, database Upstash terpisah dan diberi nama baru (sekarang `p2p-spike`), hitung ulang kuota Upstash dengan jumlah user nyata, API key gateway lama dirotasi bersama Script Properties.
