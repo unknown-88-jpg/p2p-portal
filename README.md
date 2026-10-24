@@ -10,7 +10,7 @@ Status per 2026-10-24: **Fase 1 / M8 (UAT & penutupan) berjalan.** Rincian terki
 |---|---|---|
 | **0** Spike | Sheets/Drive/Upstash/Vercel layak dipakai | ✅ Selesai |
 | **1** Auth, Ajukan, Approval | M0 fondasi · M1 lapisan data · M2 auth · M3 master/PO/pajak · M4a–c pengajuan (server, lampiran, UI) · M5 persetujuan Manager · M6 WhatsApp · M7 detail/voucher/dashboard · M8 hardening & UAT | M0–M7 ✅ · **M8 🟡 berjalan** |
-| **2** Finance | Verifikasi pajak, e-approve Fin. Mgr/CFO (O4: menggantikan TTD basah, tanpa transisi), jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | ⬜ Belum mulai. Gerbang O4/O5 terbuka 2026-10-24 |
+| **2** Finance | Verifikasi pajak, e-approve Fin. Mgr/CFO (O4: menggantikan TTD basah, tanpa transisi), jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | 🟡 Berjalan: F2-A ✅ (antrean & hak akses), F2-B ✅ (verifikasi pajak), F2-C ✅ (e-approve Fin. Mgr/CFO), F2-D ✅ (jurnal COA bulk), F2-E ✅ (pembayaran), F2-F ✅ (notif, riwayat bayar, digest Finance), F2-G 🟡 (kode & review selesai; UAT menunggu) |
 | **3** Pendukung | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | ⬜ Belum mulai |
 | **4** Go-live | Vercel Pro, `PROD_SHEET_IDS`, Upstash terpisah, cutover dari Apps Script | ⬜ Belum mulai |
 
@@ -194,6 +194,59 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - **Patch 2** (F-11…F-14): pesan kunci login menyebut durasi; `POST /api/auth/set-password/cek` (rute publik, hanya mengintip validitas link tanpa menghanguskan atau membocorkan data akun; pembatas sendiri 20 kegagalan/IP/15 mnt, terpisah dari `setpass`); CSS cetak voucher dipaksa tata letak A4 agar 1 halaman; parser WA mengabaikan penanda format WhatsApp di sekitar perintah/kode.
 - **Bukti kapasitas (Vercel Hobby sin1, 2026-10-22):** Sheets API puncak ±15% dari batas baca, Vercel 0% error/timeout, Upstash ±19K dari 500K command/bulan, bundle client 748 KB; load test CONC=10/30 tanpa 5xx dan tanpa persetujuan ganda.
 - **Pembatas `setpass` (diperbaiki 2026-10-24):** dulu plafon global 10 kegagalan (dari IP mana pun) mengunci set-password semua orang 15 menit. Sekarang `SETPASS_RULE`: 10 link tak valid / 15 mnt **per IP**, plafon global longgar 500 / 15 mnt (rem penyalahgunaan massal). Token 256-bit.
+
+## Fase 2 / F2-A — Fondasi Finance & antrean (2026-10-24)
+- **Hak akses** (`src/domain/finance.ts`, capability `finance.view`): melihat antrean = Finance Staff (L3), Fin. Mgr (L4), CFO (L5); PIC/Manager/Admin → 403 (halaman: diarahkan ke beranda). Bertindak per tahap mengikuti level persis seperti lama: L3 pajak/jurnal/bayar, L4 & L5 persetujuan. Capability `sign.upload` dihapus (O4: tanpa TTD basah).
+- **`GET /api/finance/queues?stage=pajak|persetujuan|jurnal|bayar`** (port `getFinanceQueues`): pemetaan status sama dengan lama (Manager Approved → pajak, Tax Verified → persetujuan, Wet Signed → jurnal, COA Posted/Partially Paid → bayar), lintas brand/divisi. Ringkasan per tahap: jumlah, total Rp (tahap bayar = sisa tagihan), umur tertua. Kolom ringkas saja: **tanpa NPWP, rekening, email pembuat** (detail lewat `/pengajuan/{id}`, I13). Bacaan tampilan ber-cache; flag `basi` bila salinan lama dipakai. Ajuan sendiri ditandai (`ajuanSendiri`, untuk I6 di F2-B).
+- **UI `/finance`**: tab 4 tahap (jumlah + total), cari, urut (terlama / jatuh tempo / nominal), kartu daftar (badge CFO, "Ajuan Anda", lewat jatuh tempo), panel detail + lampiran, panel rincian. Menu "Finance" di sidebar; beranda Finance menampilkan 4 kartu antrean. Aksi tiap tahap menyusul (F2-B..F2-E).
+- Label status `Tax Verified` kini "Menunggu Fin. Mgr / CFO" (O4).
+
+## Fase 2 / F2-B — Verifikasi pajak (2026-10-24)
+- **`POST /api/finance/{id}/verifikasi-pajak`** (port `verifyTax`, `src/server/finance-aksi.ts`): hanya Finance Staff (L3). Input `{etag, invAmount, diskon, biayaLain, statusPPN, jenisPPh, notes?}` STRICT, rupiah bulat. Di dalam lock dari baca segar: status harus Manager Approved (I3) → etag → **I6 blokir keras** (pengaju = verifikator, email dinormalisasi; percobaan dicatat `TAX_VERIFY_BLOCKED_SOD`) → **I2** DPP/PPN/PPh/nominal akhir dihitung ulang server dengan **tarif PPh SEGAR** (bukan cache) & NPWP vendor dari baris → **I1** `REQUIRE_CFO` dihitung ulang. Satu batch: baris (→ Tax Verified, `OS_BALANCE`) + approval Level 3 atas nama verifikator + `STATUS_CHANGE` (+ `TAX_ADJUST` bila nominal berubah, `CFO_FLAG` bila flag CFO berubah). Idempotency-Key wajib; dua Finance bersamaan → satu berhasil, satu 409.
+- **`POST /api/finance/{id}/kembalikan`** (port `financeReject`): L3, alasan wajib (≥ 3 huruf) → Revision Needed, `NOTES_FINANCE` = `[DITOLAK FINANCE] …` (PIC melihat "Dikembalikan Finance: …"), approval L3 REJECTED. Dari Manager Approved / Tax Verified / Wet Signed / COA Posted. Pengaju sendiri boleh mengembalikan (tidak melepaskan uang, sama dengan lama).
+- **UI** di panel kanan tab Verifikasi pajak: isian gross/diskon/biaya lain, Status PPN, Jenis PPh (Master_PPh), pratinjau DPP/PPN/PPh/nominal akhir (tampilan; angka final dari server), peringatan bila nominal berubah & badge CFO, dialog konfirmasi Loloskan dan dialog Kembalikan (template alasan). Ajuan sendiri: tombol Loloskan dikunci.
+- Notifikasi WA ke PIC saat dikembalikan Finance menyusul di F2-F.
+
+## Fase 2 / F2-C — e-approve Fin. Mgr / CFO (2026-10-24, O4)
+- **`POST /api/finance/{id}/setujui`** `{etag, sebagai: 'finmgr'|'cfo', notes?}` (`setujuiFinance`): menggantikan unggah scan TTD basah (`submitWetSignature` **tidak diport**, O4 tanpa transisi). Identitas dari **sesi** (menutup R-17); **step-up password wajib** setiap e-approve (5 menit per sesi); Idempotency-Key & etag wajib; status harus Tax Verified.
+- **Urutan & aturan** (`cekEApprove`, `statusPersetujuan` di `src/domain/finance.ts`): Fin. Mgr (L4, level persis) dulu; CFO (L5) hanya bila `REQUIRE_CFO` = YES, setelah Fin. Mgr, dan **oleh orang berbeda** dari Fin. Mgr. Persetujuan dibaca **segar** dari `Trx_Approval` dan hanya yang dicatat **setelah verifikasi pajak terakhir** yang berlaku (dokumen yang dikembalikan lalu diverifikasi ulang tidak membawa persetujuan lama). Fin. Mgr tanpa CFO, atau CFO → **Wet Signed** (enum lama, label "Menunggu Jurnal COA"); Fin. Mgr saat CFO wajib → tetap Tax Verified ("Menunggu CFO").
+- **Penanda SoD (bukan blokir, selaras O5b):** penyetuju = pengaju / verifikator pajak → `[Penanda SoD: …]` di catatan approval & audit.
+- **Kembalikan ke PIC** dari tahap persetujuan kini juga oleh Fin. Mgr / CFO (approval L4/L5 REJECTED); Finance Staff tetap bisa dari semua tahap Finance.
+- **Voucher:** kotak TTD L4/L5 kini E-Signed (`SIGN_METHOD`); catatan lama ber-Method `WET` tetap tampil "TTD Basah — Terverifikasi".
+- **UI** tab Persetujuan: daftar periksa Fin. Mgr / CFO (siapa sudah menyetujui), tombol "Setujui sebagai Fin. Mgr/CFO" sesuai giliran → dialog 2 langkah (konfirmasi → password), badge "Menunggu CFO" di kartu.
+
+## Fase 2 / F2-D — Jurnal COA (2026-10-24)
+- **`POST /api/finance/jurnal`** `{items: [{id, etag, lvl1..lvl5, budget, notes?}]}` (port `postJournalBulk`, `jurnalCoa`): Finance Staff (L3), **1–30 dokumen**, ID ganda dalam satu permintaan ditolak, Idempotency-Key wajib untuk seluruh batch.
+- Lock semua `trx:` (berurut) → **satu** baca segar `Trx_Pengajuan` + `Master_COA` → validasi per dokumen (status Wet Signed, etag, kombinasi COA, budget) → yang valid diterapkan dalam **satu batch tulis** (30 dokumen = 1 panggilan tulis); yang gagal dilaporkan per dokumen tanpa menggagalkan sisanya; semua gagal = 422 berisi alasan. Fault injection: tulis gagal = tidak ada dokumen setengah berubah.
+- Aturan lama (`validasiJurnal`): Level 1 & 2 wajib, budget wajib (huruf besar), kombinasi harus ada di Master_COA ("-" = level tidak dipilih), `SUB_COA` = level terdalam yang dipilih; `CATEGORY_COA`/`HEAD_COA`/`BUDGET` terisi, `NOTES_FINANCE` diganti catatan jurnal; → **COA Posted** ("Siap Dibayar"); audit `STATUS_CHANGE` + `COA_POST` per dokumen.
+- **UI** tab Jurnal COA: centang beberapa dokumen → isian sama diterapkan ke semua ("isi sama untuk yang dicentang"); dropdown COA bertingkat 5 level (level tanpa turunan otomatis "-"), budget, catatan, pratinjau akun yang dijurnal, dialog konfirmasi, ringkasan hasil per dokumen.
+
+## Fase 2 / F2-E — Pembayaran (2026-10-24)
+- **`POST /api/finance/bayar`** `{items: [{id, etag, nominal}], tglBayar, sumberRekening, refNo?, konfirmasiDuplikat?}` (port `executePayment`/`executePaymentBulk`, fungsi `bayar`): Finance Staff (L3), **step-up password wajib**, Idempotency-Key wajib, 1–30 dokumen, ID ganda ditolak, tanggal tidak boleh di masa depan, rekening sumber harus akun kas dari Master_COA (`bangunKas`).
+- Lock semua `trx:` → **satu** baca segar Trx_Pengajuan, Trx_Approval, Trx_Payment_Log, Master_COA → per dokumen: **I4** `cekBolehDibayar` (COA Posted/Partially Paid; Manager, verifikasi pajak, Fin. Mgr, CFO bila wajib; Sub COA & budget; **tanpa** syarat scan TTD, O4) → etag → **pembayaran kembar** (ID+tanggal+nominal+ref sama dalam 10 menit) butuh `konfirmasiDuplikat` (R-04) → **I5** `hitungBayar`: total dibayar dari **Trx_Payment_Log** (bukan kolom ringkasan), nominal ≤ sisa + Rp 1.000, sisa dalam toleransi = lunas. Yang valid: **satu batch** (log append + `TOTAL_PAID`/`OS_BALANCE`/`PAY_STATUS`/`LAST_PAY_DATE` + status Partially Paid/Paid + audit `STATUS_CHANGE` & `PAYMENT`); yang gagal dilaporkan per dokumen; semua gagal = 422 (kembar = 409 `duplikat`).
+- **O5b:** pembayar = verifikator pajak / Fin. Mgr / CFO dokumen itu → peringatan di UI + `[Penanda SoD O5b: …]` di audit, **bukan blokir**.
+- Teruji: race 20 pembayaran paralel tidak pernah overpay; kolom ringkasan yang dirusak tidak membuka overpay; klik ulang dengan kunci sama = satu pembayaran; fault injection = tidak ada log setengah tercatat.
+- **UI** tab Siap dibayar: centang beberapa dokumen; nominal per dokumen (default sisa, petunjuk lunas/cicilan), tanggal transfer, rekening kas, no. ref, total; badge "Belum boleh dibayar" + alasan; peringatan O5b; dialog konfirmasi berisi tabel hasil per dokumen → password → hasil; dialog konfirmasi pembayaran kembar.
+
+## Fase 2 / F2-F — Notifikasi, riwayat bayar, digest Finance (2026-10-24)
+- **Notif WA ke PIC saat dikembalikan Finance** (Finance Staff / Fin. Mgr / CFO): "dikembalikan oleh Finance" + alasan + link revisi, dikirim **setelah** respons (`after()`), dedup per transisi (terpisah dari pengembalian Manager); gagal kirim tidak pernah menggagalkan aksi (I15).
+- **Riwayat pembayaran** (port `getPaymentHistory`/`getTotalPaidFromLog`): `GET /api/pengajuan/{id}/payments` dan bagian **Pembayaran** di detail dokumen (tanggal, nominal, rekening sumber, ref, oleh; total dibayar & sisa) — dihitung dari `Trx_Payment_Log`; akses = I13 (selain itu 404).
+- **Digest WA Finance** (`kirimDigestFinance`, ikut dipicu `GET /api/cron/digest` di jadwal yang sama): satu ringkasan per pengguna Finance yang punya antrean untuk **ditindak** — Finance Staff: verifikasi pajak (tanpa ajuan sendiri, I6), jurnal, siap dibayar (yang lolos I4; total sisa); Fin. Mgr: belum disetujui Fin. Mgr; CFO: sudah Fin. Mgr & butuh CFO (bukan yang dia setujui sebagai Fin. Mgr). Link ke `/finance?tahap=…`, **tanpa kode SETUJU/TOLAK**. Kunci 4 menit; gagal kirim dihitung, tidak melempar; gagal digest Finance tidak menggagalkan digest Manager.
+- **`/api/home`**: `bisa.finance` = L3/L4/L5; `antreanFinance` = jumlah per tahap (beranda Finance sudah menampilkan 4 kartu sejak F2-A).
+
+## Fase 2 / F2-G — Hardening & UAT Finance (2026-10-24)
+- **Review keamanan jalur uang** (independen, adversarial): tidak ada bypass otorisasi, bayar ganda, overpay, atau celah gerbang I4. Temuan yang diperbaiki:
+  - akun **tanpa email** tidak boleh bertindak di jalur uang (sebelumnya satu orang ber-L4+L5 tanpa email bisa memberi dua tanda tangan; penanda O5b juga buta);
+  - verifikasi pajak dengan **nominal akhir 0** ditolak (dokumen tidak macet di Siap Dibayar);
+  - **wajib CFO** = `REQUIRE_CFO` = YES **atau** nominal tersimpan ≥ Rp 5 jt (`wajibCFO`) di persetujuan, gerbang bayar, dan antrean — baris lama/diedit manual tidak bisa melewati CFO;
+  - waktu verifikasi pajak tak terbaca → persetujuan L4/L5 lama **tidak** dihitung (gagal tertutup);
+  - form menangani hasil "dipulihkan" setelah tulis ambigu ("sudah tersimpan, muat ulang");
+  - riwayat bayar tidak menampilkan email mentah pembayar (fallback "Finance");
+  - digest Manager & Finance saling independen (yang satu gagal tidak menghentikan yang lain).
+- **Kuota**: bayar / jurnal 30 dokumen = 1 panggilan tulis + baca terbatas (≤ 5 / ≤ 4), dites dengan penghitung panggilan.
+- **Matriks otorisasi** semua aksi Finance × level 1/2/3/4/5/9 dites (tidak berwenang = 403 sebelum menyentuh data).
+- **Uji beban** `npm run load-test`: `LOAD_FINANCE` (Fase A ikut membaca antrean Finance), **Fase C** opt-in (`LOAD_PAY_DOCS`, `LOAD_PAY_REK`; mengubah data dummy) = 10 pembayaran paralel + replay → lulus bila ≤ 1 sukses & tanpa overpay.
+- **UAT**: `docs/desain/f2-uat-runbook.md` (F1–F21) — **menunggu dijalankan** di Vercel trial.
 
 ## Deploy
 - **Trial (sekarang):** repo GitHub privat `unknown-88-jpg/p2p-portal`, branch `main` otomatis ter-deploy ke Vercel (team FAT, Hobby, project `p2p-portal`, URL produksi `https://p2p-portal-flax.vercel.app`). `vercel.json` memaksa region `sin1`. Banner "ENVIRONMENT TRIAL — DATA DUMMY" tampil selama `APP_ENV=trial`.

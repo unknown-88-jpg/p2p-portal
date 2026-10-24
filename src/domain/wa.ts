@@ -101,8 +101,8 @@ export function pesanDigest(p: { nama: string; items: readonly ItemDigest[]; sis
 
 export const pesanPICDisetujui = (idTrx: string, catatan: string, link: string): string =>
   `✅ *Pengajuan disetujui Manager*\n\nDokumen *${idTrx}* sudah disetujui dan diteruskan ke Finance.\n` + (catatan ? `🗒️ Catatan: ${catatan}\n` : '') + `\nLihat status: ${link}`;
-export const pesanPICDikembalikan = (idTrx: string, alasan: string, link: string): string =>
-  `↩️ *Pengajuan dikembalikan untuk revisi*\n\nDokumen *${idTrx}* dikembalikan oleh Manager.\n❗ Alasan: ${alasan}\n\nPerbaiki lalu ajukan ulang di sini:\n${link}`;
+export const pesanPICDikembalikan = (idTrx: string, alasan: string, link: string, oleh: 'Manager' | 'Finance' = 'Manager'): string =>
+  `↩️ *Pengajuan dikembalikan untuk revisi*\n\nDokumen *${idTrx}* dikembalikan oleh ${oleh}.\n❗ Alasan: ${alasan}\n\nPerbaiki lalu ajukan ulang di sini:\n${link}`;
 export const pesanLinkPassword = (nama: string, link: string, ttlMenit: number): string =>
   `🔐 Halo ${nama || ''}, ini link untuk mengatur password P2P Finance (berlaku ${ttlMenit} menit, sekali pakai):\n${link}\n\nJangan bagikan link ini ke siapa pun.`.replace('Halo ,', 'Halo,');
 
@@ -120,3 +120,10 @@ export const BALASAN = {
   disetujui: (id: string) => `✅ *${id}* berhasil disetujui via WhatsApp. Terima kasih.`,
   dikembalikan: (id: string) => `↩️ *${id}* dikembalikan ke PIC. Alasan tercatat.`,
 } as const;
+
+/** F2-F: digest WA Finance — ringkasan antrean per peran + link ke /finance. TANPA kode SETUJU/TOLAK (Finance tidak bertindak via WA). */
+export interface BarisDigestFinance { label: string; jumlah: number; total: number; link: string }
+export function pesanDigestFinance(p: { nama: string; baris: readonly BarisDigestFinance[] }): string {
+  const isi = p.baris.filter((b) => b.jumlah > 0).map((b) => `• *${b.label}*: ${b.jumlah} dokumen · ${rupiah(b.total)}\n   ${b.link}`).join('\n');
+  return `📊 *Ringkasan Finance*\nHalo ${p.nama || 'Finance'}, antrean yang menunggu Anda:\n\n${isi}\n\n_Tindakan dilakukan di portal (bukan lewat WA)._`;
+}

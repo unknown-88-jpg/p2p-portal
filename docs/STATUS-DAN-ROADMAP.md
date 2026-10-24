@@ -10,7 +10,7 @@ Dokumen lengkap (hasil UAT, desain, risiko) ada di Project "P2P Finance Portal" 
 |---|---|---|
 | 0 | Spike (Sheets/Drive/Upstash/Vercel layak) | Selesai |
 | 1 | Auth, Ajukan pengajuan, Approval Manager (web + WA), voucher | M0–M7 selesai. **M8 (UAT & penutupan) berjalan** |
-| 2 | Finance (verifikasi pajak, e-approve Fin. Mgr/CFO, jurnal COA, pembayaran) | Belum mulai. **Gerbang O4/O5 terbuka (dikonfirmasi 2026-10-24)**; mulai dari F2-A setelah "go" |
+| 2 | Finance (verifikasi pajak, e-approve Fin. Mgr/CFO, jurnal COA, pembayaran) | **Berjalan.** F2-A (antrean & hak akses) dan F2-B (verifikasi pajak + kembalikan ke PIC, I6 blokir) dan F2-C (e-approve Fin. Mgr/CFO, step-up, urutan L4 → L5) dan F2-D (jurnal COA bulk, 1 batch tulis) dan F2-E (pembayaran: I4, I5 dari log, kembar, step-up, bulk) dan F2-F (notif PIC dari Finance, riwayat bayar, digest WA Finance) selesai 2026-10-24. F2-G: review keamanan jalur uang + perbaikan, tes kuota & matriks otorisasi, uji beban Fase C, runbook UAT selesai; **UAT Finance (`docs/desain/f2-uat-runbook.md`) menunggu dijalankan** |
 | 3 | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | Belum mulai |
 | 4 | Go-live (Vercel Pro, PROD_SHEET_IDS, Upstash terpisah, cutover) | Belum mulai |
 

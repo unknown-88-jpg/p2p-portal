@@ -1,9 +1,9 @@
 import { LogoutButton } from './LogoutButton';
 import { PaletPencarian } from './PaletPencarian';
-import { IkonBeranda, IkonDokumen, IkonSetuju, IkonTambah } from './icons';
+import { IkonBeranda, IkonDokumen, IkonSetuju, IkonTambah, IkonUang } from './icons';
 import { LatarMenu, TombolMenu } from './SidebarToggle';
 
-export type NavAktif = 'beranda' | 'pengajuan' | 'baru' | 'persetujuan';
+export type NavAktif = 'beranda' | 'pengajuan' | 'baru' | 'persetujuan' | 'finance';
 
 const inisial = (nama: string): string => nama.trim().split(/\s+/).slice(0, 2).map((x) => x[0]?.toUpperCase() ?? '').join('') || '?';
 
@@ -11,7 +11,7 @@ const inisial = (nama: string): string => nama.trim().split(/\s+/).slice(0, 2).m
  * Kerangka dashboard: sidebar gelap di kiri + bar atas frosted. Komponen server; hanya tombol menu, pencarian, dan Keluar yang client.
  * Mengembalikan tiga saudara (sidebar, backdrop, bar atas); CSS (#isi:has(> .sidebar)) yang menatanya menjadi grid bersama <main> halaman.
  */
-export function AppNav({ nama, bisaAjukan, bisaSetujui = false, jumlahMenunggu, aktif }: { nama: string; bisaAjukan: boolean; bisaSetujui?: boolean; jumlahMenunggu?: number; aktif?: NavAktif }) {
+export function AppNav({ nama, bisaAjukan, bisaSetujui = false, bisaFinance = false, jumlahMenunggu, aktif }: { nama: string; bisaAjukan: boolean; bisaSetujui?: boolean; bisaFinance?: boolean; jumlahMenunggu?: number; aktif?: NavAktif }) {
   const cur = (k: NavAktif) => (aktif === k ? { 'aria-current': 'page' as const } : {});
   return (
     <>
@@ -21,6 +21,7 @@ export function AppNav({ nama, bisaAjukan, bisaSetujui = false, jumlahMenunggu, 
           <a href="/" {...cur('beranda')}><IkonBeranda />Beranda</a>
           {bisaAjukan && <a href="/pengajuan" {...cur('pengajuan')}><IkonDokumen />Pengajuan saya</a>}
           {bisaSetujui && <a href="/persetujuan" {...cur('persetujuan')}><IkonSetuju />Persetujuan{jumlahMenunggu ? ` (${jumlahMenunggu})` : ''}</a>}
+          {bisaFinance && <a href="/finance" {...cur('finance')}><IkonUang />Finance</a>}
         </nav>
         {/* Di bawah daftar menu (bukan di atas) supaya posisi menu sama untuk semua peran. */}
         {bisaAjukan && <a className="btn btn-primary sb-cta" href="/pengajuan/baru" {...cur('baru')}><IkonTambah />Ajukan</a>}

@@ -87,6 +87,17 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           </div>
         </section>
         {d.coa && <div className="kartu"><span className="kartu-h">Jurnal COA</span><p>{d.coa.kategori} › {d.coa.head} › {d.coa.sub}</p></div>}
+        {d.pembayaran.items.length > 0 && (
+          <section className="kartu" aria-labelledby="h-bayar">
+            <div className="kartu-judul"><h2 className="kartu-t" id="h-bayar">Pembayaran</h2><span className="muted cap num">Dibayar {rupiah(d.pembayaran.total)} · sisa {rupiah(d.pembayaran.sisa)}</span></div>
+            <div className="tbl-wrap">
+              <table className="tbl">
+                <thead><tr><th scope="col">Tanggal</th><th scope="col" className="num">Nominal</th><th scope="col">Rekening sumber</th><th scope="col">Ref</th><th scope="col">Oleh</th></tr></thead>
+                <tbody>{d.pembayaran.items.map((p, i) => <tr key={i}><td>{p.tgl}</td><td className="num">{rupiah(p.nominal)}</td><td>{p.sumber || '—'}</td><td>{p.ref && p.ref !== '-' ? p.ref : '—'}</td><td>{p.oleh}</td></tr>)}</tbody>
+              </table>
+            </div>
+          </section>
+        )}
 
         <RiwayatTimeline timeline={d.timeline} sekarang={kini ? { label: labelStatus(d.status).label, pj: kini.pj } : null} />
 

@@ -1,14 +1,15 @@
 import { LEVEL } from './config';
 import { hasAuthority, normEmail, type Role } from './roles';
 
-/** Matriks capability (design 5.4) — mereplikasi perilaku lama: level PERSIS, bukan "level >= n". Kelonggaran lama TIDAK diubah diam-diam (O4/O5). */
+/** Matriks capability (design 5.4) — mereplikasi perilaku lama: level PERSIS, bukan "level >= n". O4/O5 final 2026-10-24 (ROADMAP-FASE-2-4 §2.0). */
 export const CAPABILITY_LEVELS = {
   'pengajuan.write': [LEVEL.PIC],
   'approve.manager': [LEVEL.MANAGER],        // + wajib wewenang brand/dept (lihat canApprove)
+  'finance.view': [LEVEL.FINANCE_STAFF, LEVEL.FINANCE_MGR, LEVEL.CFO], // F2-A: lihat antrean Finance (lama: requireLevel(FINANCE_STAFF))
   'tax.verify': [LEVEL.FINANCE_STAFF],
-  'sign.upload': [LEVEL.FINANCE_STAFF],      // kompat tanda tangan basah
-  'sign.eapprove.finmgr': [LEVEL.FINANCE_MGR], // Fase 2
-  'sign.eapprove.cfo': [LEVEL.CFO],            // Fase 2
+  // O4: TTD basah (unggah scan) DIHAPUS tanpa masa transisi -> capability 'sign.upload' tidak ada lagi.
+  'sign.eapprove.finmgr': [LEVEL.FINANCE_MGR], // Fase 2 (F2-C)
+  'sign.eapprove.cfo': [LEVEL.CFO],            // Fase 2 (F2-C)
   'journal.post': [LEVEL.FINANCE_STAFF],
   'payment.execute': [LEVEL.FINANCE_STAFF],
   'vendor.register': [LEVEL.PIC, LEVEL.MANAGER, LEVEL.FINANCE_STAFF, LEVEL.ADMIN],

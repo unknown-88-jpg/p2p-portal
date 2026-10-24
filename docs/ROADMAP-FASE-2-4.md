@@ -50,30 +50,30 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 
 ### 2.2 Milestone
 
-**F2-A — Fondasi Finance & antrean (S–M)**
+**F2-A — Fondasi Finance & antrean (S–M)** — ✅ selesai 2026-10-24 (README §F2-A)
 - Capability matrix L3/L4/L5 di service layer (bukan `requireLevel` sama-persis seperti lama).
 - `GET /api/finance/queues` per tahap (hitungan, total Rp, aging), kolom ringkas saja (hemat kuota).
 - UI `/finance` + tab tahap, tabel sortir/filter/cari, panel detail kanan.
 - Exit: matriks authz tiap peran × tahap hijau; level tak berwenang 403.
 
-**F2-B — Verifikasi pajak (M)**
+**F2-B — Verifikasi pajak (M)** — ✅ selesai 2026-10-24 (README §F2-B)
 - Form gross/diskon/biaya lain/PPN/PPh; hitung ulang server (`hitungPajak`, golden sudah ada dari M3); CFO flag dihitung ulang (I1).
 - **I6** blokir keras server-side (email dinormalisasi) + UI (badge "Ajuan Anda — minta rekan verifikasi").
 - "Loloskan" dan "Kembalikan ke PIC" (alasan wajib), keduanya idempotent + etag.
 - Exit: I1, I2, I3, I6 hijau; race dua Finance verifikasi dokumen sama → satu berhasil, satu 409.
 
-**F2-C — Persetujuan L4/L5 / TTD (M–L, bergantung O4)**
+**F2-C — Persetujuan L4/L5 / TTD (M–L, bergantung O4)** — ✅ selesai 2026-10-24 (README §F2-C)
 - **O4 (final 2026-10-24): e-approve saja, tanpa jalur transisi scan.** Fin. Mgr (L4) dan CFO (L5, wajib bila `REQUIRE_CFO`) login sendiri + step-up password + identitas dari sesi (menutup R-17: lama tercatat atas nama pengunggah).
 - `bolehDibayar` (I4) tidak lagi mensyaratkan link TTD; diganti approval L4 (+ L5 bila CFO wajib) yang tercatat atas nama penandatangan. Dokumen yang sudah Wet Signed di sistem lama sebelum cutover tetap sah (catatan cutover F4-D).
 - `loginApprover` lama menolak level selain 2; di sistem baru login terbuka semua level (sudah, D5).
 - Exit: approval L4/L5 tercatat atas nama penandatangan sebenarnya; gate CFO enforced server-side; test urutan L4 → L5.
 
-**F2-D — Jurnal COA bulk (M)**
+**F2-D — Jurnal COA bulk (M)** — ✅ selesai 2026-10-24 (README §F2-D)
 - Cascading COA 5 level (level tanpa turunan = `-`), validasi kombinasi terhadap `Master_COA`, Sub COA & Budget wajib.
 - Bulk: validasi semua item dulu (baca segar sekali), terapkan yang valid dalam **satu batch**, laporan per item (berhasil/gagal + alasan). "Isi sama untuk yang dicentang".
 - Exit: bulk 30 dokumen = 1 panggilan tulis; sebagian gagal tidak menggagalkan sisanya; tidak ada baris setengah berubah (fault injection).
 
-**F2-E — Treasury / pembayaran (L, paling berisiko)**
+**F2-E — Treasury / pembayaran (L, paling berisiko)** — ✅ selesai 2026-10-24 (README §F2-E)
 - `bolehDibayar` (I4): status COA Posted/Partially Paid; approval L2, L3, L4 ada; L5 bila CFO wajib; Sub COA, Budget, Link TTD terisi.
 - **I5 anti-overpay:** `nominal ≤ sisa + PAYMENT_TOLERANCE (1000)`; total dibayar dihitung dari `Trx_Payment_Log`, bukan kolom ringkasan.
 - Cicilan (Partially Paid → Paid), rekening sumber, tanggal bayar; satu batch menulis Payment_Log + ringkasan + status + audit.
@@ -82,14 +82,14 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 - Peringatan O5b (pembayar = verifikator/pengunggah) + penanda audit.
 - Exit: I4, I5 hijau; race 20 paralel pembayaran sisa kecil tidak ada overpay; uji klik ganda; simulasi 30 bayar-bulk tanpa melewati kuota; rekonsiliasi `TOTAL_PAID` vs log nol selisih.
 
-**F2-F — Return ke PIC, riwayat, digest Finance (S–M)**
+**F2-F — Return ke PIC, riwayat, digest Finance (S–M)** — ✅ selesai 2026-10-24 (README §F2-F)
 - `financeReject` → Revision Needed (alasan wajib) + notifikasi PIC.
 - Tab Pembayaran di detail dokumen (riwayat cicilan, total terbayar, sisa).
 - Digest WA Finance: ringkasan gabungan ("N perlu verifikasi pajak, N perlu jurnal, N siap dibayar") + link dashboard; **tanpa kode SETUJU/TOLAK** (Finance tidak approve via WA).
 - Hitungan antrean Finance di `/api/home`.
 - Exit: I15 untuk notifikasi Finance; digest tidak menggagalkan transaksi.
 
-**F2-G — Hardening & UAT Finance (M)**
+**F2-G — Hardening & UAT Finance (M)** — 🟡 kode, review & runbook selesai 2026-10-24; UAT menunggu (README §F2-G)
 - Uji beban ulang dari Vercel termasuk skenario bulk bayar; review keamanan jalur uang.
 - UAT: 2 Finance Staff + Fin. Mgr + CFO, dokumen yang sama dari Submit sampai Lunas, termasuk cicilan, return, dan dokumen ≥ Rp 5 jt.
 - Exit (design doc bagian 10): I4, I5, I6, I16 hijau; temuan UAT ditutup/dijadwalkan.

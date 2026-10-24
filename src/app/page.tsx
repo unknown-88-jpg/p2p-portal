@@ -13,6 +13,8 @@ import { JADWAL_DIGEST_TEKS } from '@/domain/wa';
 import { STATUS } from '@/domain/status';
 import { sudahKirimHariIni } from '@/server/wa-manual';
 import { wajibSesi } from './_lib/sesi';
+import { propsNav } from './_lib/nav';
+import { antreanFinance } from '@/server/finance';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Beranda' };
@@ -23,6 +25,7 @@ export default async function Home() {
   const daftar = bisa ? await listMine(authDeps(), s) : [];
   const bisaSetuju = can(s.roles, 'approve.manager');
   const menunggu = bisaSetuju ? (await inbox(authDeps(), s)).length : 0;
+  const fin = can(s.roles, 'finance.view') ? await antreanFinance(authDeps(), s).catch(() => null) : null;
   const dash = await dashboard(authDeps(), s);
   const waHariIni = bisa ? await sudahKirimHariIni(authDeps(), dash.pic.terbaru.filter((t) => t.status === STATUS.SUBMITTED).map((t) => t.id)) : new Set<string>();
   const n = (k: string) => daftar.filter((d) => KELOMPOK_STATUS.find((x) => x.kunci === k)!.cocok(d.status)).length;
@@ -34,7 +37,7 @@ export default async function Home() {
   ] as const;
   return (
     <>
-      <AppNav nama={s.nama} bisaAjukan={bisa} bisaSetujui={bisaSetuju} jumlahMenunggu={menunggu} aktif="beranda" />
+      <AppNav nama={s.nama} {...await propsNav(s)} aktif="beranda" />
       <main className="dash">
         <div className="dash-head">
           <div>
@@ -42,6 +45,7 @@ export default async function Home() {
             <p className="muted">{s.jabatan}</p>
           </div>
           <div className="dash-aksi">
+            {fin && <a className="btn btn-secondary" href="/finance">Antrean Finance</a>}
             {bisaSetuju && <a className="btn btn-secondary" href="/persetujuan">Persetujuan{menunggu ? ` (${menunggu} menunggu)` : ''}</a>}
             {bisa && <a className="btn btn-primary" href="/pengajuan/baru">Buat pengajuan</a>}
           </div>
@@ -57,7 +61,22 @@ export default async function Home() {
               </a>
             ))}
           </div>
-        ) : <div className="kartu"><p className="muted">Fitur Finance menyusul di milestone berikutnya.</p></div>}
+        ) : null}
+
+        {fin && (
+          <>
+            <h2 className="sec-h">Antrean Finance</h2>
+            <div className="metrik metrik-4">
+              {fin.tahap.map((t) => (
+                <a key={t.kunci} className={`metrik-kartu${t.jumlah && t.bisaAksi ? ' nada-kuning' : ''}`} href={`/finance?tahap=${t.kunci}`}>
+                  <span className="metrik-ikon"><IkonProses /></span>
+                  <div className="metrik-teks"><div className="metrik-n num">{t.jumlah}</div><div className="metrik-l">{t.label}</div></div>
+                  <span className="metrik-panah" aria-hidden="true"><IkonPanah /></span>
+                </a>
+              ))}
+            </div>
+          </>
+        )}
 
         {dash.manager && (
           <>

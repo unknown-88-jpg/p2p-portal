@@ -547,7 +547,9 @@ dialog.lebar .dlg-aksi .btn { white-space: nowrap; }
 .metrik-panah .ikon { width: 16px; height: 16px; }
 a.metrik-kartu:hover .metrik-panah { background: var(--primary); color: #fff; }
 a.metrik-kartu:focus-visible { outline-offset: 3px; border-radius: var(--r-lg); }
-@media (max-width: 760px) { .metrik { grid-template-columns: minmax(0, 1fr); gap: 8px; } .metrik-kartu { padding: 10px 14px; } .metrik-n { font-size: 24px; } }
+.metrik.metrik-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .metrik.metrik-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .metrik, .metrik.metrik-4 { grid-template-columns: minmax(0, 1fr); gap: 8px; } .metrik-kartu { padding: 10px 14px; } .metrik-n { font-size: 24px; } }
 
 /* ---- Warna kartu statistik (semantik; hanya aktif bila angka > 0, angka 0 tetap netral) ----
    merah  = butuh tindakan Anda (draf / revisi)      -> border ikut berwarna (sinyal mendesak)
@@ -751,6 +753,32 @@ dialog .chips.tombol-baris .chip { text-align: left; border-radius: var(--r-md);
 
 .inbox-aksi { background: var(--canvas); border: 1px solid var(--hairline); border-radius: 24px; padding: 22px; }
 .ds-l { display: block; font-size: 13px; color: var(--muted); }
+/* F2-A: antrean Finance */
+.fin-tahap { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+.fin-tab { display: grid; gap: 2px; text-align: left; font: inherit; color: inherit; cursor: pointer; padding: 12px 14px; background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); min-width: 0; }
+.fin-tab:hover { border-color: var(--chip); }
+.fin-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.fin-tab.aktif { border: 2px solid var(--primary); padding: 11px 13px; background: #f6f9fe; }
+.fin-tab-l { font-size: 13px; font-weight: 600; color: var(--ink-80); }
+.fin-tab-n { font-size: 24px; font-weight: 700; line-height: 1.15; letter-spacing: -0.3px; }
+.fin-tab-s { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.fin-ringkas { margin: 0 0 16px; }
+.fin-alat { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; max-width: 640px; }
+.fin-alat .cari { flex: 1 1 auto; max-width: none; }
+.fin-urut select { min-height: 44px; padding: 0 10px; border: 1px solid var(--hairline); border-radius: 12px; background: var(--canvas); font: inherit; font-size: 14px; color: inherit; }
+.fin-badges { display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.badge-saya { display: inline-flex; align-items: center; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: #fff2cf; color: #7a5600; }
+.badge-tunggu { display: inline-flex; align-items: center; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: #e4effb; color: #00509e; }
+.ib-jt.lewat { color: #b3261e; font-weight: 600; }
+.fin-st { margin-bottom: 12px; }
+.fin-menyusul { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--hairline); }
+.by-ringkas { margin-bottom: 12px; }
+.vp { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hairline); }
+.vp .grid2 { gap: 0 10px; }
+.vp .ip-aksi { display: grid; gap: 8px; margin-top: 12px; }
+.vp .ip-rincian { margin: 4px 0 12px; }
+@media (max-width: 900px) { .fin-tahap { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .fin-alat { flex-direction: column; } .fin-urut select { width: 100%; } }
 .ip-angka { font-size: 30px; line-height: 1.1; font-weight: 700; letter-spacing: -0.4px; margin-top: 4px; }
 .ip-sub { font-size: 13px; color: var(--muted); margin-top: 6px; }
 .ip-rincian { margin: 14px 0 0; padding: 12px 14px; background: var(--parchment); border-radius: var(--r-md); }

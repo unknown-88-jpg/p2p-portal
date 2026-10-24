@@ -12,6 +12,7 @@ Salinan dokumen dari Project claude.ai "P2P Finance Portal", diambil 2026-10-24.
 | `konteks-sistem-p2p-portal.md` | Konteks & keputusan sistem Apps Script lama (alasan tiap kontrol uang) | Sebelum "memperbaiki" aturan yang tampak aneh |
 | `code-review-2026-09-18.md` | Review sistem lama (celah yang sudah ditutup) | Referensi |
 | `m8-uat-hasil.md`, `m8-uat-runbook.md`, `phase1-status.md` | Hasil UAT M8, temuan F-01…F-16, runbook | Status Fase 1 |
+| `f2-uat-runbook.md` | Runbook UAT Fase 2 / Finance (F1–F21) | Sebelum UAT Finance |
 
 Catatan: hasil per milestone M3–M8 yang lebih rinci ada di bagian milestone `README.md` repo ini. Dokumen `m3…m7-hasil.md` dan spike kit tidak disalin.
 Status keputusan terbaru ada di `docs/STATUS-DAN-ROADMAP.md` dan `docs/ROADMAP-FASE-2-4.md` (bila berbeda dengan dokumen lama di sini, yang terbaru menang).
