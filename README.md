@@ -302,6 +302,10 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - **Manual maks. 1x per tujuan** per siklus verifikasi (kunci Redis `wa:fin-manual:{id}:{finmgr|cfo}:{siklus}`; dikembalikan lalu diverifikasi ulang = siklus baru). Pengingat berikutnya lewat digest Finance terjadwal. Tidak ada yang terkirim → jatah dikembalikan.
 - Pesan tanpa kode balasan (persetujuan Finance hanya lewat web + password, O4). Audit `WA_REMINDER_MANUAL` (Level 4 / Level 5).
 
+## Ruang kerja verifikasi pajak (desain 2, 2026-10-24)
+- Tahap **Verifikasi pajak** (Finance Staff): daftar tampil sebagai kartu; klik kartu membuka ruang kerja penuh — jejak "← Antrean verifikasi pajak / ID", header (status, vendor, peringatan, **Nominal akhir** + "dari nilai invoice"), baris info (pengaju, brand/dept, tipe, keperluan, no. invoice, jatuh tempo, detail lengkap), tiga kolom **Lampiran invoice** (gambar tampil langsung; PDF lewat "Tab baru" karena CSP `object-src 'none'`) · **Form verifikasi** (penjelasan status PPN, status NPWP) · **Rincian perhitungan & catatan**, dan footer **Kembalikan ke PIC / Loloskan verifikasi**.
+- Peringatan (tampilan saja, tidak memblokir): diskon ≥ 20% dari nilai invoice, nominal akhir berubah, ajuan sendiri (Loloskan tetap terkunci, I6). Logika, endpoint, idempotensi, dan hitung ulang server (I2) tidak berubah.
+
 ## Urutan daftar: terbaru dulu (2026-10-24, keputusan user)
 - Semua daftar di dashboard kini **terbaru dulu**: antrean Finance (default "Terbaru"; pilihan "Terlama di tahap" / jatuh tempo / nominal tetap ada), inbox persetujuan Manager, antrean pengesahan vendor, daftar user Admin, rincian aging AP (jatuh tempo terbaru dulu, tanpa jatuh tempo di akhir), kandidat arsip. Yang sudah terbaru dulu: pengajuan saya, vendor saya, beranda, log pembayaran, audit, riwayat export, pencarian.
 - Beda dari sebelumnya: antrean Finance & inbox Manager dulu tertua dulu (FIFO). Timeline riwayat di detail dokumen tetap kronologis.

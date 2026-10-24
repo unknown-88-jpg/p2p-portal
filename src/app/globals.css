@@ -973,3 +973,64 @@ dialog .chips.tombol-baris + .f { margin-top: 16px; }
 .wa-fin { display: grid; gap: 6px; margin: 4px 0 12px; }
 .wa-fin .cap { font-size: 12px; }
 .ip-rincian dd { white-space: nowrap; }
+
+/* ---- Ruang kerja verifikasi pajak (desain 2) ---- */
+.inbox.hanya-daftar { grid-template-columns: minmax(0, 1fr); grid-template-areas: "l"; }
+.inbox.hanya-daftar .ib-daftar { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.btn-outline-danger { background: #fff; color: var(--danger); border: 1.5px solid var(--danger); }
+.btn-outline-danger:hover:not(:disabled) { background: var(--danger-bg); }
+.rv-wadah { margin-top: 8px; }
+.rv-jejak { display: flex; align-items: center; gap: 8px; font-size: 15px; margin-bottom: 14px; }
+.rv-jejak > span:last-child { font-weight: 600; }
+.rv { background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); overflow: hidden; }
+.rv-head { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto; gap: 20px; align-items: start; padding: 24px 28px; border-bottom: 1px solid var(--divider); }
+.rv-id { display: grid; gap: 6px; justify-items: start; }
+.rv-vendor { font-size: 28px; letter-spacing: -0.4px; line-height: 1.15; }
+.rv-peringatan { display: grid; gap: 8px; align-self: center; }
+.rv-warn { display: flex; gap: 10px; align-items: flex-start; padding: 12px 16px; border: 1px solid #f0d58a; background: var(--warn-bg); color: var(--warn); border-radius: var(--r-md); font-size: 14px; }
+.rv-warn .ikon { flex: none; width: 20px; height: 20px; margin-top: 1px; }
+.rv-warn div { display: grid; gap: 2px; } .rv-warn b { font-weight: 600; }
+.rv-total { display: grid; justify-items: end; gap: 2px; text-align: right; }
+.rv-total strong { font-size: 40px; line-height: 1.1; letter-spacing: -0.6px; }
+.rv-info { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)) auto; gap: 12px 20px; align-items: end; margin: 0; padding: 18px 28px; border-bottom: 1px solid var(--divider); }
+.rv-info dt { font-size: 13px; color: var(--muted); } .rv-info dd { margin: 2px 0 0; font-size: 16px; overflow-wrap: anywhere; }
+.rv-detail { white-space: nowrap; font-size: 15px; }
+.rv-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1.1fr); }
+.rv-kol { padding: 22px 28px; min-width: 0; }
+.rv-kol + .rv-kol { border-left: 1px solid var(--divider); }
+.rv-kol-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.rv-kol-h .ds-h { margin: 0; display: inline-flex; align-items: center; gap: 6px; }
+.rv-kol-h .ikon { width: 16px; height: 16px; }
+.rv-lamp-isi { background: var(--parchment); border-radius: var(--r-md); padding: 14px; min-height: 260px; display: grid; place-items: center; text-align: center; }
+.rv-lamp-isi img { max-width: 100%; max-height: 640px; border-radius: 6px; background: #fff; }
+.rv-ppn { margin: -4px 0 12px; }
+.rv-npwp { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: -4px; }
+.rv-rincian { background: var(--parchment); border-radius: var(--r-md); padding: 16px 18px; margin-bottom: 14px; }
+.rv-rincian > b { display: block; font-size: 15px; margin-bottom: 8px; }
+.rv-rincian dl { margin: 0; display: grid; gap: 8px; font-size: 15px; }
+.rv-rincian dl > div { display: flex; justify-content: space-between; gap: 12px; }
+.rv-rincian dd { margin: 0; white-space: nowrap; } .rv-rincian dt { color: var(--ink-80); }
+.rv-rincian .pisah { border-top: 1px solid var(--hairline); padding-top: 10px; margin-top: 2px; }
+.rv-rincian .total { border-top: 1px solid var(--hairline); padding-top: 12px; margin-top: 2px; font-weight: 700; font-size: 17px; }
+.rv-rincian .total dd { font-size: 22px; }
+.rv-foot { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; padding: 18px 28px; border-top: 1px solid var(--hairline); background: rgba(255, 255, 255, 0.96); }
+.rv-foot > div:first-child { display: grid; } .rv-foot > div:first-child strong { font-size: 26px; }
+.rv-aksi { display: grid; justify-items: end; gap: 8px; }
+.rv-tombol { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; }
+.rv-tombol .btn { min-width: 220px; }
+.rv-tombol .ikon { width: 18px; height: 18px; margin-right: 6px; vertical-align: -3px; }
+@media (max-width: 1200px) {
+  .rv-head { grid-template-columns: minmax(0, 1fr) auto; } .rv-peringatan { grid-column: 1 / -1; grid-row: 2; }
+  .rv-info { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rv-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .rv-lamp { grid-column: 1 / -1; border-bottom: 1px solid var(--divider); }
+  .rv-lamp + .rv-kol { border-left: 0; }
+}
+@media (max-width: 760px) {
+  .rv-head, .rv-info, .rv-kol, .rv-foot { padding-left: 16px; padding-right: 16px; }
+  .rv-head { grid-template-columns: minmax(0, 1fr); } .rv-total { justify-items: start; text-align: left; } .rv-peringatan { grid-row: auto; }
+  .rv-vendor { font-size: 22px; } .rv-total strong { font-size: 32px; }
+  .rv-info { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rv-body { grid-template-columns: minmax(0, 1fr); } .rv-kol + .rv-kol { border-left: 0; border-top: 1px solid var(--divider); }
+  .rv-aksi { justify-items: stretch; width: 100%; } .rv-tombol .btn { flex: 1 1 100%; min-width: 0; }
+}
+@container (min-width: 1020px) { .inbox.hanya-daftar { grid-template-columns: minmax(0, 1fr); grid-template-areas: "l"; } }

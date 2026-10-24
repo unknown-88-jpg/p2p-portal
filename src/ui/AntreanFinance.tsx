@@ -74,7 +74,10 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
   const ring = data.tahap.find((t) => t.kunci === tahap)!;
   const selesai = (p: { jenis: 'ok' | 'warn'; teks: string }, ulang: boolean) => { setInfo(p); setSel(null); setDetailHP(false); setPilih(new Set()); if (ulang) void muat(); };
   const bisaPilih = (tahap === 'jurnal' || tahap === 'bayar') && ring.bisaAksi;
-  const cur = tampil.find((i) => i.id === sel) ?? (!detailHP ? tampil[0] ?? null : null);
+  // Tahap pajak (bisa aksi): daftar kartu -> klik membuka ruang kerja verifikasi penuh (desain 2), bukan panel samping.
+  const ruangPajak = tahap === 'pajak' && ring.bisaAksi;
+  const dokRuang = ruangPajak ? tampil.find((i) => i.id === sel) ?? null : null;
+  const cur = ruangPajak ? null : tampil.find((i) => i.id === sel) ?? (!detailHP ? tampil[0] ?? null : null);
 
   return (
     <>
@@ -98,15 +101,18 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
         <div className="kosong" role="status"><h2>Tidak ada dokumen di tahap ini</h2><p className="muted">Dokumen akan muncul di sini setelah tahap sebelumnya selesai.</p></div>
       ) : (
         <>
-        <div className="fin-alat">
+        {!dokRuang && <div className="fin-alat">
           <div className="cari"><input type="search" aria-label="Cari di antrean" placeholder="Cari ID, vendor, invoice, PIC" value={q} onChange={(e) => setQ(e.target.value)} /></div>
           <label className="fin-urut"><span className="sr-only">Urutkan</span>
             <select value={urut} onChange={(e) => setUrut(e.target.value as Urut)}>
               <option value="terbaru">Terbaru</option><option value="umur">Terlama di tahap</option><option value="jatuh-tempo">Jatuh tempo terdekat</option><option value="nominal">Nominal terbesar</option>
             </select>
           </label>
-        </div>
-        <div className="inbox-wrap"><div className={`inbox${detailHP ? ' hp-detail' : ''}`}>
+        </div>}
+        {dokRuang ? (
+          <FormVerifikasiPajak key={`${dokRuang.id}|${dokRuang.etag}`} dok={dokRuang} onSelesai={selesai} onKembali={() => { setSel(null); setDetailHP(false); }} />
+        ) : (
+        <div className="inbox-wrap"><div className={`inbox${detailHP ? ' hp-detail' : ''}${ruangPajak ? ' hanya-daftar' : ''}`}>
           <section className="inbox-list" aria-label={ring.label}>
             {tampil.length === 0 ? <p className="muted" role="status">Tidak ada yang cocok dengan kata kunci.</p> : (
               <ul className="ib-daftar">
@@ -176,9 +182,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
                 </dl>}
                 {cur.perluCFO && <p className="cap"><span className="badge-cfo">Butuh persetujuan CFO</span></p>}
                 </>}
-                {cur.tahap === 'pajak' && ring.bisaAksi
-                  ? <FormVerifikasiPajak key={`${cur.id}|${cur.etag}`} dok={cur} onSelesai={selesai} />
-                  : cur.tahap === 'jurnal' && ring.bisaAksi
+                {cur.tahap === 'jurnal' && ring.bisaAksi
                   ? <FormJurnal key="jurnal" target={terpilih.length ? terpilih : [cur]} onSelesai={selesai} />
                   : cur.tahap === 'bayar' && ring.bisaAksi
                   ? <FormBayar key="bayar" target={terpilih.length ? terpilih : [cur]} onSelesai={selesai} />
@@ -189,6 +193,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
             </>
           )}
         </div></div>
+        )}
         </>
       )}
     </>
