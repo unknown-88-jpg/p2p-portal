@@ -66,6 +66,14 @@ export const angka = (raw: string): number => { const r = parseRupiah(raw); retu
 export const formatRibuan = (n: number): string => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 export const rupiah = (n: number): string => `${n < 0 ? '-' : ''}Rp ${formatRibuan(Math.abs(n))}`;
 
+/** Ganti jenis pembayaran. Full Payment mengisi nilai invoice = sisa tagihan P.O; DP/Pelunasan mengosongkan nilai yang tadi terisi otomatis (nilai ketikan user tidak disentuh). */
+export function gantiJenisPembayaran(f: Pick<FormPengajuan, 'jenisPembayaran' | 'invoiceAmount'>, jenis: string, sisaTagihanPO: number | null): Partial<FormPengajuan> {
+  const otomatis = sisaTagihanPO !== null && sisaTagihanPO > 0 ? formatRibuan(sisaTagihanPO) : '';
+  if (jenis === 'Full Payment' && otomatis) return { jenisPembayaran: jenis, invoiceAmount: otomatis };
+  if (f.jenisPembayaran === 'Full Payment' && otomatis && f.invoiceAmount === otomatis) return { jenisPembayaran: jenis, invoiceAmount: '' };
+  return { jenisPembayaran: jenis };
+}
+
 /** Nomor rekening disamarkan sebagian (design 7.4.C): hanya 4 digit terakhir. */
 export function samarkanRekening(no: string): string {
   const d = no.replace(/\s+/g, '');

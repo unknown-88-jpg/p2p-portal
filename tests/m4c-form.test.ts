@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  angka, bacaDrafLokal, bacaKetikan, bisaSimpanDraft, brandBoleh, cekPoUntukTrade, deptBoleh, gaugePlafon, dariDokumen, formAdaIsi, formKosong, formatRibuan, keInputServer, langkahBermasalah, parseRupiah,
+  angka, bacaDrafLokal, bacaKetikan, bisaSimpanDraft, brandBoleh, cekPoUntukTrade, deptBoleh, gaugePlafon, dariDokumen, formAdaIsi, formKosong, formatRibuan, gantiJenisPembayaran, keInputServer, langkahBermasalah, parseRupiah,
   peringatanBarang, pilihKunci, previewHitung, rupiah, samarkanRekening, serialDrafLokal, sidikJari, tambahHari, validasiLangkah,
   type DokumenDto, type FormPengajuan, type KonteksValidasi,
 } from '@/domain/pengajuan-form';
@@ -257,5 +257,20 @@ describe('bacaKetikan (ketik angka satu per satu)', () => {
   it('huruf ditolak; kosong = 0', () => {
     expect(bacaKetikan('1.500', '1.500a')).toMatchObject({ ok: false });
     expect(bacaKetikan('1', '')).toEqual({ ok: true, n: 0 });
+  });
+});
+
+describe('gantiJenisPembayaran: Full Payment mengisi nilai invoice = sisa tagihan P.O', () => {
+  it('Full Payment mengisi sisa tagihan', () => {
+    expect(gantiJenisPembayaran({ jenisPembayaran: '', invoiceAmount: '' }, 'Full Payment', 53_417_086)).toEqual({ jenisPembayaran: 'Full Payment', invoiceAmount: '53.417.086' });
+  });
+  it('DP/Pelunasan tetap kosong; nilai otomatis dari Full Payment dikosongkan lagi', () => {
+    expect(gantiJenisPembayaran({ jenisPembayaran: '', invoiceAmount: '' }, 'DP', 1_000_000)).toEqual({ jenisPembayaran: 'DP' });
+    expect(gantiJenisPembayaran({ jenisPembayaran: 'Full Payment', invoiceAmount: '1.000.000' }, 'Pelunasan', 1_000_000)).toEqual({ jenisPembayaran: 'Pelunasan', invoiceAmount: '' });
+  });
+  it('nilai ketikan user tidak dihapus saat pindah ke DP; tanpa P.O / sisa 0 tidak mengisi', () => {
+    expect(gantiJenisPembayaran({ jenisPembayaran: 'Full Payment', invoiceAmount: '750.000' }, 'DP', 1_000_000)).toEqual({ jenisPembayaran: 'DP' });
+    expect(gantiJenisPembayaran({ jenisPembayaran: '', invoiceAmount: '' }, 'Full Payment', null)).toEqual({ jenisPembayaran: 'Full Payment' });
+    expect(gantiJenisPembayaran({ jenisPembayaran: '', invoiceAmount: '' }, 'Full Payment', 0)).toEqual({ jenisPembayaran: 'Full Payment' });
   });
 });
