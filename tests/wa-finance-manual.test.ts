@@ -78,7 +78,7 @@ describe('Kirim WA tahap persetujuan Finance (1x per tujuan)', () => {
     const tolak = (info: string) => { w.deps.wa = { send: async () => ({ ok: false, info }) }; };
     tolak('diblokir allowlist trial');
     const e = await kirimWaFinance(w.deps, fs, 'NTR-00001').catch((x: unknown) => x as AppError);
-    expect(e).toMatchObject({ code: 'RULE_VIOLATION', message: expect.stringMatching(/Mode trial: nomor WA Fin\. Mgr \(.*\*.*\) belum ada di daftar izin WA_TRIAL_ALLOWLIST/) });
+    expect(e).toMatchObject({ code: 'RULE_VIOLATION', message: expect.stringMatching(/Mode trial: nomor WA Fin\. Mgr \(.*\*.*\) belum diizinkan.*Master_User_TTD.*WA_TRIAL_ALLOWLIST/) });
     expect((e as AppError).message).not.toContain(HP_FM);
     tolak('WA belum dikonfigurasi');
     expect(await kirimWaFinance(w.deps, fs, 'NTR-00001').catch((x: AppError) => x.message)).toMatch(/belum dikonfigurasi/);
@@ -86,5 +86,14 @@ describe('Kirim WA tahap persetujuan Finance (1x per tujuan)', () => {
     expect(await kirimWaFinance(w.deps, fs, 'NTR-00001').catch((x: AppError) => `${x.code} ${x.message}`)).toMatch(/UPSTREAM_BUSY .*sesi WhatsApp gateway putus/);
     w.deps.wa = w.wa;
     expect(await kode(kirimWaFinance(w.deps, fs, 'NTR-00001'))).toBe('OK'); // jatah tidak hangus oleh kegagalan di atas
+  });
+});
+
+describe('allowlist trial dari Master_User_TTD (opsi 1)', () => {
+  it('nomorUserAktif: hanya user aktif ber-nomor; nonaktif tidak diizinkan', async () => {
+    const { nomorUserAktif } = await import('@/server/deps');
+    const w2 = authWorld();
+    const n = await nomorUserAktif(w2.deps);
+    expect([...n].sort()).toEqual(['6281200000001', '6281200000002', '6281200000003']); // Eko (NO) tidak ada
   });
 });

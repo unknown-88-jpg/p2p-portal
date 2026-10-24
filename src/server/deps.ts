@@ -5,6 +5,8 @@ import { UpstashRedis } from '@/infra/upstash-redis';
 import { systemClock } from '@/lib/clock';
 import { env } from '@/lib/env';
 import type { UowDeps } from './uow';
+import { loadAccounts } from './users';
+import { bacaTampilan } from './view-cache';
 
 /** Perakitan produksi. Dibuat per-request/per-skrip; tidak menyimpan state bisnis (instance Vercel boleh berganti kapan saja). */
 export function productionDeps(): UowDeps {
@@ -26,7 +28,7 @@ import type { AuthDeps } from './auth';
 export function productionAuthDeps(): AuthDeps {
   const base = productionDeps();
   const e = env();
-  const wa = buildWaSender(e);
+  const wa = buildWaSender(e, () => nomorUserAktif(base)); // trial: izin WA = env + user aktif sheet dummy
   const dev = new DevLinkSender(e.APP_ENV);
   return {
     ...base,
@@ -43,4 +45,10 @@ export function productionAuthDeps(): AuthDeps {
 export function productionBackupDrive(): GoogleDrive | null {
   const id = env().DRIVE_BACKUP_ID;
   return id ? new GoogleDrive(id) : null;
+}
+
+/** Nomor HP user AKTIF di Master_User_TTD (cache tampilan 15 dtk). Dipakai allowlist WA mode trial. */
+export async function nomorUserAktif(d: UowDeps): Promise<ReadonlySet<string>> {
+  const akun = await loadAccounts({ readRows: (sc) => bacaTampilan(d, sc) });
+  return new Set([...akun.values()].filter((a) => a.aktif && a.phone).map((a) => a.phone));
 }
