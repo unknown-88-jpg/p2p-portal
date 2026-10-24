@@ -24,7 +24,7 @@ Dokumen desain ada di repo ini (sumber utama, update lewat PR): `docs/desain/` (
 3. **Tidak ada push langsung ke `main`.** Selalu branch (`feat/…`, `fix/…`, `docs/…`) → commit → push → PR. Merge ke `main` = deploy Production otomatis di Vercel, jadi merge dilakukan manusia setelah review.
 4. **Perubahan yang menyentuh kontrol uang atau keamanan** (plafon PO, pajak, approval/SoD, step-up, pembayaran, auth, throttle, webhook, CSRF, authz): jelaskan alasan dan dampak DULU, minta konfirmasi user, baru ubah. Tulis/ubah test invarian bersamaan dengan kodenya.
 5. **Jangan mengubah perilaku diam-diam.** Beda dari sistem lama harus tercatat (README / docs) dan diputuskan user. Jangan "memperbaiki" aturan yang tampak aneh tanpa menanyakan (mis. SoD, ambang Rp 5 jt, retensi PO).
-6. **Fase 2 (Finance):** O4/O5 sudah dikonfirmasi eksplisit 2026-10-24 (O4 e-approve L4/L5 tanpa jalur scan, O5a ya, O5b peringatan; lihat `docs/ROADMAP-FASE-2-4.md` §2.0). Tiap milestone F2-x tetap butuh "go"; jangan mulai milestone berikutnya tanpa "go".
+6. **Fase 2 (Finance):** O4/O5 sudah dikonfirmasi eksplisit 2026-10-24 (O4 e-approve L4/L5 tanpa jalur scan, O5a ya, O5b peringatan, I6 blokir, kas list dari Master_COA; lihat `docs/ROADMAP-FASE-2-4.md` §2.0). Tiap milestone F2-x tetap butuh "go"; jangan mulai milestone berikutnya tanpa "go".
 7. **Berhenti setelah tiap milestone/PR** dan tunggu review. Jangan menggabungkan banyak milestone dalam satu PR.
 8. Baca file/fungsi yang relevan sebelum mengubah; jangan menebak dari nama. Kalau ada ambiguitas penting, tanya.
 9. Jangan masukkan `node_modules`, `.next`, atau `.env*` ke commit. Jangan menambah dependensi tanpa alasan tertulis.
