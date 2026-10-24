@@ -19,7 +19,7 @@ Dokumen lengkap (hasil UAT, desain, risiko) ada di Project "P2P Finance Portal" 
 - Bukti kapasitas: Sheets ±15% dari batas baca, Vercel 0% error, Upstash ±4% kuota bulanan; load test lokal & Vercel lulus.
 - Patch 1 (F-01…F-09) diterapkan.
 - UAT lulus: U1–U11, U12–U14 & U16 (jalur WA nyata), U15, U17–U20, U22, U24. U13 lulus **by design** (kode WA tidak diterbitkan untuk ≥ Rp 5 jt; server menolak jalur `wa`).
-- Digest WA ke Manager: GitHub Actions `digest-approval` aktif (hari kerja 09/12/15/17 WIB; secret `APP_URL`, `CRON_SECRET` terpasang; run manual #5 sukses). Catatan: **WA ke Manager hanya lewat digest**, tidak otomatis saat submit (F-15).
+- Digest WA ke Manager: GitHub Actions `digest-approval` aktif (hari kerja 09/12/15/17 WIB; secret `APP_URL`, `CRON_SECRET` terpasang; run manual #5 sukses). F-15 selesai 2026-10-24: selain digest, PIC bisa menekan **Kirim WA** di beranda (maks. 1x/hari per dokumen).
 
 ## Fase 1 / M8 — belum selesai
 1. **Patch 2 sudah di kode** (PR #18: F-11 durasi kunci login, F-12 cek link set-password saat halaman dibuka, F-13 voucher cetak 1 halaman di iOS, F-14 parser WA abaikan `*`/`_`/`~`). Sisa: pastikan ter-deploy; F-13 **harus diverifikasi ulang di iPhone** (hasil di sini baru simulasi Chromium).
@@ -31,7 +31,6 @@ Dokumen lengkap (hasil UAT, desain, risiko) ada di Project "P2P Finance Portal" 
 ## Temuan terbuka (tidak menghalangi Fase 1)
 - F-02: invoice PDF tidak bisa dicetak gabungan dengan voucher (CSP `object-src 'none'`).
 - Pembatas set-password `setpass` memakai kunci nomor `'-'` yang **global**: 10 kegagalan dari IP mana pun mengunci pengiriman password untuk semua orang 15 menit. Perlu dirancang ulang (per IP/per token).
-- F-15: pertimbangkan notifikasi WA langsung saat submit.
 - Daftar kas (placeholder), screenshot Master_COA produksi, rekening di Master_COA dummy terlihat nyata, folder Drive `upload-test` berisi file lain, perbandingan 5 voucher dengan sistem lama (syarat keluar M7), label data basah (stale) di UI.
 - Sebelum go-live: tambah `1zau0TiAc0r9OIFuVUHpQzq5tgBUr2AepS0RfgLLAzwg` ke `PROD_SHEET_IDS`; ganti nama/pisahkan database Upstash (`p2p-spike`); hitung ulang kuota Upstash dengan jumlah user nyata; rotasi API key gateway lama bersama Script Properties.
 
