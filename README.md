@@ -10,7 +10,7 @@ Status per 2026-10-24: **Fase 1 / M8 (UAT & penutupan) berjalan.** Rincian terki
 |---|---|---|
 | **0** Spike | Sheets/Drive/Upstash/Vercel layak dipakai | ✅ Selesai |
 | **1** Auth, Ajukan, Approval | M0 fondasi · M1 lapisan data · M2 auth · M3 master/PO/pajak · M4a–c pengajuan (server, lampiran, UI) · M5 persetujuan Manager · M6 WhatsApp · M7 detail/voucher/dashboard · M8 hardening & UAT | M0–M7 ✅ · **M8 🟡 berjalan** |
-| **2** Finance | Verifikasi pajak, e-approve Fin. Mgr/CFO (O4: menggantikan TTD basah, tanpa transisi), jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | 🟡 Berjalan: F2-A ✅ (antrean & hak akses), F2-B ✅ (verifikasi pajak), F2-C ✅ (e-approve Fin. Mgr/CFO), F2-D ✅ (jurnal COA bulk), F2-E ✅ (pembayaran), F2-F ✅ (notif, riwayat bayar, digest Finance) |
+| **2** Finance | Verifikasi pajak, e-approve Fin. Mgr/CFO (O4: menggantikan TTD basah, tanpa transisi), jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | 🟡 Berjalan: F2-A ✅ (antrean & hak akses), F2-B ✅ (verifikasi pajak), F2-C ✅ (e-approve Fin. Mgr/CFO), F2-D ✅ (jurnal COA bulk), F2-E ✅ (pembayaran), F2-F ✅ (notif, riwayat bayar, digest Finance), F2-G 🟡 (kode & review selesai; UAT menunggu) |
 | **3** Pendukung | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | ⬜ Belum mulai |
 | **4** Go-live | Vercel Pro, `PROD_SHEET_IDS`, Upstash terpisah, cutover dari Apps Script | ⬜ Belum mulai |
 
@@ -233,6 +233,20 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - **Riwayat pembayaran** (port `getPaymentHistory`/`getTotalPaidFromLog`): `GET /api/pengajuan/{id}/payments` dan bagian **Pembayaran** di detail dokumen (tanggal, nominal, rekening sumber, ref, oleh; total dibayar & sisa) — dihitung dari `Trx_Payment_Log`; akses = I13 (selain itu 404).
 - **Digest WA Finance** (`kirimDigestFinance`, ikut dipicu `GET /api/cron/digest` di jadwal yang sama): satu ringkasan per pengguna Finance yang punya antrean untuk **ditindak** — Finance Staff: verifikasi pajak (tanpa ajuan sendiri, I6), jurnal, siap dibayar (yang lolos I4; total sisa); Fin. Mgr: belum disetujui Fin. Mgr; CFO: sudah Fin. Mgr & butuh CFO (bukan yang dia setujui sebagai Fin. Mgr). Link ke `/finance?tahap=…`, **tanpa kode SETUJU/TOLAK**. Kunci 4 menit; gagal kirim dihitung, tidak melempar; gagal digest Finance tidak menggagalkan digest Manager.
 - **`/api/home`**: `bisa.finance` = L3/L4/L5; `antreanFinance` = jumlah per tahap (beranda Finance sudah menampilkan 4 kartu sejak F2-A).
+
+## Fase 2 / F2-G — Hardening & UAT Finance (2026-10-24)
+- **Review keamanan jalur uang** (independen, adversarial): tidak ada bypass otorisasi, bayar ganda, overpay, atau celah gerbang I4. Temuan yang diperbaiki:
+  - akun **tanpa email** tidak boleh bertindak di jalur uang (sebelumnya satu orang ber-L4+L5 tanpa email bisa memberi dua tanda tangan; penanda O5b juga buta);
+  - verifikasi pajak dengan **nominal akhir 0** ditolak (dokumen tidak macet di Siap Dibayar);
+  - **wajib CFO** = `REQUIRE_CFO` = YES **atau** nominal tersimpan ≥ Rp 5 jt (`wajibCFO`) di persetujuan, gerbang bayar, dan antrean — baris lama/diedit manual tidak bisa melewati CFO;
+  - waktu verifikasi pajak tak terbaca → persetujuan L4/L5 lama **tidak** dihitung (gagal tertutup);
+  - form menangani hasil "dipulihkan" setelah tulis ambigu ("sudah tersimpan, muat ulang");
+  - riwayat bayar tidak menampilkan email mentah pembayar (fallback "Finance");
+  - digest Manager & Finance saling independen (yang satu gagal tidak menghentikan yang lain).
+- **Kuota**: bayar / jurnal 30 dokumen = 1 panggilan tulis + baca terbatas (≤ 5 / ≤ 4), dites dengan penghitung panggilan.
+- **Matriks otorisasi** semua aksi Finance × level 1/2/3/4/5/9 dites (tidak berwenang = 403 sebelum menyentuh data).
+- **Uji beban** `npm run load-test`: `LOAD_FINANCE` (Fase A ikut membaca antrean Finance), **Fase C** opt-in (`LOAD_PAY_DOCS`, `LOAD_PAY_REK`; mengubah data dummy) = 10 pembayaran paralel + replay → lulus bila ≤ 1 sukses & tanpa overpay.
+- **UAT**: `docs/desain/f2-uat-runbook.md` (F1–F21) — **menunggu dijalankan** di Vercel trial.
 
 ## Deploy
 - **Trial (sekarang):** repo GitHub privat `unknown-88-jpg/p2p-portal`, branch `main` otomatis ter-deploy ke Vercel (team FAT, Hobby, project `p2p-portal`, URL produksi `https://p2p-portal-flax.vercel.app`). `vercel.json` memaksa region `sin1`. Banner "ENVIRONMENT TRIAL — DATA DUMMY" tampil selama `APP_ENV=trial`.

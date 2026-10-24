@@ -19,6 +19,9 @@ export async function api<T>(path: string, init?: ApiInit): Promise<T> {
   }
   return json;
 }
+/** Ulangan dengan Idempotency-Key yang sama setelah tulis AMBIGU yang ternyata berlaku: server mengembalikan {recovered: true}, bukan hasil lengkap. */
+export const hasilDipulihkan = (h: unknown): boolean => !!h && typeof h === 'object' && (h as { recovered?: unknown }).recovered === true;
+export const PESAN_DIPULIHKAN = 'Permintaan sebelumnya ternyata sudah tersimpan. Daftar dimuat ulang; periksa statusnya.';
 /** true = server MENJAWAB dengan error (hasilnya pasti: aksi tidak berlaku). false = jaringan putus/timeout (hasil AMBIGU: aksi mungkin sudah berlaku). */
 export const isApiError = (e: unknown): e is ApiError => !!e && typeof e === 'object' && typeof (e as { code?: unknown }).code === 'string';
 export const errMessage = (e: unknown): string => {

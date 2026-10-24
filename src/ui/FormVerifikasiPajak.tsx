@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ALASAN_MAX, CATATAN_MAX, TEMPLATE_ALASAN } from '@/domain/approval';
 import { alasanValid, catatanValid, pertahankanKunci, perluMuatUlang } from '@/domain/approval-ui';
 import { angka, formatRibuan, parseRupiah, pilihKunci, rupiah, type KunciIdem } from '@/domain/pengajuan-form';
-import { api, errMessage, isApiError } from './api';
+import { api, errMessage, hasilDipulihkan, isApiError, PESAN_DIPULIHKAN } from './api';
 import { Chips, Dialog, Field, Pesan, UangInput } from './kit';
 
 export interface DokPajak {
@@ -61,6 +61,7 @@ export function FormVerifikasiPajak({ dok, onSelesai }: { dok: DokPajak; onSeles
     kunci.current = pilihKunci(kunci.current, `${jenis}|${JSON.stringify(isi)}`, baru);
     try {
       const r = await api<{ hasil: { finalAmount?: number; perluCFO?: boolean } }>(url, { body: isi, headers: { 'idempotency-key': kunci.current.key } });
+      if (hasilDipulihkan(r.hasil)) { kunci.current = null; setDlg(null); onSelesai({ jenis: 'warn', teks: PESAN_DIPULIHKAN }, true); return; }
       kunci.current = null; setDlg(null);
       onSelesai(jenis === 'loloskan'
         ? { jenis: 'ok', teks: `${dok.id} lolos verifikasi pajak. Nominal akhir ${rupiah(r.hasil.finalAmount ?? 0)}; berikutnya persetujuan Fin. Mgr${r.hasil.perluCFO ? ' + CFO' : ''}.` }

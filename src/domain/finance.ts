@@ -1,5 +1,6 @@
 // Fase 2 / F2-A: tahap antrean Finance & hak akses per level. Murni, tanpa I/O. Sumber perilaku: getFinanceQueues (API_Finance.gs).
 import { can, type Capability } from './capabilities';
+import { butuhCFO } from './config';
 import type { Role } from './roles';
 import { STATUS, type Status } from './status';
 
@@ -69,7 +70,10 @@ const ok = (r: BarisApproval): boolean => String(r.action ?? '').trim().toUpperC
 export function statusPersetujuan(rows: readonly BarisApproval[]): StatusPersetujuan {
   const l3 = rows.filter((r) => ok(r) && lvl(r.level) === 3).sort((a, b) => ts(a.timestamp) - ts(b.timestamp)).at(-1);
   const mulai = l3 ? ts(l3.timestamp) : -Infinity;
+  // Gagal tertutup: verifikasi pajak ada tetapi waktunya tak terbaca (sel rusak/diedit manual) -> persetujuan L4/L5 dianggap belum ada.
+  const rusak = !!l3 && !Number.isFinite(mulai);
   const ambil = (level: number): Penyetuju | null => {
+    if (rusak) return null;
     const r = rows.filter((x) => ok(x) && lvl(x.level) === level && ts(x.timestamp) >= mulai).sort((a, b) => ts(a.timestamp) - ts(b.timestamp)).at(-1);
     return r ? { nama: String(r.nama ?? '').trim(), email: String(r.email ?? '').trim() } : null;
   };
@@ -98,6 +102,9 @@ export function cekEApprove(sebagai: Sebagai, roles: readonly Role[], email: str
 
 /** Setelah persetujuan ini, apakah tahap persetujuan selesai (lanjut ke Jurnal COA / status Wet Signed)? */
 export const persetujuanLengkap = (sebagai: Sebagai, perluCFO: boolean): boolean => sebagai === 'cfo' || !perluCFO;
+
+/** I1 berlapis: wajib CFO bila kolom REQUIRE_CFO = YES ATAU nominal tersimpan >= ambang (baris lama / diedit manual tidak bisa melewati CFO). */
+export const wajibCFO = (requireCfo: unknown, finalAmount: number): boolean => String(requireCfo ?? '').trim().toUpperCase() === 'YES' || butuhCFO(finalAmount);
 
 /** Penanda pemisahan tugas (bukan blokir, selaras O5b): penyetuju L4/L5 = pengaju atau verifikator pajak. */
 export function penandaTugasRangkap(email: string, pengajuEmail: string, st: StatusPersetujuan): string {

@@ -92,7 +92,7 @@ export async function riwayatBayar(d: AuthDeps, s: SessionData, idTrx: string) {
 async function riwayatDari(d: AuthDeps, idTrx: string, finalAmount: number) {
   const nama = await namaPeta(d);
   const items = (await bacaTampilan(d, TRX_PAYMENT_LOG)).filter((x) => str(Y(x, 'ID_Trx')).toUpperCase() === idTrx.toUpperCase())
-    .map((x) => { const oleh = str(Y(x, 'Created_By')); return { tgl: fmtTanggal(Y(x, 'Tgl_Bayar')), nominal: num(Y(x, 'Nominal')), sumber: str(Y(x, 'Sumber_Rekening')), ref: str(Y(x, 'Ref_No')), oleh: nama(oleh) }; });
+    .map((x) => { const oleh = str(Y(x, 'Created_By')); return { tgl: fmtTanggal(Y(x, 'Tgl_Bayar')), nominal: num(Y(x, 'Nominal')), sumber: str(Y(x, 'Sumber_Rekening')), ref: str(Y(x, 'Ref_No')), oleh: (nama(oleh) === oleh ? 'Finance' : nama(oleh)) }; }); // email mentah tidak ditampilkan
   const total = items.reduce((t, x) => t + x.nominal, 0);
   return { items, total, sisa: Math.max(finalAmount - total, 0) };
 }

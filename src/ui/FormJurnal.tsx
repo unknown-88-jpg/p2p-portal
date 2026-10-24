@@ -4,7 +4,7 @@ import { CATATAN_MAX } from '@/domain/approval';
 import { pertahankanKunci } from '@/domain/approval-ui';
 import { JURNAL_MAKS, opsiCoa, validasiJurnal, type BarisCoa } from '@/domain/finance';
 import { pilihKunci, type KunciIdem } from '@/domain/pengajuan-form';
-import { api, errMessage, isApiError } from './api';
+import { api, errMessage, hasilDipulihkan, isApiError, PESAN_DIPULIHKAN } from './api';
 import { Dialog, Field, Pesan } from './kit';
 
 export interface DokJurnal { id: string; vendorNama: string; etag: string }
@@ -44,6 +44,7 @@ export function FormJurnal({ target, onSelesai }: { target: readonly DokJurnal[]
     kunci.current = pilihKunci(kunci.current, JSON.stringify(body), baru);
     try {
       const r = await api<{ hasil: { berhasil: { id: string }[]; gagal: { id: string; alasan: string }[] } }>('/api/finance/jurnal', { body, headers: { 'idempotency-key': kunci.current.key } });
+      if (hasilDipulihkan(r.hasil)) { kunci.current = null; setDlg(false); onSelesai({ jenis: 'warn', teks: PESAN_DIPULIHKAN }, true); return; }
       kunci.current = null; setDlg(false);
       const { berhasil, gagal } = r.hasil;
       onSelesai({ jenis: gagal.length ? 'warn' : 'ok', teks: `${berhasil.length} dokumen terjurnal ke ${cek.akun}.${gagal.length ? ` Gagal: ${gagal.map((g) => `${g.id} (${g.alasan})`).join('; ')}` : ''}` }, true);

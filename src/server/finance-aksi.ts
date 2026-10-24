@@ -4,7 +4,7 @@ import { butuhCFO, CONFIG, LEVEL } from '@/domain/config';
 import { isValidYmd } from '@/domain/pengajuan';
 import { LEVEL_LABEL } from '@/domain/dokumen';
 import { RuleError } from '@/domain/errors';
-import { cekBolehDibayar, cekEApprove, hitungBayar, JENDELA_DUPLIKAT_MS, penandaTugasRangkap, persetujuanLengkap, PESAN_I6, statusPersetujuan, STATUS_BOLEH_KEMBALI_FINANCE, tugasRangkapBayar, validasiJurnal, type Sebagai } from '@/domain/finance';
+import { wajibCFO, cekBolehDibayar, cekEApprove, hitungBayar, JENDELA_DUPLIKAT_MS, penandaTugasRangkap, persetujuanLengkap, PESAN_I6, statusPersetujuan, STATUS_BOLEH_KEMBALI_FINANCE, tugasRangkapBayar, validasiJurnal, type Sebagai } from '@/domain/finance';
 import { num, str, upper } from '@/domain/legacy-parse';
 import { rupiah } from '@/domain/pengajuan-form';
 import { checkTransition, STATUS } from '@/domain/status';
@@ -27,6 +27,10 @@ const T = (k: string): number => colIndex(TRX_PENGAJUAN, k);
 const cell = (r: RawRow, k: string): CellValue => r[T(k)] ?? null;
 const idemOf = (k: string | undefined): { idempotencyKey?: string } => (k ? { idempotencyKey: k } : {});
 const CONFLICT = 'Dokumen berubah sejak Anda membukanya. Muat ulang lalu periksa lagi.';
+/** Identitas penandatangan/pembayar dicatat lewat email; akun tanpa email tidak boleh bertindak di jalur uang (pemisahan tugas & jejak audit bergantung padanya). */
+function wajibEmail(s: SessionData): void {
+  if (!s.email.trim()) throw new AppError('FORBIDDEN', 'Akun Anda belum punya email di Master_User_TTD. Hubungi admin sebelum memproses dokumen Finance.');
+}
 
 function approvalL3(idTrx: string, s: SessionData, action: 'APPROVED' | 'REJECTED', notes: string, now: number, level: number = LEVEL.FINANCE_STAFF): Mutation {
   return {
@@ -45,6 +49,7 @@ const statusChange = (s: SessionData, idTrx: string, dari: string, ke: string, n
  * Satu batch: baris + approval L3 + audit STATUS_CHANGE (+ TAX_ADJUST bila nominal berubah). Idempotency-Key wajib (aksi uang).
  */
 export async function verifikasiPajak(d: AuthDeps, s: SessionData, idTrx: string, input: z.infer<typeof verifikasiPajakSchema>, idemKey: string | undefined) {
+  wajibEmail(s);
   if (!can(s.roles, 'tax.verify')) throw new AppError('FORBIDDEN', 'Hanya Finance Staff yang bisa memverifikasi pajak.');
   return runAction(d, {
     name: 'finance.verifikasiPajak', actor: s.email || s.phone, money: true, ...idemOf(idemKey), lockKeys: [`trx:${idTrx}`],
@@ -65,6 +70,7 @@ export async function verifikasiPajak(d: AuthDeps, s: SessionData, idTrx: string
         calc = hitungPajak({ invAmount: input.invAmount, diskon: input.diskon, biayaLain: input.biayaLain, statusPPN: input.statusPPN, jenisPPh: input.jenisPPh || '-', npwpVendor: str(cell(r, 'NPWP_VENDOR')) }, await readPph(store));
       } catch (e) { if (e instanceof RuleError) throw new AppError('RULE_VIOLATION', e.message); throw e; }
 
+      if (calc.finalAmount <= 0) throw new AppError('RULE_VIOLATION', 'Nominal akhir harus lebih dari nol. Periksa nilai invoice, diskon, dan potongan PPh.');
       const oldFinal = num(cell(r, 'FINAL_AMOUNT'));
       const perluCFO = butuhCFO(calc.finalAmount);
       const now = toSheetSerial(clock.now());
@@ -90,6 +96,7 @@ export async function verifikasiPajak(d: AuthDeps, s: SessionData, idTrx: string
  * Boleh dari tahap Finance yang alurnya mengizinkan revisi (Manager Approved, Tax Verified, Wet Signed, COA Posted). Hanya Finance Staff (L3).
  */
 export async function kembalikanFinance(d: AuthDeps, s: SessionData, idTrx: string, input: z.infer<typeof kembalikanFinanceSchema>, idemKey: string | undefined) {
+  wajibEmail(s);
   const staff = can(s.roles, 'tax.verify');
   const penyetuju = can(s.roles, 'sign.eapprove.finmgr') ? LEVEL.FINANCE_MGR : can(s.roles, 'sign.eapprove.cfo') ? LEVEL.CFO : null;
   if (!staff && !penyetuju) throw new AppError('FORBIDDEN', 'Hanya Finance yang bisa mengembalikan dokumen ke PIC.');
@@ -126,6 +133,7 @@ export async function kembalikanFinance(d: AuthDeps, s: SessionData, idTrx: stri
  * Fin. Mgr saat CFO wajib -> status tetap Tax Verified, LAST_UPDATE berubah (etag ikut berubah).
  */
 export async function setujuiFinance(d: AuthDeps, s: SessionData, token: string, idTrx: string, input: z.infer<typeof setujuiFinanceSchema>, idemKey: string | undefined) {
+  wajibEmail(s);
   const sebagai: Sebagai = input.sebagai;
   const capOk = can(s.roles, sebagai === 'finmgr' ? 'sign.eapprove.finmgr' : 'sign.eapprove.cfo');
   if (!capOk) throw new AppError('FORBIDDEN', sebagai === 'finmgr' ? 'Hanya Fin. Mgr yang bisa memberi persetujuan ini.' : 'Hanya CFO yang bisa memberi persetujuan ini.');
@@ -141,7 +149,7 @@ export async function setujuiFinance(d: AuthDeps, s: SessionData, token: string,
       const rows = (await store.readRows(TRX_APPROVAL)).filter((x) => str(A(x, 'ID_Trx')).toUpperCase() === idTrx.toUpperCase())
         .map((x) => ({ level: A(x, 'Level'), action: A(x, 'Action'), nama: A(x, 'Approver_Name'), email: A(x, 'Approver_Email'), timestamp: A(x, 'Timestamp') }));
       const st = statusPersetujuan(rows);
-      const perluCFO = upper(cell(r, 'REQUIRE_CFO')) === 'YES';
+      const perluCFO = wajibCFO(cell(r, 'REQUIRE_CFO'), num(cell(r, 'FINAL_AMOUNT')));
       const tolak = cekEApprove(sebagai, s.roles, s.email, perluCFO, st);
       if (tolak) throw new AppError(tolak.kode, tolak.pesan);
       await requireStepUp(d, token); // setelah aturan: password tidak diminta untuk aksi yang memang akan ditolak
@@ -172,6 +180,7 @@ export interface HasilJurnal { berhasil: { id: string; akun: string }[]; gagal: 
  * ID ganda dalam satu permintaan ditolak (R-04). Idempotency-Key wajib untuk seluruh batch.
  */
 export async function jurnalCoa(d: AuthDeps, s: SessionData, input: z.infer<typeof jurnalSchema>, idemKey: string | undefined): Promise<HasilJurnal> {
+  wajibEmail(s);
   if (!can(s.roles, 'journal.post')) throw new AppError('FORBIDDEN', 'Hanya Finance Staff yang bisa memposting jurnal COA.');
   const ids = input.items.map((i) => i.id.toUpperCase());
   if (new Set(ids).size !== ids.length) throw new AppError('VALIDATION', 'Ada dokumen yang sama lebih dari sekali dalam satu jurnal.');
@@ -219,6 +228,7 @@ export interface HasilBayar {
  * (log pembayaran + ringkasan + status + audit). O5b: pembayar = verifikator/penyetuju -> penanda di audit, bukan blokir.
  */
 export async function bayar(d: AuthDeps, s: SessionData, token: string, input: z.infer<typeof bayarSchema>, idemKey: string | undefined): Promise<HasilBayar> {
+  wajibEmail(s);
   if (!can(s.roles, 'payment.execute')) throw new AppError('FORBIDDEN', 'Hanya Finance Staff yang bisa mengeksekusi pembayaran.');
   if (!isValidYmd(input.tglBayar)) throw new AppError('VALIDATION', 'Tanggal bayar tidak valid.');
   if (input.tglBayar > wibDate(d.clock.now())) throw new AppError('VALIDATION', 'Tanggal bayar tidak boleh di masa depan.');
@@ -246,7 +256,7 @@ export async function bayar(d: AuthDeps, s: SessionData, token: string, input: z
         const aprDok = apr.filter((x) => str(A(x, 'ID_Trx')).toUpperCase() === id);
         const st = statusPersetujuan(aprDok.map((x) => ({ level: A(x, 'Level'), action: A(x, 'Action'), nama: A(x, 'Approver_Name'), email: A(x, 'Approver_Email'), timestamp: A(x, 'Timestamp') })));
         const gerbang = cekBolehDibayar({
-          status: dari, perluCFO: upper(cell(r, 'REQUIRE_CFO')) === 'YES', subCoa: str(cell(r, 'SUB_COA')), budget: str(cell(r, 'BUDGET')), st,
+          status: dari, perluCFO: wajibCFO(cell(r, 'REQUIRE_CFO'), num(cell(r, 'FINAL_AMOUNT'))), subCoa: str(cell(r, 'SUB_COA')), budget: str(cell(r, 'BUDGET')), st,
           manager: aprDok.some((x) => Number(A(x, 'Level')) === LEVEL.MANAGER && upper(A(x, 'Action')) === 'APPROVED'),
         });
         if (gerbang) { hasil.gagal.push({ id, alasan: `Pembayaran diblokir: ${gerbang}` }); continue; }

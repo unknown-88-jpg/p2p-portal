@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { pertahankanKunci } from '@/domain/approval-ui';
 import { BAYAR_MAKS } from '@/domain/finance';
 import { angka, formatRibuan, parseRupiah, pilihKunci, rupiah, type KunciIdem } from '@/domain/pengajuan-form';
-import { api, errMessage, isApiError } from './api';
+import { api, errMessage, hasilDipulihkan, isApiError, PESAN_DIPULIHKAN } from './api';
 import { Dialog, Field, Pesan, UangInput } from './kit';
 import { IkonMata, IkonMataCoret } from './icons';
 
@@ -50,6 +50,7 @@ export function FormBayar({ target, onSelesai }: { target: readonly DokBayar[]; 
     kunci.current = pilihKunci(kunci.current, JSON.stringify(body), baru);
     try {
       const r = await api<{ hasil: { berhasil: { id: string; lunas: boolean }[]; gagal: { id: string; alasan: string }[]; total: number } }>('/api/finance/bayar', { body, headers: { 'idempotency-key': kunci.current.key } });
+      if (hasilDipulihkan(r.hasil)) { kunci.current = null; setDlg(null); onSelesai({ jenis: 'warn', teks: PESAN_DIPULIHKAN }, true); return; }
       kunci.current = null; setDlg(null);
       const { berhasil, gagal } = r.hasil;
       const lunas = berhasil.filter((b) => b.lunas).length;

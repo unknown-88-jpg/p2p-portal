@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { ALASAN_MAX, CATATAN_MAX, TEMPLATE_ALASAN } from '@/domain/approval';
 import { alasanValid, catatanValid, pertahankanKunci, perluMuatUlang } from '@/domain/approval-ui';
 import { pilihKunci, rupiah, type KunciIdem } from '@/domain/pengajuan-form';
-import { api, errMessage, isApiError } from './api';
+import { api, errMessage, hasilDipulihkan, isApiError, PESAN_DIPULIHKAN } from './api';
 import { Dialog, Pesan } from './kit';
 import { IkonMata, IkonMataCoret, IkonSelesai } from './icons';
 
@@ -57,6 +57,7 @@ export function FormPersetujuanFinance({ dok, peran, onSelesai }: { dok: DokSetu
     kunci.current = pilihKunci(kunci.current, `S|${JSON.stringify(isi)}`, baru);
     try {
       const r = await api<{ hasil: { menungguCFO: boolean } }>(`/api/finance/${encodeURIComponent(dok.id)}/setujui`, { body: isi, headers: { 'idempotency-key': kunci.current.key } });
+      if (hasilDipulihkan(r.hasil)) { kunci.current = null; setDlg(null); onSelesai({ jenis: 'warn', teks: PESAN_DIPULIHKAN }, true); return; }
       kunci.current = null; setDlg(null); setNotes('');
       onSelesai({ jenis: 'ok', teks: `${dok.id} disetujui sebagai ${giliran === 'finmgr' ? 'Fin. Mgr' : 'CFO'}. ${r.hasil.menungguCFO ? 'Berikutnya persetujuan CFO.' : 'Berikutnya Jurnal COA.'}` }, true);
     } catch (e) { gagal(e, 'Koneksi terputus, hasil belum pasti. Tekan "Setujui" lagi - aman, tidak akan tercatat dua kali.'); }

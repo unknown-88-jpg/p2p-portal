@@ -1,5 +1,5 @@
 import { can } from '@/domain/capabilities';
-import { bisaLihatFinance, cekBolehDibayar, isKunciTahap, ringkasTahap, statusPersetujuan, tahapDariStatus, tugasRangkapBayar, type KunciTahap, type RingkasTahap } from '@/domain/finance';
+import { wajibCFO, bisaLihatFinance, cekBolehDibayar, isKunciTahap, ringkasTahap, statusPersetujuan, tahapDariStatus, tugasRangkapBayar, type KunciTahap, type RingkasTahap } from '@/domain/finance';
 import { LEVEL } from '@/domain/config';
 import { milikSendiri } from '@/domain/approval';
 import { umurHari } from '@/domain/dokumen';
@@ -54,7 +54,7 @@ function itemOf(r: RawRow, s: SessionData, now: number, hariIni: string): ItemFi
     jenisPPh: str(cell(r, 'JENIS_PPH')), pphAmount: num(cell(r, 'PPH_AMOUNT')), nominal, totalPaid,
     // Sisa tagihan untuk TAMPILAN saja. Aksi bayar (F2-E, I5) menghitung dari Trx_Payment_Log, bukan kolom ringkasan.
     sisa: Math.max(nominal - totalPaid, 0),
-    perluCFO: upper(cell(r, 'REQUIRE_CFO')) === 'YES', punyaLampiran: !!str(cell(r, 'FILE_URL')),
+    perluCFO: wajibCFO(cell(r, 'REQUIRE_CFO'), nominal), punyaLampiran: !!str(cell(r, 'FILE_URL')),
     umurHari: umurHari(msOf(cell(r, 'LAST_UPDATE')), now), ajuanSendiri: milikSendiri(str(cell(r, 'CREATED_BY')), s.email),
     etag: etagOf(r), invoiceAmount: num(cell(r, 'INV_AMOUNT')), diskon: num(cell(r, 'DISKON')), biayaLainnya: num(cell(r, 'BIAYA_LAIN')),
     punyaNPWP: !['', '-'].includes(clean(cell(r, 'NPWP_VENDOR'))), jenisPembayaran: str(cell(r, 'JENIS_PEMBAYARAN')), // punyaNPWP: aturan sama dengan hitungPajak

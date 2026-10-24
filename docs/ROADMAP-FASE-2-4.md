@@ -89,7 +89,7 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 - Hitungan antrean Finance di `/api/home`.
 - Exit: I15 untuk notifikasi Finance; digest tidak menggagalkan transaksi.
 
-**F2-G — Hardening & UAT Finance (M)**
+**F2-G — Hardening & UAT Finance (M)** — 🟡 kode, review & runbook selesai 2026-10-24; UAT menunggu (README §F2-G)
 - Uji beban ulang dari Vercel termasuk skenario bulk bayar; review keamanan jalur uang.
 - UAT: 2 Finance Staff + Fin. Mgr + CFO, dokumen yang sama dari Submit sampai Lunas, termasuk cicilan, return, dan dokumen ≥ Rp 5 jt.
 - Exit (design doc bagian 10): I4, I5, I6, I16 hijau; temuan UAT ditutup/dijadwalkan.
