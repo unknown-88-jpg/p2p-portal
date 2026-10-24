@@ -1,15 +1,12 @@
-import { CONFIG } from './config';
 import { num, upper } from './legacy-parse';
 
 // Padanan hitungPlafonSJ_ + assertPOTidakOverbilling_ (API_PO.gs). Satu-satunya sumber kebenaran plafon (tampilan = enforcement).
+// Keputusan user 2026-10-24: retensi 10% sistem lama DIHAPUS. Plafon = grand total P.O penuh, tidak lagi bergantung pada Surat Jalan.
 
-/** Plafon nilai yang boleh ditagih atas PO. 90% bebas (DP/cicilan tanpa syarat SJ); 10% terakhir (retensi) baru boleh bila qtySJ >= qtyPO. qtyPO<=0 (jasa): penuh. */
-export function hitungPlafonSJ(grandTotal: unknown, qtyPO: unknown, qtySJ: unknown): number {
-  const gt = num(grandTotal), qPO = num(qtyPO), qSJ = num(qtySJ);
-  if (gt <= 0) return 0;
-  if (qPO <= 0) return gt;
-  const plafonBebas = Math.round(gt * (1 - num(CONFIG.PO_RETENSI_PELUNASAN_PCT)));
-  return qSJ >= qPO ? gt : plafonBebas;
+/** Plafon nilai yang boleh ditagih atas PO = grand total P.O (grand total <= 0 -> 0). Tanpa retensi (lihat keputusan 2026-10-24 di atas). */
+export function hitungPlafonSJ(grandTotal: unknown): number {
+  const gt = num(grandTotal);
+  return gt > 0 ? gt : 0;
 }
 
 export interface PoRecord {
@@ -27,15 +24,11 @@ const rp = (n: unknown): string => 'Rp ' + Math.round(Number(n) || 0).toLocaleSt
 export type CeilingResult = { ok: true; plafon: number; sisaBoleh: number } | { ok: false; plafon: number; message: string };
 
 /** `totalDiajukan` = kumulatif non-Rejected atas PO ini, TERMASUK dokumen yang sedang disubmit. */
-export function cekPlafonPO(a: { poNumber: string; grandTotal: number; qtyPO: number; qtySJ: number; totalDiajukan: number }): CeilingResult {
-  const plafon = hitungPlafonSJ(a.grandTotal, a.qtyPO, a.qtySJ);
+export function cekPlafonPO(a: { poNumber: string; grandTotal: number; totalDiajukan: number }): CeilingResult {
+  const plafon = hitungPlafonSJ(a.grandTotal);
   if (a.totalDiajukan > plafon) {
     const poClean = upper(a.poNumber);
-    const diterimaPenuh = a.qtyPO > 0 && a.qtySJ >= a.qtyPO;
-    const saran = diterimaPenuh
-      ? 'Cek Surat Jalan atau kurangi nominal invoice.'
-      : `Ini sudah masuk porsi pelunasan terakhir (retensi ${Math.round(CONFIG.PO_RETENSI_PELUNASAN_PCT * 100)}%) - ` +
-        'baru bisa ditagih penuh setelah Surat Jalan menunjukkan barang diterima LENGKAP.';
+    const saran = 'Kurangi nominal invoice atau cek pengajuan lain atas P.O ini.';
     return { ok: false, plafon, message: `Melebihi plafon P.O "${poClean}". Total yang diajukan atas PO ini (${rp(a.totalDiajukan)}, termasuk dokumen ini) melebihi plafon saat ini (${rp(plafon)}). ${saran}` };
   }
   return { ok: true, plafon, sisaBoleh: Math.max(plafon - a.totalDiajukan, 0) };
@@ -52,7 +45,7 @@ export type PoSubmitDecision =
 export function gatePoSubmit(poNumber: string, lookup: PoLookup, totalDiajukan: number): PoSubmitDecision {
   if (lookup.status === 'unreadable') return { ok: false, code: 'PO_UNREADABLE', message: 'Data P.O sedang disinkronkan dari sistem sumber. Coba lagi sebentar.' };
   if (lookup.status === 'notFound') return { ok: false, code: 'PO_NOT_FOUND', message: `Nomor P.O "${upper(poNumber)}" tidak ditemukan di DB_PO.` };
-  const c = cekPlafonPO({ poNumber, grandTotal: lookup.po.grandTotalPO, qtyPO: lookup.po.qtyPO, qtySJ: lookup.qtySJ, totalDiajukan });
+  const c = cekPlafonPO({ poNumber, grandTotal: lookup.po.grandTotalPO, totalDiajukan });
   return c.ok ? c : { ok: false, code: 'OVER_CEILING', message: c.message };
 }
 
