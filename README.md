@@ -11,7 +11,7 @@ Status per 2026-10-24: **Fase 1 / M8 (UAT & penutupan) berjalan.** Rincian terki
 | **0** Spike | Sheets/Drive/Upstash/Vercel layak dipakai | ✅ Selesai |
 | **1** Auth, Ajukan, Approval | M0 fondasi · M1 lapisan data · M2 auth · M3 master/PO/pajak · M4a–c pengajuan (server, lampiran, UI) · M5 persetujuan Manager · M6 WhatsApp · M7 detail/voucher/dashboard · M8 hardening & UAT | M0–M7 ✅ · **M8 🟡 berjalan** |
 | **2** Finance | Verifikasi pajak, e-approve Fin. Mgr/CFO (O4: menggantikan TTD basah, tanpa transisi), jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | 🟡 Berjalan: F2-A ✅ (antrean & hak akses), F2-B ✅ (verifikasi pajak), F2-C ✅ (e-approve Fin. Mgr/CFO), F2-D ✅ (jurnal COA bulk), F2-E ✅ (pembayaran), F2-F ✅ (notif, riwayat bayar, digest Finance), F2-G 🟡 (kode & review selesai; UAT menunggu) |
-| **3** Pendukung | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | ⬜ Belum mulai |
+| **3** Pendukung | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | 🟡 Berjalan: F3-A ✅ (vendor) |
 | **4** Go-live | Vercel Pro, `PROD_SHEET_IDS`, Upstash terpisah, cutover dari Apps Script | ⬜ Belum mulai |
 
 Detail rencana Fase 2–4 (lingkup, milestone, exit criteria, risiko, keputusan terbuka): [`docs/ROADMAP-FASE-2-4.md`](docs/ROADMAP-FASE-2-4.md).
@@ -247,6 +247,13 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - **Matriks otorisasi** semua aksi Finance × level 1/2/3/4/5/9 dites (tidak berwenang = 403 sebelum menyentuh data).
 - **Uji beban** `npm run load-test`: `LOAD_FINANCE` (Fase A ikut membaca antrean Finance), **Fase C** opt-in (`LOAD_PAY_DOCS`, `LOAD_PAY_REK`; mengubah data dummy) = 10 pembayaran paralel + replay → lulus bila ≤ 1 sukses & tanpa overpay.
 - **UAT**: `docs/desain/f2-uat-runbook.md` (F1–F21) — **menunggu dijalankan** di Vercel trial.
+
+## Fase 3 / F3-A — Pendaftaran & pengesahan vendor (2026-10-24)
+- **`POST /api/vendors`** (port `submitNewVendor`, `src/server/vendor.ts`): PIC / Manager / Finance Staff / Admin. Validasi lama (nama, tipe Trade/Non-Trade, bank, nama pemilik, rekening **6–20 digit**; huruf besar; spasi/titik/strip di nomor rekening dibuang) → status **Pending**, pendaftar & tanggal dari server, kode **VND-xxxx** lewat `nextId` dalam lock `seq:VND` (bootstrap dari nomor tertinggi di sheet).
+- **I7 rekening unik** (bank + nomor) dicek dari baca segar di dalam lock `vendor-rek:{bank}:{no}` (dua pendaftaran bersamaan → satu). Vendor **Rejected tidak menghalangi** pendaftaran ulang (lama: semua baris). Pesan duplikat: Finance melihat vendor pemilik rekening; pendaftar lain hanya pesan umum (tidak membocorkan data vendor lain). Audit `VENDOR_CREATE` tanpa nomor rekening penuh.
+- **Pengesahan berdasarkan KODE** (`POST /api/vendors/{kode}/approve|reject`, menutup **R-21**): Finance Staff; di dalam lock dari baca segar: status harus Pending (Rejected tidak bisa dihidupkan), rekening yang dilihat pengesah harus sama dengan sheet (409), **maker-checker** pendaftar ≠ pengesah (menolak miliknya sendiri boleh), I7 dicek ulang saat mengesahkan. Tolak: alasan wajib (dicatat di audit `VENDOR_REJECT`).
+- **`GET /api/vendors?status=pending`**: antrean pengesahan (Finance Staff) dengan peringatan (NPWP kosong, nomor rekening sama di bank lain, nama vendor sama); tanpa parameter = vendor yang saya daftarkan (rekening disamarkan).
+- **UI `/vendor`** + menu "Vendor": form daftar, daftar vendor saya + status, tab "Menunggu pengesahan" (Sahkan / Tolak + dialog); wizard langkah Vendor menautkan "Daftarkan vendor baru". Vendor baru dipakai di pengajuan setelah Approved (I8).
 
 ## Deploy
 - **Trial (sekarang):** repo GitHub privat `unknown-88-jpg/p2p-portal`, branch `main` otomatis ter-deploy ke Vercel (team FAT, Hobby, project `p2p-portal`, URL produksi `https://p2p-portal-flax.vercel.app`). `vercel.json` memaksa region `sin1`. Banner "ENVIRONMENT TRIAL — DATA DUMMY" tampil selama `APP_ENV=trial`.

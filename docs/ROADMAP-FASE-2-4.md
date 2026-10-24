@@ -119,7 +119,7 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 
 ### 3.2 Milestone
 
-**F3-A — Vendor register & approve (M)**
+**F3-A — Vendor register & approve (M)** — ✅ selesai 2026-10-24 (README §F3-A)
 - Daftar vendor: validasi rekening 6–20 digit; **I7** rekening (bank+no) unik — lock `vendor-rek:`; cek duplikat real-time tanpa membocorkan detail vendor lain ke non-Finance.
 - Maker-checker: pendaftar ≠ pengesah. Approve/reject **by kode vendor** (R-21).
 - Antrean pengesahan Finance dengan peringatan (rekening mirip vendor lain, NPWP kosong).

@@ -46,7 +46,7 @@ export function LangkahVendor({ form, ubah, galat, vendors, po, onCobaLagi }: {
   return (
     <>
       {terpilih && <KartuVendor v={{ ...terpilih, nama: terpilih.namaAsli }} />}
-      <Field label={terpilih ? 'Ganti vendor' : 'Cari vendor'} id="cariVendor" galat={galat.vendorKode} petunjuk="Hanya vendor yang sudah disahkan Finance. Ketik sebagian nama atau kode.">
+      <Field label={terpilih ? 'Ganti vendor' : 'Cari vendor'} id="cariVendor" galat={galat.vendorKode} petunjuk={<>Hanya vendor yang sudah disahkan Finance. Ketik sebagian nama atau kode. Belum terdaftar? <a className="link" href="/vendor" target="_blank" rel="noopener">Daftarkan vendor baru</a>.</>}>
         {(p) => <input {...p} type="search" value={q} autoComplete="off" placeholder="mis. Gama" onChange={(e) => setQ(e.target.value)} />}
       </Field>
       <div className="pilihan" role="listbox" aria-label="Daftar vendor">

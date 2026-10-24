@@ -606,6 +606,14 @@ a.metrik-kartu:focus-visible { outline-offset: 3px; border-radius: var(--r-lg); 
 .pill-st { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 7px 12px 7px 10px; letter-spacing: -0.1px; }
 .pill-st .ikon { width: 15px; height: 15px; }
 .msg { display: flex; align-items: flex-start; gap: 10px; border: 1px solid transparent; }
+.vendor-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; align-items: start; margin-top: 14px; }
+.vendor-saya li { display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--hairline); }
+.vendor-saya li:last-child { border-bottom: 0; }
+.vs-n { display: grid; gap: 2px; min-width: 0; }
+.vendor-saya .vs-n b { color: var(--ink); font-size: 15px; }
+.vendor-saya .pill-st { flex: none; }
+.vendor-antre { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 14px; }
+@media (max-width: 900px) { .vendor-grid { grid-template-columns: minmax(0, 1fr); } }
 .toast-wadah { position: fixed; top: calc(var(--banner-h) + var(--top-h) + 12px); right: 16px; z-index: 60; display: grid; gap: 10px; width: min(420px, calc(100vw - 32px)); pointer-events: none; }
 .toast { pointer-events: auto; display: flex; align-items: flex-start; gap: 10px; padding: 14px 12px 14px 16px; border-radius: var(--r-lg); border: 1px solid var(--hairline); background: var(--canvas); color: var(--ink); font-size: 15px; line-height: 1.4; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16); animation: toast-masuk .18s ease-out; }
 .toast .ikon { width: 20px; height: 20px; margin-top: 1px; flex: none; }

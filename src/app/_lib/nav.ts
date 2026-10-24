@@ -8,10 +8,10 @@ import { authDeps } from '@/server/runtime';
  * dan halaman Persetujuan menulis bisaAjukan={false} tetap sehingga pengguna ber-peran ganda kehilangan "Pengajuan saya" dan "Ajukan").
  * Angka antrean memakai pembacaan tampilan ber-cache; bila gagal dibaca, angka dihilangkan (hiasan saja, tidak boleh merusak halaman).
  */
-export async function propsNav(s: SessionData): Promise<{ bisaAjukan: boolean; bisaSetujui: boolean; bisaFinance?: boolean; jumlahMenunggu?: number }> {
+export async function propsNav(s: SessionData): Promise<{ bisaAjukan: boolean; bisaSetujui: boolean; bisaFinance?: boolean; bisaVendor?: boolean; jumlahMenunggu?: number }> {
   const bisaAjukan = can(s.roles, 'pengajuan.write');
   const bisaSetujui = can(s.roles, 'approve.manager');
-  const fin = can(s.roles, 'finance.view') ? { bisaFinance: true } : {};
+  const fin = { ...(can(s.roles, 'finance.view') ? { bisaFinance: true } : {}), ...(can(s.roles, 'vendor.register') || can(s.roles, 'vendor.approve') ? { bisaVendor: true } : {}) };
   if (!bisaSetujui) return { bisaAjukan, bisaSetujui, ...fin };
   try { return { bisaAjukan, bisaSetujui, ...fin, jumlahMenunggu: (await inbox(authDeps(), s)).length }; }
   catch { return { bisaAjukan, bisaSetujui, ...fin }; }
