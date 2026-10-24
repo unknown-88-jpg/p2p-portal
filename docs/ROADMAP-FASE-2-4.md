@@ -132,7 +132,7 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 - Golden test: hasil identik dengan `Export_Odoo.gs` lama untuk set dokumen contoh.
 - Exit: I16 hijau; selisih nol terhadap ekspor lama pada dummy.
 
-**F3-C — Admin: user, master, health (M)**
+**F3-C — Admin: user, master, health (M)** — ✅ selesai 2026-10-24 (README §F3-C; repair rekening dipersempit, perlu konfirmasi)
 - Peran Level 9 = System Admin (O3). Kelola user (cari, ubah level/brand/dept via form yang menulis ke `Master_User_TTD`, nonaktifkan, kirim link set-password, paksa logout sesi).
 - Master: org/entitas/COA/PPh read + validator (edit tetap di Sheet pada awal).
 - `/admin/health`: validasi header, `validateStruktur`, `auditDataIntegrity`, rekonsiliasi pembayaran (baca-saja + alarm), kesehatan koneksi Sheets/Drive/Redis/WA, status cron terakhir.
