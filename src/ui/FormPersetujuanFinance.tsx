@@ -29,6 +29,9 @@ export function giliranSaya(dok: DokSetuju, peran: Peran): Sebagai | null {
  * F2-C (O4): e-approve Fin. Mgr / CFO di panel antrean. Dua langkah seperti persetujuan Manager: konfirmasi -> password (step-up, berlaku 5 menit).
  * Fin. Mgr / CFO juga bisa mengembalikan ke PIC dari tahap ini.
  */
+/** Tombol Kirim WA tidak ditampilkan bila penerimanya adalah pengguna ini sendiri (gilirannya menyetujui target yang sama). */
+export const tampilKirimWa = (giliran: Sebagai | null, target: 'finmgr' | 'cfo'): boolean => giliran !== target;
+
 export function FormPersetujuanFinance({ dok, peran, onSelesai }: { dok: DokSetuju; peran: Peran; onSelesai: (pesan: { jenis: 'ok' | 'warn'; teks: string }, muatUlang: boolean) => void }) {
   const [dlg, setDlg] = useState<Dlg>(null);
   const [notes, setNotes] = useState('');
@@ -103,7 +106,7 @@ export function FormPersetujuanFinance({ dok, peran, onSelesai }: { dok: DokSetu
         <p className="muted cap">{p.finMgrSaya && peran.cfo ? 'Anda sudah menyetujui sebagai Fin. Mgr; persetujuan CFO harus oleh orang lain.' : peran.cfo && dok.perluCFO && !p.finMgr ? 'Persetujuan CFO dibuka setelah Fin. Mgr menyetujui.' : 'Tidak ada persetujuan yang menunggu Anda untuk dokumen ini.'}</p>
       )}
       {galat && !dlg && <Pesan jenis="err">{galat}</Pesan>}
-      {dok.persetujuan?.wa && <KirimWaFinance key={`${dok.id}|${dok.persetujuan.wa.target}`} id={dok.id} wa={dok.persetujuan.wa} />}
+      {dok.persetujuan?.wa && tampilKirimWa(giliran, dok.persetujuan.wa.target) && <KirimWaFinance key={`${dok.id}|${dok.persetujuan.wa.target}`} id={dok.id} wa={dok.persetujuan.wa} />}
       <div className="ip-aksi">
         {giliran && <button type="button" className="btn btn-primary" disabled={sibuk} onClick={() => { setGalat(null); setDlg('setuju'); }}>Setujui sebagai {peranLabel}</button>}
         {bisaKembalikan && <button type="button" className="btn btn-secondary" disabled={sibuk} onClick={() => { setGalat(null); setDlg('kembalikan'); }}>Kembalikan ke PIC</button>}

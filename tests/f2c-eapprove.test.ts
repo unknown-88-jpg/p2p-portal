@@ -8,7 +8,7 @@ import type { SessionData } from '@/server/auth';
 import { kembalikanFinance, setujuiFinance } from '@/server/finance-aksi';
 import { antreanFinance } from '@/server/finance';
 import { setujuiFinanceSchema } from '@/server/finance-schema';
-import { giliranSaya } from '@/ui/FormPersetujuanFinance';
+import { giliranSaya, tampilKirimWa } from '@/ui/FormPersetujuanFinance';
 import { authWorld } from './auth-helpers';
 import { trxRow } from './helpers';
 
@@ -68,6 +68,12 @@ describe('F2-C domain', () => {
     expect(giliranSaya(d(true, { finMgr: 'Eko', cfo: null, finMgrSaya: false }), { staff: false, finMgr: false, cfo: true })).toBe('cfo');
     expect(giliranSaya(d(true, { finMgr: 'RR', cfo: null, finMgrSaya: true }), { staff: false, finMgr: true, cfo: true })).toBeNull();
     expect(giliranSaya(d(false, { finMgr: 'Eko', cfo: null, finMgrSaya: false }), { staff: false, finMgr: false, cfo: true })).toBeNull();
+  });
+  it('UI: tombol Kirim WA disembunyikan bila penerimanya diri sendiri', () => {
+    expect(tampilKirimWa('finmgr', 'finmgr')).toBe(false); // Fin. Mgr yang sedang giliran tidak mengirim WA ke dirinya
+    expect(tampilKirimWa('cfo', 'cfo')).toBe(false);
+    expect(tampilKirimWa(null, 'finmgr')).toBe(true); // Finance Staff / peran lain tetap bisa mengingatkan
+    expect(tampilKirimWa(null, 'cfo')).toBe(true); // Fin. Mgr yang sudah menyetujui tetap bisa mengingatkan CFO
   });
 });
 
