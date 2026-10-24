@@ -12,6 +12,7 @@ import { appendAudit } from './audit';
 import type { AuthDeps, SessionData } from './auth';
 import { findRowById } from './row-index';
 import { itemPerManager } from './wa-digest';
+import { galatKirimWa } from './wa-galat';
 
 const T = (k: string): number => colIndex(TRX_PENGAJUAN, k);
 const kunciHarian = (idTrx: string, ymd: string): string => `wa:manual:${idTrx}:${ymd}`;
@@ -49,11 +50,12 @@ export async function kirimWaManual(d: AuthDeps, s: SessionData, idTrx: string, 
     if (!grup.length) throw new AppError('RULE_VIOLATION', 'Tidak ada Manager dengan nomor WA aktif yang berwenang atas dokumen ini.');
     const base = d.baseUrl.replace(/\/+$/, '');
     let terkirim = 0;
+    const gagal: Parameters<typeof galatKirimWa>[0][number][] = [];
     for (const [phone, g] of grup) {
       const r = await d.wa.send(phone, pesanPengingatPIC({ nama: g.acc.nama, pengirim: s.nama, item: g.items[0]!, linkInbox: `${base}/persetujuan` }));
-      if (r.ok) terkirim++; else logger.warn('wa_manual_gagal_kirim', { idTrx, to: maskPhone(phone), info: r.info });
+      if (r.ok) terkirim++; else { gagal.push({ phone, r }); logger.warn('wa_manual_gagal_kirim', { idTrx, to: maskPhone(phone), info: r.info }); }
     }
-    if (!terkirim) throw new AppError('UPSTREAM_BUSY', 'WhatsApp belum bisa dikirim. Coba lagi beberapa saat lagi.', undefined, 60);
+    if (!terkirim) throw galatKirimWa(gagal, 'Manager');
     await appendAudit(d.store, d.clock, { actor: s.email, idTrx, action: 'WA_REMINDER_MANUAL', field: 'Level 2', newValue: `${terkirim}/${grup.length}`, notes: 'Pengingat WA ke Manager dikirim PIC' })
       .catch((e: Error) => logger.warn('wa_manual_audit_gagal', { idTrx, err: e.message })); // WA sudah terkirim: audit gagal tidak membatalkan (I15)
     logger.info('wa_manual', { idTrx, manager: grup.length, terkirim });

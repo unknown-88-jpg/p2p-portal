@@ -32,15 +32,27 @@ export class LixusWaSender implements WaSender {
   }
 }
 
-/** Pengaman trial (wajib): hanya kirim ke nomor di WA_TRIAL_ALLOWLIST. Allowlist kosong = tidak ada yang terkirim. */
+/** Sumber izin tambahan (trial): nomor user aktif di Master_User_TTD dummy. Melempar = dianggap tidak ada izin (fail-closed). */
+export type IzinTambahan = () => Promise<ReadonlySet<string>>;
+
+/**
+ * Pengaman trial (wajib): hanya kirim ke nomor di WA_TRIAL_ALLOWLIST **atau** (keputusan user 2026-10-24, opsi 1) nomor user AKTIF
+ * di Master_User_TTD dummy. Gagal membaca sheet = hanya allowlist env yang berlaku. Tanpa keduanya = tidak ada yang terkirim.
+ */
 export class TrialAllowlistSender implements WaSender {
   private allow: Set<string>;
-  constructor(private inner: WaSender, allowlistCsv: string) {
+  constructor(private inner: WaSender, allowlistCsv: string, private tambahan?: IzinTambahan) {
     this.allow = new Set(allowlistCsv.split(',').map((s) => normalizePhone(s.trim())).filter(Boolean));
+  }
+  private async diizinkan(n: string): Promise<boolean> {
+    if (this.allow.has(n)) return true;
+    if (!this.tambahan) return false;
+    try { return (await this.tambahan()).has(n); }
+    catch (e) { logger.warn('wa_allowlist_sheet_gagal', { err: (e as Error).message }); return false; }
   }
   async send(to: string, text: string): Promise<WaResult> {
     const n = normalizePhone(to);
-    if (!n || !this.allow.has(n)) { logger.info('wa_blocked_trial_allowlist', { to: maskPhone(n || 'x') }); return { ok: false, info: 'diblokir allowlist trial' }; }
+    if (!n || !(await this.diizinkan(n))) { logger.info('wa_blocked_trial_allowlist', { to: maskPhone(n || 'x') }); return { ok: false, info: 'diblokir allowlist trial' }; }
     return this.inner.send(n, text);
   }
 }
@@ -50,8 +62,8 @@ export class NullWaSender implements WaSender {
   async send(to: string): Promise<WaResult> { logger.info('wa_not_configured', { to: maskPhone(normalizePhone(to) || 'x') }); return { ok: false, info: 'WA belum dikonfigurasi' }; }
 }
 
-export function buildWaSender(e: { APP_ENV: 'trial' | 'production'; WA_GATEWAY_URL?: string | undefined; WA_API_KEY?: string | undefined; WA_TRIAL_ALLOWLIST: string }): WaSender {
+export function buildWaSender(e: { APP_ENV: 'trial' | 'production'; WA_GATEWAY_URL?: string | undefined; WA_API_KEY?: string | undefined; WA_TRIAL_ALLOWLIST: string }, tambahan?: IzinTambahan): WaSender {
   if (!e.WA_GATEWAY_URL || !e.WA_API_KEY) return new NullWaSender();
   const real = new LixusWaSender(e.WA_GATEWAY_URL, e.WA_API_KEY);
-  return e.APP_ENV === 'trial' ? new TrialAllowlistSender(real, e.WA_TRIAL_ALLOWLIST) : real;
+  return e.APP_ENV === 'trial' ? new TrialAllowlistSender(real, e.WA_TRIAL_ALLOWLIST, tambahan) : real;
 }

@@ -113,5 +113,12 @@ describe('pengirim', () => {
     expect((await s.send('081299999999', 'x')).ok).toBe(false);
     expect(sent).toEqual(['6281200000001']);
     expect((await new TrialAllowlistSender(inner, '').send('081200000001', 'x')).ok).toBe(false);
+    // opsi 1 (2026-10-24): user aktif Master_User_TTD juga diizinkan; sumber gagal = fail-closed
+    const dariSheet = new TrialAllowlistSender(inner, '', async () => new Set(['6281200000009']));
+    expect((await dariSheet.send('0812-0000-0009', 'x')).ok).toBe(true);
+    expect((await dariSheet.send('081200000008', 'x'))).toEqual({ ok: false, info: 'diblokir allowlist trial' });
+    const rusak = new TrialAllowlistSender(inner, '081200000001', async () => { throw new Error('Sheets 500'); });
+    expect((await rusak.send('081200000009', 'x')).ok).toBe(false);
+    expect((await rusak.send('081200000001', 'x')).ok).toBe(true);
   });
 });
