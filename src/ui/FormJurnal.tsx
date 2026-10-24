@@ -63,11 +63,13 @@ export function FormJurnal({ target, onSelesai }: { target: readonly DokJurnal[]
       {terlalu && <Pesan jenis="warn">Maksimal {JURNAL_MAKS} dokumen sekali jurnal.</Pesan>}
       {LABEL.map((l, n) => {
         const o = opsi(n);
-        const nonaktif = !coa || (n > 0 && !lv[n - 1]) || o.length === 0;
+        // Bertahap: level berikutnya baru tampil setelah level sebelumnya dipilih dan punya turunan (kosong tetap dikirim "-").
+        if (n > 0 && (!lv[n - 1] || o.length === 0)) return null;
+        const nonaktif = !coa;
         return (
           <Field key={l} label={l} id={`jr-l${n}`} opsional={n >= 2}>
             {(p) => <select {...p} value={lv[n]} disabled={nonaktif} onChange={(e) => ubah(n, e.target.value)}>
-              <option value="">{!coa ? 'Memuat…' : n > 0 && !lv[n - 1] ? '—' : o.length === 0 ? '- (tidak ada turunan)' : n >= 2 ? '- (tidak dipilih)' : 'Pilih…'}</option>
+              <option value="">{!coa ? 'Memuat…' : n >= 2 ? '- (tidak dipilih)' : 'Pilih…'}</option>
               {o.map((v) => <option key={v} value={v}>{v}</option>)}
             </select>}
           </Field>
