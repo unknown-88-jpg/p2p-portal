@@ -20,16 +20,16 @@
 
 ### 2.0 Gerbang sebelum mulai (WAJIB)
 
-Fase 2 menyentuh kontrol uang. Sebelum satu baris kode Fase 2 ditulis, minta konfirmasi **eksplisit final** dari owner (bukan delegasi "ikut rekomendasi"). **Status 2026-10-24: O4, O5a, O5b dijawab eksplisit oleh pemilik → gerbang terbuka.** I6 mengikuti perilaku lama (blokir); kas list masih terbuka (baru dibutuhkan di F2-E).
+Fase 2 menyentuh kontrol uang. Sebelum satu baris kode Fase 2 ditulis, minta konfirmasi **eksplisit final** dari owner (bukan delegasi "ikut rekomendasi"). **Status 2026-10-24: O4, O5a, O5b dijawab eksplisit oleh pemilik → gerbang terbuka.** I6 dan sumber kas list juga sudah dikonfirmasi (lihat tabel). **Semua keputusan gerbang Fase 2 sudah final.**
 
 | # | Keputusan | Rekomendasi saat ini | Catatan |
 |---|---|---|---|
 | O4 | e-approve Level 4/5 menggantikan TTD basah | **Keputusan pemilik 2026-10-24 (final)**: **e-approve, cut-off langsung, TANPA masa transisi** — jalur unggah scan TTD basah tidak dibangun di portal baru | Menutup R-17. Konsekuensi: syarat "Link TTD terisi" di `bolehDibayar` (I4) diganti "approval L4 (+ L5 bila CFO wajib) tercatat atas nama penandatangan"; enum status `Wet Signed` tetap (kompat sheet), label tampil "Disetujui Fin. Mgr/CFO" |
 | O5a | Approver L2 ≠ pembuat dokumen | **Keputusan pemilik 2026-10-24 (final)**: **ya** (sudah aktif di Fase 1, flag `SOD_APPROVER_NOT_CREATOR`) | Selesai |
 | O5b | Pembayar ≠ verifikator pajak ≠ approver L4/L5 | **Keputusan pemilik 2026-10-24 (final)**: **peringatan + penanda audit, bukan blokir** (sesuai rekomendasi) | "Pengunggah TTD" tidak ada lagi (O4 tanpa scan); peringatan berlaku untuk pembayar = verifikator pajak / approver L4/L5 |
-| I6 | Pengaju ≠ verifikator pajak | Blokir keras (perilaku lama, bukan perubahan) | Dipindah dari Fase 1 ke Fase 2; bila pemilik ingin lain, putuskan sebelum F2-B |
+| I6 | Pengaju ≠ verifikator pajak | **Keputusan pemilik 2026-10-24 (final): blokir keras** (sama dengan perilaku lama) | Dipindah dari Fase 1 ke Fase 2; diterapkan di F2-B |
 | — | Aturan PO (#16 retensi dihapus, #17 I11 dihapus + Full Payment isi otomatis) | **Final** — dikonfirmasi pemilik 2026-10-24 (README M3) | Selesai; tinggal uji ulang U6 dengan aturan baru |
-| — | Kas list / rekening sumber bayar | Placeholder | Perlu keputusan sumber data final |
+| — | Kas list / rekening sumber bayar | **Keputusan pemilik 2026-10-24 (final): menyatu dengan Master_COA** | Sudah ada di kode: `bangunKas` (`src/domain/master.ts`) = akun COA di bawah "KAS DAN SETARA KAS" (Level 2 struktur baru atau Level 3 struktur lama). Dipakai F2-E |
 
 Sisa dari Fase 1 yang harus tutup dulu: PR `patch2-wa-uat` merge, verifikasi Production (F-13 iPhone, F-12 link kedaluwarsa), pembersihan data dummy, F-16.
 
@@ -228,6 +228,6 @@ F3-A (vendor) tidak bergantung pada Fase 2 kecuali pilihan dummy; boleh dimajuka
 1. ~~O4~~ — final 2026-10-24: e-approve L4/L5, cut-off tanpa transisi.
 2. ~~O5b~~ — final 2026-10-24: peringatan + penanda audit (bukan blokir).
 3. ~~Konfirmasi final aturan PO #16/#17~~ — sudah final (pemilik, 2026-10-24).
-4. Sumber data kas list (rekening sumber bayar).
+4. ~~Sumber data kas list~~ — final 2026-10-24: menyatu dengan Master_COA (`bangunKas`).
 5. Opsional: Google SSO Admin (O9), PDF server-side, dark mode.
 6. Tanggal target go-live dan jendela cutover.

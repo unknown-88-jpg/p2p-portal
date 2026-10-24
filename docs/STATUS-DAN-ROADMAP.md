@@ -26,13 +26,13 @@ Dokumen lengkap (hasil UAT, desain, risiko) ada di Project "P2P Finance Portal" 
 2. **Aturan P.O. baru (#16 & #17) — FINAL** (dikonfirmasi pemilik 2026-10-24, tercatat di README M3): retensi 10% dihapus (plafon = grand total P.O. penuh) dan I11 "Trade non-DP butuh barang diterima penuh" dihapus. Sisa: **uji ulang U6** dengan ekspektasi baru (hasil U6 lama berlaku untuk kode sebelum 2026-10-24). U8 (akses dokumen) tidak terpengaruh.
 3. U21 Android; U23 (unggah PDF 3–10 MB dari ponsel; ditunda); cek baris audit di sheet (U3, U18).
 4. Pembersihan data dummy: kembalikan nomor Dummy 002 (2 baris) ke `08000005002`; hapus baris peran tambahan (Dummy 002 Level 1, Dummy 003 Level 2); hapus dokumen uji (NTR-00001…13, TRD-00001/3/4, draf INV-U6-B); reset password Dummy 001/003/007; cek akun Manager yang masih bernomor lama (F-16).
-5. ~~Konfirmasi eksplisit O4/O5~~ — selesai 2026-10-24: O4 e-approve tanpa transisi scan, O5a ya, O5b peringatan. Masih terbuka untuk F2-E: sumber kas list.
+5. ~~Konfirmasi eksplisit O4/O5~~ — selesai 2026-10-24: O4 e-approve tanpa transisi scan, O5a ya, O5b peringatan. I6 blokir; kas list menyatu dengan Master_COA. Semua keputusan gerbang Fase 2 final.
 
 - Next.js 16.4.0 → **16.4.2** (2026-10-24): menutup advisori kritis `npm audit` untuk next 16.0.0–16.4.0; `next build` tidak lagi kadang berhenti dengan `SecurityFatalError`.
 
 ## Temuan terbuka (tidak menghalangi Fase 1)
 - F-02: invoice PDF tidak bisa dicetak gabungan dengan voucher (CSP `object-src 'none'`).
-- Daftar kas (placeholder), screenshot Master_COA produksi, rekening di Master_COA dummy terlihat nyata, folder Drive `upload-test` berisi file lain, perbandingan 5 voucher dengan sistem lama (syarat keluar M7), label data basah (stale) di UI.
+- Screenshot Master_COA produksi, rekening di Master_COA dummy terlihat nyata, folder Drive `upload-test` berisi file lain, perbandingan 5 voucher dengan sistem lama (syarat keluar M7), label data basah (stale) di UI.
 - Sebelum go-live: tambah `1zau0TiAc0r9OIFuVUHpQzq5tgBUr2AepS0RfgLLAzwg` ke `PROD_SHEET_IDS`; ganti nama/pisahkan database Upstash (`p2p-spike`); hitung ulang kuota Upstash dengan jumlah user nyata; rotasi API key gateway lama bersama Script Properties.
 
 ## Aturan kerja bersama
