@@ -135,7 +135,7 @@ export function PengajuanWizard({ roles, email, nama, awal }: WizardProps) {
   const peringatan = {
     barang: poData ? peringatanBarang(form, poData.qtyPO, poData.qtySJ) : null,
     plafon: poData && nominal > poData.plafonSJ - poData.billing.totalDiajukan
-      ? `Nominal ${rupiah(nominal)} melebihi sisa plafon P.O (${rupiah(Math.max(0, poData.plafonSJ - poData.billing.totalDiajukan))}). Kurangi nominal, atau tunggu Surat Jalan lengkap bila ini porsi retensi.` : null,
+      ? `Nominal ${rupiah(nominal)} melebihi sisa plafon P.O (${rupiah(Math.max(0, poData.plafonSJ - poData.billing.totalDiajukan))}). Kurangi nominal.` : null,
   };
 
   // ---------------------------------------------------------------- mengubah isian

@@ -102,9 +102,9 @@ describe('M3: master data', () => {
 
 describe('M3: PO', () => {
   const trx = (id: string, poNo: string, status: string, final: number, paid = 0): R => trxRow(id, { PO_NUMBER: poNo, STATUS: status, FINAL_AMOUNT: final, TOTAL_PAID: paid, NO_INVOICE: 'INV-' + id, JENIS_PEMBAYARAN: 'DP' });
-  it('ketemu: qty SJ dijumlah (case-insensitive), plafon 90% karena SJ belum penuh, vendor & brand dari prefix', async () => {
+  it('ketemu: qty SJ dijumlah (case-insensitive), plafon = grand total penuh walau SJ belum penuh (tanpa retensi), vendor & brand dari prefix', async () => {
     const r = await j(await po(get('/api/po/po%2Fhl%2F2026%2F001', ck)));
-    expect(r.po).toMatchObject({ poNumber: 'PO/HL/2026/001', companyName: 'PT Hemas', brandName: 'HEYLOCAL', qtyPO: 10, qtySJ: 6, qtyKurang: 4, plafonSJ: 900_000, sisaBolehTagih: 900_000, grandTotalPO: 1_000_000 });
+    expect(r.po).toMatchObject({ poNumber: 'PO/HL/2026/001', companyName: 'PT Hemas', brandName: 'HEYLOCAL', qtyPO: 10, qtySJ: 6, qtyKurang: 4, plafonSJ: 1_000_000, sisaBolehTagih: 1_000_000, grandTotalPO: 1_000_000 });
     expect(r.po.vendor).toMatchObject({ kode: 'V1', npwp: '0123', noRekening: '99', status: 'Approved' });
   });
   it('tidak ada -> 404 (bukan 503)', async () => { expect((await po(get('/api/po/PO-NGAWUR', ck))).status).toBe(404); });
@@ -140,10 +140,10 @@ describe('M3: PO', () => {
     const r = await j(await po(get('/api/po/PO%2FHL%2F2026%2F001', ck)));
     expect(r.po.billing).toMatchObject({ totalDiajukan: 1_000_000, totalDibayar: 700_000 });
     expect(r.po.billing.dokumen.map((d: { idTrx: string }) => d.idTrx)).toEqual(['T1', 'T3']);
-    expect(r.po.sisaBolehTagih).toBe(0); // plafon 900k < 1jt diajukan -> 0, bukan negatif
+    expect(r.po.sisaBolehTagih).toBe(0); // plafon 1jt, sudah diajukan 1jt -> 0
     const ex = await j(await po(get('/api/po/PO%2FHL%2F2026%2F001?excludeIdTrx=T3', ck)));
     expect(ex.po.billing.totalDiajukan).toBe(400_000);
-    expect(ex.po.sisaBolehTagih).toBe(500_000);
+    expect(ex.po.sisaBolehTagih).toBe(600_000);
   });
   it('input aneh: nomor kosong/terlalu panjang/%-rusak -> 400', async () => {
     expect((await po(get('/api/po/%20', ck))).status).toBe(400);

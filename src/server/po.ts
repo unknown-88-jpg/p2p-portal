@@ -22,7 +22,7 @@ export async function getPoDetails(d: UowDeps, poNumber: string, excludeIdTrx?: 
   if (!vendor) throw new AppError('RULE_VIOLATION', `Vendor "${po.kodeVendor}" di PO ini tidak ada di Master_Vendor.`);
   if (upper(vendor.status) !== 'APPROVED') throw new AppError('RULE_VIOLATION', `Vendor "${vendor.nama}" masih berstatus ${vendor.status}. Minta Finance sahkan rekeningnya dulu sebelum mengajukan.`);
 
-  const c = cekPlafonPO({ poNumber: poClean, grandTotal: po.grandTotalPO, qtyPO: po.qtyPO, qtySJ: lk.qtySJ, totalDiajukan: billing.totalDiajukan });
+  const c = cekPlafonPO({ poNumber: poClean, grandTotal: po.grandTotalPO, totalDiajukan: billing.totalDiajukan });
   const plafonSJ = c.plafon;
   const sisaBolehTagih = Math.max(plafonSJ - billing.totalDiajukan, 0);
   return { ...po, qtySJ: lk.qtySJ, qtyKurang: Math.max(po.qtyPO - lk.qtySJ, 0), plafonSJ, sisaBolehTagih, billing, vendor };

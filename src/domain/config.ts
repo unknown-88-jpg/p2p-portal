@@ -3,7 +3,6 @@ export const CONFIG = {
   CFO_THRESHOLD: 5_000_000,
   PPN_RATE: 0.11,
   PAYMENT_TOLERANCE: 1000,
-  PO_RETENSI_PELUNASAN_PCT: 0.10,
   /** D9: approval via WA di/atas nominal ini DIMATIKAN (wajib web + konfirmasi password). */
   WA_APPROVAL_MAX_EXCLUSIVE: 5_000_000,
   /** D9/I14: approve manager di web pada/di atas nominal ini wajib konfirmasi ulang password (step-up). */

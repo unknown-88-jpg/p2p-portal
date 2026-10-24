@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { hitungPajak, type PphRate } from '@/domain/tax';
+import { num } from '@/domain/legacy-parse';
 import { cekPlafonPO, cocokkanPrefix, gatePoSubmit, hitungPlafonSJ, type PoLookup } from '@/domain/po';
 import { butuhCFO } from '@/domain/config';
 import { bangunCoa, bangunKas, bangunOrg, bangunPph, cariVendor, daftarVendor, picOptions } from '@/domain/master';
@@ -28,9 +29,16 @@ describe('golden: hitungPajak == Calc.gs lama', () => {
 });
 
 describe('golden: plafon, CFO, prefix', () => {
-  it('hitungPlafonSJ_ identik pada 620 vektor', () => {
+  it('plafon = grand total penuh pada 620 vektor (retensi 10% sistem lama SENGAJA dihapus, keputusan 2026-10-24)', () => {
     const g = golden<{ gt: unknown; qp: unknown; qs: unknown; out: number }[]>('plafon');
-    for (const c of g) expect(hitungPlafonSJ(c.gt, c.qp, c.qs), JSON.stringify(c)).toBe(c.out);
+    let samaDenganLama = 0;
+    for (const c of g) {
+      const gt = num(c.gt);
+      expect(hitungPlafonSJ(c.gt), JSON.stringify(c)).toBe(gt > 0 ? gt : 0);
+      if (hitungPlafonSJ(c.gt) === c.out) samaDenganLama++;
+      else expect(c.out, 'satu-satunya beda dari sistem lama = potongan retensi').toBe(Math.round(gt * 0.9));
+    }
+    expect(samaDenganLama).toBeGreaterThan(0);
   });
   it('butuhCFO identik (batas 5.000.000 inklusif)', () => {
     for (const c of golden<{ v: unknown; out: boolean }[]>('cfo')) expect(butuhCFO(Number(c.v ?? 0) || 0), JSON.stringify(c)).toBe(c.out);
@@ -72,26 +80,23 @@ describe('plafon PO & gate submit (keputusan 2026-10-12: PO tak ketemu / tak ter
     expect((d as { message: string }).message).toMatch(/coba lagi/i);
     expect((d as { message: string }).message).not.toMatch(/tidak ditemukan/i);
   });
-  it('DP pertama tanpa SJ lolos sampai 90% (900.000), lewat satu rupiah = ditolak', () => {
-    expect(gatePoSubmit('PO-1', found(0), 900_000)).toMatchObject({ ok: true, plafon: 900_000, sisaBoleh: 0 });
-    const d = gatePoSubmit('PO-1', found(0), 900_001);
+  it('tanpa retensi: belum ada SJ pun boleh sampai grand total penuh, lewat satu rupiah = ditolak', () => {
+    expect(gatePoSubmit('PO-1', found(0), 1_000_000)).toMatchObject({ ok: true, plafon: 1_000_000, sisaBoleh: 0 });
+    const d = gatePoSubmit('PO-1', found(0), 1_000_001);
     expect(d).toMatchObject({ ok: false, code: 'OVER_CEILING' });
-    expect((d as { message: string }).message).toContain('retensi 10%');
+    expect((d as { message: string }).message).not.toMatch(/retensi/i);
   });
-  it('retensi 10% terbuka hanya saat SJ penuh', () => {
-    expect(gatePoSubmit('PO-1', found(9), 1_000_000).ok).toBe(false);
-    expect(gatePoSubmit('PO-1', found(10), 1_000_000)).toMatchObject({ ok: true, plafon: 1_000_000 });
-    const over = gatePoSubmit('PO-1', found(10), 1_000_001);
-    expect((over as { message: string }).message).toContain('Cek Surat Jalan');
+  it('plafon tidak bergantung jumlah barang di Surat Jalan', () => {
+    for (const sj of [0, 5, 9, 10]) expect(gatePoSubmit('PO-1', found(sj), 1_000_000)).toMatchObject({ ok: true, plafon: 1_000_000 });
   });
   it('jasa (qtyPO=0) bebas penuh; grandTotal<=0 -> plafon 0', () => {
     expect(gatePoSubmit('PO-1', found(0, 500_000, 0), 500_000).ok).toBe(true);
-    expect(cekPlafonPO({ poNumber: 'P', grandTotal: 0, qtyPO: 5, qtySJ: 5, totalDiajukan: 1 }).ok).toBe(false);
+    expect(cekPlafonPO({ poNumber: 'P', grandTotal: 0, totalDiajukan: 1 }).ok).toBe(false);
   });
   it('pesan pelanggaran memakai format sistem lama', () => {
-    const r = cekPlafonPO({ poNumber: 'po-1', grandTotal: 1_000_000, qtyPO: 10, qtySJ: 0, totalDiajukan: 950_000 });
+    const r = cekPlafonPO({ poNumber: 'po-1', grandTotal: 1_000_000, totalDiajukan: 1_050_000 });
     expect(r.ok).toBe(false);
-    expect((r as { message: string }).message).toMatch(/^Melebihi plafon P\.O "PO-1"\. Total yang diajukan atas PO ini \(Rp 950\.000, termasuk dokumen ini\) melebihi plafon saat ini \(Rp 900\.000\)\./);
+    expect((r as { message: string }).message).toMatch(/^Melebihi plafon P\.O "PO-1"\. Total yang diajukan atas PO ini \(Rp 1\.050\.000, termasuk dokumen ini\) melebihi plafon saat ini \(Rp 1\.000\.000\)\./);
   });
 });
 

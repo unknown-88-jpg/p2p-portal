@@ -27,7 +27,6 @@ export function KartuPo({ po, nominalIni = 0, judul = 'Data P.O' }: { po: DataPo
         {nominalIni > 0 && (
           <div className="sisa-baris"><span>Pengajuan ini {rupiah(nominalIni)}</span><span className={g.nada === 'lewat' ? 'err-teks' : undefined}>{g.sisaSetelahIni < 0 ? `Lewat ${rupiah(-g.sisaSetelahIni)}` : `Sisa setelahnya ${rupiah(g.sisaSetelahIni)}`}</span></div>
         )}
-        {!diterimaPenuh && po.qtyPO > 0 && <p className="hint">Barang belum lengkap diterima: porsi 10% terakhir (retensi) baru bisa ditagih setelah Surat Jalan lengkap.</p>}
       </div>
 
       {po.billing.dokumen.length > 0 && (

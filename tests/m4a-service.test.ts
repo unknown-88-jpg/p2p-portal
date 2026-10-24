@@ -253,12 +253,12 @@ describe('submit Trade (I10, I11)', () => {
     w = authWorld(); setupAgain();
     expect(await code(submitPengajuan(w.deps, citra, await mk({ invoiceAmount: 1_000_001 }), key()))).toBe('RULE_VIOLATION');
   });
-  it('SJ belum lengkap: plafon 90%; 900.000 lolos DP, 900.001 ditolak', async () => {
+  it('SJ belum lengkap: plafon tetap grand total penuh (tanpa retensi); 1.000.000 lolos DP, 1.000.001 ditolak', async () => {
     w.store.seed(DB_SJ, [sjRow('PO/HL/2026/001', 5)]);
-    const ok = await draft({ jenisPembayaran: 'DP', invoiceAmount: 900_000 }, true); attach(ok);
+    const ok = await draft({ jenisPembayaran: 'DP', invoiceAmount: 1_000_000 }, true); attach(ok);
     expect(await code(submitPengajuan(w.deps, citra, ok, key()))).toBe('OK');
     w = authWorld(); setupAgain(); w.store.seed(DB_SJ, [sjRow('PO/HL/2026/001', 5)]);
-    const over = await draft({ jenisPembayaran: 'DP', invoiceAmount: 900_001 }, true); attach(over);
+    const over = await draft({ jenisPembayaran: 'DP', invoiceAmount: 1_000_001 }, true); attach(over);
     expect(await code(submitPengajuan(w.deps, citra, over, key()))).toBe('RULE_VIOLATION');
   });
   it('I11: SJ belum lengkap + Full Payment => ditolak; DP lolos', async () => {
