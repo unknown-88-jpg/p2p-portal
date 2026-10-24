@@ -179,10 +179,14 @@ export function InboxPersetujuan({ idAwal }: { idAwal?: string | undefined }) {
               {items.map((i) => (
                 <li key={i.id} className={`inbox-row${tampilCur?.id === i.id ? ' aktif' : ''}`}>
                   <button type="button" className="ib-kartu" aria-current={tampilCur?.id === i.id ? 'true' : undefined} onClick={() => pilihItem(i.id)}>
-                    <span className="ib-top"><span className="ib-id num"><span>{i.id}</span> · <span>{i.tanggal}</span></span>{i.perluCFO && <span className="badge-cfo">CFO</span>}</span>
-                    <span className="ib-v">{i.vendorNama || '—'}</span>
-                    <span className="ib-n num">{rupiah(i.nominal)}</span>
-                    <span className="ib-jt">{i.dueDate ? `Jatuh tempo ${i.dueDate}` : '\u00a0'}</span>
+                    <span className="ib-h">
+                      <span className="ib-v">{i.vendorNama || '—'}</span>
+                      <span className="ib-meta"><span className="dok-id num">{i.id}</span><span className="ib-umur">{i.tanggal}</span>{i.perluCFO && <span className="fin-badges"><span className="badge-cfo">CFO</span></span>}</span>
+                    </span>
+                    <span className="ib-b">
+                      <span className="ib-k"><span className="ib-dt">Jatuh tempo</span><span className="ib-dd num">{i.dueDate || '—'}</span></span>
+                      <span className="ib-k kanan"><span className="ib-dt">Nominal</span><span className="ib-dd ib-n num">{rupiah(i.nominal)}</span></span>
+                    </span>
                   </button>
                   {bisaBulk(i) && <label className="pilih-tap"><input type="checkbox" className="pilih-cb" aria-label={`Pilih ${i.id} untuk persetujuan massal`} checked={pilih.has(i.id)}
                     onChange={(e) => setPilih((p) => { const n = new Set(p); if (e.target.checked) n.add(i.id); else n.delete(i.id); return n; })} /></label>}
