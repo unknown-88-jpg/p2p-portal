@@ -67,12 +67,12 @@ Aturan tegas: route handler hanya parse → authz → panggil service → map er
 > **Hasil M3:** domain murni (`tax.ts`, `po.ts`, `master.ts`) + golden dari **kode lama yang dijalankan apa adanya** (1.230 vektor pajak, 620 plafon, CFO, prefix; BUKAN ekspor produksi). 197 tes hijau, `next build` OK, mutation check: 16 mutasi aturan uang/org terdeteksi (mutan yang tak mengubah hasil pembulatan = ekuivalen). **Keputusan 2026-10-12:** PO tak ketemu / DB_PO tak terbaca saat submit → **TOLAK** (`gatePoSubmit`; enforcement di M4). Beda disengaja dari lama: tarif PPh di luar 0..1 ditolak, Infinity ditolak, kode vendor kosong tak pernah cocok, org tanpa email, input `/api/calc/tax` ketat. Deteksi error IMPORTRANGE dipersempit (kolom kunci semua baris + kolom terpakai baris cocok). **Terbuka:** header asli Master_Setting/COA/PPh belum diketahui (dibaca posisional, `strictHeader:false`); preview pajak pakai tarif cache, submit M4 wajib tarif segar.
 > **Temuan 2026-10-08 (dari salinan dummy):** `DB_PO` dan `DB_SJ` di sistem asli adalah **IMPORTRANGE live** dari spreadsheet sistem PO lain (`Trans_PO_Headers`, `Trans_GR_Headers`), bukan data yang ditulis portal. Konsekuensi: (a) nilai error rumus (`#N/A`, `#REF!`, "Loading...") bisa muncul sewaktu-waktu → pembacaan PO/SJ **wajib** memperlakukan error sebagai `UPSTREAM_BUSY` dan menolak submit, bukan menganggap "PO tidak ada"; sistem lama (`assertPOTidakOverbilling_`) justru **meloloskan** submit bila PO tidak ketemu — celah yang harus diputuskan user di M3/M4 (gue sarankan: tolak submit Trade bila PO tidak terbaca); (b) header tab datang dari sumber → validator header menjaga bila sumber mengubah kolom; (c) kolom `Kode Vendor` di DB_PO berisi `#N/A` untuk PO yang vendornya tak punya kode di sumber; (d) salinan dummy harus **dibekukan** (script anonimisasi melakukannya) supaya tidak menarik data nyata.
 - `GET /api/master/*` (1 payload org, entitas, COA, kas, PPh) dengan cache + invalidasi.
-- `GET /api/po/:poNumber` (`hitungPlafonSJ_` model retensi 90/10, kumulatif non-Rejected, jasa tanpa qty bebas).
+- `GET /api/po/:poNumber` (`hitungPlafonSJ_` model retensi 90/10, kumulatif non-Rejected, jasa tanpa qty bebas). → **Keputusan pemilik 2026-10-24 (final):** retensi dihapus, plafon = grand total penuh.
 - `POST /api/calc/tax` = fungsi murni; **golden test** `hitungPajak` terhadap 200+ baris dummy hasil ekspor sistem lama (pembulatan identik `Math.round`).
 - **Exit:** golden test 100% sama; plafon PO lolos 10 skenario simulasi lama (DP tanpa SJ, tepat 90%, masuk retensi tanpa SJ, pelunasan setelah SJ lengkap, over-receipt, PO jasa, dokumen Rejected diabaikan).
 
 ### M4 — Pengajuan: wizard, lampiran, submit (L)
-- CRUD draft/update (I12) + `submit` (I9 invoice unik, I10 plafon baca-segar dalam lock `po:`/`inv:`, I11 barang diterima penuh, I1 CFO flag, I2 hitung ulang server).
+- CRUD draft/update (I12) + `submit` (I9 invoice unik, I10 plafon baca-segar dalam lock `po:`/`inv:`, ~~I11 barang diterima penuh~~ (dihapus 2026-10-24), I1 CFO flag, I2 hitung ulang server).
 - Upload lampiran **langsung browser→Drive** (O11): sesi resumable dibuat server (header `Origin`), konfirmasi server (size/parents/nama/tipe), whitelist MIME + magic bytes, batas ukuran di server, **cron housekeeping membersihkan file yatim**, URL sesi tidak pernah di-log. Untuk putus-jaringan: kueri status sesi + lanjut (belum teruji di S3 → **test tersendiri di milestone ini**).
 - Proxy lampiran `GET …/files/:fileId` (I13, stream, `/download/drive/v3/…`, `Cache-Control: private`, indikator memuat; **tidak pernah di jalur kritis approve**).
 - UI wizard 5 langkah (autosave draft, cek duplikat invoice inline, gauge plafon PO, badge CFO), daftar "Pengajuan saya".
@@ -115,7 +115,7 @@ Aturan tegas: route handler hanya parse → authz → panggil service → map er
 | I8 vendor Approved & nama persis | M4 | unit + contract |
 | I9 invoice unik per vendor | M4 | race 20 paralel |
 | I10 plafon PO (lintas dokumen) | M3/M4 | 10 skenario + race pada PO sama |
-| I11 barang diterima penuh (Trade non-DP) | M4 | unit |
+| ~~I11 barang diterima penuh (Trade non-DP)~~ — dihapus 2026-10-24 | M4 | unit (kini menguji bahwa submit LOLOS) |
 | I12 edit hanya pemilik, Draft/Revision | M4 | unit + authz |
 | I13 akses lihat dokumen/lampiran | M4/M7 | matriks authz (tiap peran × dokumen) |
 | I14 WA: kode terikat nomor, ≥ 5 jt tidak via WA, step-up web | M5/M6 | unit ambang + e2e kedua jalur |

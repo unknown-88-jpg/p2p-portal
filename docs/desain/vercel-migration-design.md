@@ -101,8 +101,8 @@ Ini aturan yang tidak boleh berubah perilakunya tanpa keputusan eksplisit lo. Se
 | I7 | Vendor maker-checker: pendaftar ≠ pengesah; rekening (bank+no) unik | `approveVendor`, `submitNewVendor` |
 | I8 | Vendor di pengajuan harus `Approved` dan dicocokkan nama persis | `findVendor_`, `getVendorList` |
 | I9 | Invoice unik per vendor (kecuali dokumen berstatus Rejected) | `assertNoDuplicateInvoice_` |
-| I10 | Anti-overbilling PO: plafon = 90% grandTotal (`PO_RETENSI_PELUNASAN_PCT=0.10`), 100% hanya bila `qtySJ ≥ qtyPO`; kumulatif lintas dokumen non-Rejected; di-enforce saat submit; qty direkomputasi dari DB_PO/DB_SJ, bukan snapshot baris | `hitungPlafonSJ_`, `assertPOTidakOverbilling_` |
-| I11 | Trade non-DP butuh barang diterima penuh (cek qty) saat submit | `submitPengajuan` |
+| I10 | **Keputusan pemilik 2026-10-24 (final):** plafon = **grand total P.O penuh**, tanpa retensi & tanpa syarat Surat Jalan; kumulatif lintas dokumen non-Rejected tetap berlaku. *Aturan lama (tidak berlaku lagi):* plafon = 90% grandTotal (`PO_RETENSI_PELUNASAN_PCT=0.10`), 100% hanya bila `qtySJ ≥ qtyPO`; kumulatif lintas dokumen non-Rejected; di-enforce saat submit; qty direkomputasi dari DB_PO/DB_SJ, bukan snapshot baris | `hitungPlafonSJ_`, `assertPOTidakOverbilling_` |
+| I11 | **Keputusan pemilik 2026-10-24 (final):** **DIHAPUS** — Trade non-DP tetap boleh diajukan walau barang belum diterima penuh (layar tinjau hanya info). *Aturan lama:* Trade non-DP butuh barang diterima penuh (cek qty) saat submit | `submitPengajuan` |
 | I12 | Edit hanya oleh pemilik, hanya status Draft/Revision; revisi mengosongkan PPh lama | `updatePengajuanRow_` |
 | I13 | Otorisasi lihat dokumen/lampiran: pemilik, manager berwenang brand/dept, atau Finance (L3+) | `bisaLihatDokumen_` |
 | I14 | Approval WA: kode 4 digit terikat nomor pengirim; **nominal ≥ Rp 5jt TIDAK boleh via WA — wajib di web + konfirmasi ulang password (D9, berubah dari sistem lama yang memakai OTP email)**; Finance TIDAK approve via WA | `WA_Approval.gs`, `WA_Digest.gs` |
