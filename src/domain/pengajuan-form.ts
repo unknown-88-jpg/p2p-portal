@@ -1,6 +1,6 @@
 import { LEVEL } from './config';
 import type { Org } from './master';
-import { cekBarangDiterima, hitungDraft, isValidYmd, JENIS_PEMBAYARAN, STATUS_PPN_OPSI, TIPE, type Tipe } from './pengajuan';
+import { hitungDraft, isValidYmd, JENIS_PEMBAYARAN, STATUS_PPN_OPSI, TIPE, type Tipe } from './pengajuan';
 import { hasAuthority, type Role } from './roles';
 
 // Logika form wizard (M4c). MURNI & dapat dites tanpa browser. Server tetap satu-satunya penentu: semua yang ada di sini hanya
@@ -174,9 +174,11 @@ function hitungAman(f: FormPengajuan, npwp: string): PreviewHitung | null {
 }
 export const previewHitung = (f: FormPengajuan, npwpVendor: string): PreviewHitung | null => (angka(f.invoiceAmount) > 0 ? hitungAman(f, npwpVendor) : null);
 
-/** I11 (peringatan dini di layar tinjau; server tetap menolak saat submit). */
+/** Info (tidak memblokir) di layar tinjau: Trade non-DP yang barangnya belum diterima penuh. Aturan tolak I11 dihapus 2026-10-24. */
 export const peringatanBarang = (f: FormPengajuan, qtyPO: number, qtySJ: number): string | null =>
-  f.tipe === 'Trade' ? cekBarangDiterima('Trade', f.jenisPembayaran, qtyPO, qtySJ) : null;
+  f.tipe === 'Trade' && f.jenisPembayaran !== 'DP' && qtyPO > 0 && qtySJ < qtyPO
+    ? `Barang belum diterima penuh (Surat Jalan ${qtySJ} dari ${qtyPO}). Pengajuan "${f.jenisPembayaran}" tetap bisa diajukan.`
+    : null;
 
 // ------------------------------------------------------------------ ke/dari server
 /** Body POST create/update. Urutan kunci TETAP (dipakai sebagai sidik jari idempotensi). Tidak ada angka turunan: server menghitung semuanya. */

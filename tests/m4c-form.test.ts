@@ -137,8 +137,8 @@ describe('preview hitung = fungsi domain yang sama dengan server (I1 batas CFO)'
     expect(previewHitung(lengkap({ invoiceAmount: '' }), '')).toBeNull();
     expect(previewHitung(lengkap({ invoiceAmount: '1.000', diskon: '2.000' }), '')).toBeNull();
   });
-  it('peringatan I11 hanya Trade non-DP dengan SJ < PO', () => {
-    expect(peringatanBarang(lengkap({ tipe: 'Trade', jenisPembayaran: 'Full Payment' }), 10, 4)).toMatch(/belum diterima penuh/);
+  it('info barang (tidak memblokir) hanya Trade non-DP dengan SJ < PO', () => {
+    expect(peringatanBarang(lengkap({ tipe: 'Trade', jenisPembayaran: 'Full Payment' }), 10, 4)).toMatch(/belum diterima penuh.*tetap bisa diajukan/);
     expect(peringatanBarang(lengkap({ tipe: 'Trade', jenisPembayaran: 'DP' }), 10, 4)).toBeNull();
     expect(peringatanBarang(lengkap({ tipe: 'Trade', jenisPembayaran: 'Full Payment' }), 10, 10)).toBeNull();
     expect(peringatanBarang(lengkap({ tipe: 'Non-Trade' }), 10, 0)).toBeNull();

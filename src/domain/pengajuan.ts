@@ -63,13 +63,7 @@ export function hitungDraft(a: { invoiceAmount?: unknown; diskon?: unknown; biay
   return { ...t, perluCFO: butuhCFO(t.finalAmount) };
 }
 
-/** I11: Trade non-DP butuh barang diterima penuh. qty harus hasil baca SEGAR DB_PO/DB_SJ, bukan snapshot baris. */
-export function cekBarangDiterima(tipe: string, jenis: string, qtyPO: number, qtySJ: number): string | null {
-  if (tipe === 'Trade' && jenis !== 'DP' && qtyPO > 0 && qtySJ < qtyPO) {
-    return `Barang belum diterima penuh (SJ ${qtySJ} dari PO ${qtyPO}). Pembayaran "${jenis}" tidak bisa diajukan. Gunakan jenis "DP" bila memang uang muka.`;
-  }
-  return null;
-}
+// Keputusan user 2026-10-24: aturan I11 (Trade non-DP wajib barang diterima penuh) DIHAPUS; pengajuan tetap bisa diajukan walau Surat Jalan belum lengkap.
 
 /** Nama lock invoice (I9). Dinormalisasi supaya "inv-1" dan "INV-1 " berebut lock yang sama. */
 export const invoiceLockName = (vendorKode: string, noInvoice: string): string => `inv:${upper(vendorKode)}:${upper(noInvoice)}`;

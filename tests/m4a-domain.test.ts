@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cariInvoiceDuplikat, cekBarangDiterima, cekHakPengaju, hitungDraft, invoiceLockName, isValidYmd, validatePengajuan, type PengajuanInput } from '@/domain/pengajuan';
+import { cariInvoiceDuplikat, cekHakPengaju, hitungDraft, invoiceLockName, isValidYmd, validatePengajuan, type PengajuanInput } from '@/domain/pengajuan';
 import { serialToYmd, ymdToSerial } from '@/lib/time';
 
 const base: PengajuanInput = {
@@ -59,16 +59,6 @@ describe('I9 cariInvoiceDuplikat', () => {
   it('vendor lain tidak bentrok', () => expect(cariInvoiceDuplikat([row({ vendorKode: 'V2', vendorNama: 'Beta' })], v, 'INV-1')).toBeNull());
   it('baris lama tanpa kode: cocok lewat nama', () => expect(cariInvoiceDuplikat([row({ vendorKode: '' })], v, 'INV-1')).not.toBeNull());
   it('nama lock dinormalisasi', () => expect(invoiceLockName('v1', ' inv-1 '.trim())).toBe(invoiceLockName('V1', 'INV-1')));
-});
-
-describe('I11 cekBarangDiterima', () => {
-  it('Trade Full Payment, SJ kurang => tolak', () => expect(cekBarangDiterima('Trade', 'Full Payment', 10, 9)).toMatch(/belum diterima penuh/));
-  it('Trade DP dikecualikan', () => expect(cekBarangDiterima('Trade', 'DP', 10, 0)).toBeNull());
-  it('Trade SJ lengkap lolos; qtyPO 0 (jasa) lolos; Non-Trade lolos', () => {
-    expect(cekBarangDiterima('Trade', 'Pelunasan', 10, 10)).toBeNull();
-    expect(cekBarangDiterima('Trade', 'Pelunasan', 0, 0)).toBeNull();
-    expect(cekBarangDiterima('Non-Trade', 'Full Payment', 10, 0)).toBeNull();
-  });
 });
 
 describe('tanggal', () => {

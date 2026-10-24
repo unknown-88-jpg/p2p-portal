@@ -237,7 +237,7 @@ describe('submit', () => {
   });
 });
 
-describe('submit Trade (I10, I11)', () => {
+describe('submit Trade (I10; I11 dihapus)', () => {
   // PO 1.000.000, qtyPO 10, SJ 10 (lengkap): plafon penuh 1.000.000.
   const mk = async (o: Partial<PengajuanInput> = {}): Promise<string> => { const id = await draft({ jenisPembayaran: 'Full Payment', ...o }, true); attach(id); return id; };
 
@@ -261,10 +261,10 @@ describe('submit Trade (I10, I11)', () => {
     const over = await draft({ jenisPembayaran: 'DP', invoiceAmount: 1_000_001 }, true); attach(over);
     expect(await code(submitPengajuan(w.deps, citra, over, key()))).toBe('RULE_VIOLATION');
   });
-  it('I11: SJ belum lengkap + Full Payment => ditolak; DP lolos', async () => {
+  it('I11 dihapus (2026-10-24): SJ belum lengkap + Full Payment tetap lolos; DP juga lolos', async () => {
     w.store.seed(DB_SJ, [sjRow('PO/HL/2026/001', 5)]);
     const fp = await mk({ invoiceAmount: 100_000 });
-    expect(await code(submitPengajuan(w.deps, citra, fp, key()))).toBe('RULE_VIOLATION');
+    expect(await code(submitPengajuan(w.deps, citra, fp, key()))).toBe('OK');
     const dp = await draft({ jenisPembayaran: 'DP', invoiceAmount: 100_000, noInvoice: 'DP-1' }, true); attach(dp);
     expect(await code(submitPengajuan(w.deps, citra, dp, key()))).toBe('OK');
   });
