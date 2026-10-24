@@ -28,6 +28,8 @@ Dokumen lengkap (hasil UAT, desain, risiko) ada di Project "P2P Finance Portal" 
 4. Pembersihan data dummy: kembalikan nomor Dummy 002 (2 baris) ke `08000005002`; hapus baris peran tambahan (Dummy 002 Level 1, Dummy 003 Level 2); hapus dokumen uji (NTR-00001…13, TRD-00001/3/4, draf INV-U6-B); reset password Dummy 001/003/007; cek akun Manager yang masih bernomor lama (F-16).
 5. Konfirmasi eksplisit O4/O5. (`docs/desain/m8-uat-hasil.md` & `phase1-status.md` diperbarui 2026-10-24.)
 
+- Next.js 16.4.0 → **16.4.2** (2026-10-24): menutup advisori kritis `npm audit` untuk next 16.0.0–16.4.0; `next build` tidak lagi kadang berhenti dengan `SecurityFatalError`.
+
 ## Temuan terbuka (tidak menghalangi Fase 1)
 - F-02: invoice PDF tidak bisa dicetak gabungan dengan voucher (CSP `object-src 'none'`).
 - Daftar kas (placeholder), screenshot Master_COA produksi, rekening di Master_COA dummy terlihat nyata, folder Drive `upload-test` berisi file lain, perbandingan 5 voucher dengan sistem lama (syarat keluar M7), label data basah (stale) di UI.
