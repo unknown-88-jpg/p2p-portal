@@ -115,6 +115,9 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
         <div className="inbox-wrap"><div className={`inbox${detailHP ? ' hp-detail' : ''}${ruangPajak ? ' hanya-daftar' : ''}`}>
           <section className="inbox-list" aria-label={ring.label}>
             {tampil.length === 0 ? <p className="muted" role="status">Tidak ada yang cocok dengan kata kunci.</p> : (
+              <div className={ruangPajak ? 'fin-tabel' : undefined}>
+              {/* Kepala kolom hanya tampilan (layar lebar, daftar penuh); tiap baris tetap membawa label sendiri untuk pembaca layar. */}
+              {ruangPajak && <div className="daftar-head" aria-hidden="true"><span>Vendor</span><span>ID</span><span>Umur</span><span>Jatuh tempo</span><span>Keterangan</span><span className="kanan">Nominal</span></div>}
               <ul className="ib-daftar">
                 {tampil.map((i) => (
                   <li key={i.id} className={`inbox-row${cur?.id === i.id ? ' aktif' : ''}`}>
@@ -134,6 +137,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
                   </li>
                 ))}
               </ul>
+              </div>
             )}
           </section>
 

@@ -339,6 +339,26 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); }
 .ib-dd.lewat, .ib-dt:has(+ .ib-dd.lewat) { color: var(--danger); font-weight: 600; }
 .ib-n { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
 .pilih-tap { top: -1px; bottom: auto; right: 2px; margin: 0; } /* checkbox di pojok kanan atas, sejajar nama vendor (nominal di kanan bawah) */
+/* Finance — daftar penuh (Verifikasi pajak): baris tabel seperti daftar Pengajuan saya di layar lebar, kartu di HP */
+.fin-tabel .daftar-head { display: none; }
+@media (min-width: 1100px) {
+  .fin-tabel { --fcols: minmax(0, 1.6fr) 112px 80px 112px minmax(0, 1fr) 150px; background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); box-shadow: var(--shadow-xs); overflow: hidden; }
+  .fin-tabel .daftar-head { display: grid; grid-template-columns: var(--fcols); gap: 16px; padding: 10px 16px; background: var(--pearl); border-bottom: 1px solid var(--hairline); font-size: 12px; font-weight: 500; color: var(--muted); }
+  .fin-tabel .daftar-head .kanan { text-align: right; }
+  .inbox.hanya-daftar .fin-tabel .ib-daftar { display: block; margin: 0; }
+  .fin-tabel .inbox-row + .inbox-row { border-top: 1px solid var(--divider); }
+  .fin-tabel .ib-kartu { display: grid; grid-template-columns: var(--fcols); gap: 16px; align-items: center; padding: 12px 16px; border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+  .fin-tabel .ib-kartu:hover { background: var(--pearl); }
+  .fin-tabel .ib-h, .fin-tabel .ib-meta, .fin-tabel .ib-b, .fin-tabel .ib-k { display: contents; }
+  .fin-tabel .ib-h > *, .fin-tabel .ib-meta > *, .fin-tabel .ib-k > * { grid-row: 1; min-width: 0; }
+  .fin-tabel .ib-v { grid-column: 1; font-size: 14px; font-weight: 500; padding-right: 0; }
+  .fin-tabel .dok-id { grid-column: 2; justify-self: start; }
+  .fin-tabel .ib-umur { grid-column: 3; font-size: 14px; color: var(--ink-80); }
+  .fin-tabel .ib-k:first-child .ib-dd { grid-column: 4; }
+  .fin-tabel .fin-badges { grid-column: 5; margin-left: 0; justify-content: flex-start; }
+  .fin-tabel .ib-n { grid-column: 6; text-align: right; }
+  .fin-tabel .ib-dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+}
 /* vendor: chip kode sama dengan chip ID pengajuan */
 .vs-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 2px; }
 .vendor-antre .dok-h { margin-bottom: 4px; }
