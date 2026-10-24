@@ -46,7 +46,7 @@ export async function daftarUser(d: AuthDeps, s: SessionData): Promise<BarisUser
       punyaPassword: !!str(U(r, 'Password_Hash')),
     });
   });
-  return out;
+  return out.reverse(); // baris terbaru (paling bawah di sheet) dulu
 }
 
 /** Jumlah System Admin aktif (bernomor HP sah) SESUDAH perubahan diterapkan. */

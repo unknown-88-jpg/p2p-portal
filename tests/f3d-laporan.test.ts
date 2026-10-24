@@ -51,7 +51,8 @@ describe('F3-D domain — cocok dengan perhitungan manual', () => {
   it('aging AP: sisa dari payment log, per bucket & per vendor', () => {
     const a = agingAP(PENGAJUAN, BAYAR, '2026-10-24');
     expect(a.baris.map((b) => [b.id, b.bucket, b.hariLewat, b.sisa])).toEqual([
-      ['TRD-D', '> 60 hari', 115, 800_000], ['TRD-C', '31–60 hari', 55, 1_200_000], ['NTR-B', '0–30 hari', 23, 3_500_000], ['NTR-A', 'Belum jatuh tempo', -6, 10_000_000], ['NTR-I', 'Tanpa jatuh tempo', null, 500_000],
+      // jatuh tempo terbaru dulu; tanpa jatuh tempo di akhir
+      ['NTR-A', 'Belum jatuh tempo', -6, 10_000_000], ['NTR-B', '0–30 hari', 23, 3_500_000], ['TRD-C', '31–60 hari', 55, 1_200_000], ['TRD-D', '> 60 hari', 115, 800_000], ['NTR-I', 'Tanpa jatuh tempo', null, 500_000],
     ]);
     expect(a.totalSisa).toBe(16_000_000);
     expect(a.perBucket).toEqual([

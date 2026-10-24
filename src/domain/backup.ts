@@ -53,5 +53,5 @@ export function kandidatArsip(pengajuan: readonly Readonly<Record<string, unknow
     const lunas = tglYmd(r.LAST_PAY_DATE) || tglYmd(r.LAST_UPDATE);
     if (lunas && lunas <= batas) kandidat.push({ id: str(r.ID_TRX), vendor: str(r.VENDOR_NAME), nominal: num(r.FINAL_AMOUNT), lunas });
   }
-  return { batas, kandidat: kandidat.sort((a, b) => a.lunas.localeCompare(b.lunas)) };
+  return { batas, kandidat: kandidat.sort((a, b) => b.lunas.localeCompare(a.lunas) || b.id.localeCompare(a.id)) };
 }

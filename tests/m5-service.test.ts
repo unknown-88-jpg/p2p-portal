@@ -226,16 +226,16 @@ describe('reject (kembalikan ke PIC)', () => {
 });
 
 describe('inbox', () => {
-  it('hanya Submitted milik divisi berwenang, tertua dulu; ada etag, butuhStepUp, terkunci; email pembuat tidak bocor', async () => {
+  it('hanya Submitted milik divisi berwenang, terbaru dulu; ada etag, butuhStepUp, terkunci; email pembuat tidak bocor', async () => {
     const a = await submitted(citra, 1_000_000, 'I-A');
     const b = await submitted(dual, 6_000_000, 'I-B');
     await submitted(citra, 2_000_000, 'I-C', 'BRAND B', 'DEPT Y'); // divisi lain
     const draft = await createDraft(w.deps, citra, { tipe: 'Non-Trade', brand: 'BRAND A', departement: 'DEPT X', description: 'x', vendorKode: 'V3', noInvoice: 'I-D', dateInvoice: '2026-10-01', dueDate: '2026-10-31', jenisPembayaran: 'Full Payment', invoiceAmount: 1, statusPPN: 'Non PPN' });
     const items = await inbox(w.deps, budi, true);
-    expect(items.map((i) => i.id)).toEqual([a, b]);
+    expect(items.map((i) => i.id)).toEqual([b, a]);
     expect(items.map((i) => i.id)).not.toContain(draft.id);
-    expect(items[0]).toMatchObject({ etag: etag(a), butuhStepUp: false, terkunci: null, perluCFO: false, punyaLampiran: true });
-    expect(items[1]).toMatchObject({ butuhStepUp: true, perluCFO: true });
+    expect(items[1]).toMatchObject({ etag: etag(a), butuhStepUp: false, terkunci: null, perluCFO: false, punyaLampiran: true });
+    expect(items[0]).toMatchObject({ butuhStepUp: true, perluCFO: true });
     const forDual = await inbox(w.deps, dual, true);
     expect(forDual.find((i) => i.id === b)).toBeUndefined(); // M8 F-05: dokumen buatan sendiri tidak masuk antrean
     expect(forDual.find((i) => i.id === a)!.terkunci).toBeNull();

@@ -67,7 +67,7 @@ export async function antreanVendor(d: AuthDeps, s: SessionData): Promise<ItemVe
   return rows.filter((r) => upper(V(r, 'Status')) === upper(VENDOR_STATUS.PENDING) && str(V(r, 'Kode Vendor'))).map((r) => {
     const v = bangunVendor(r), oleh = str(V(r, 'Didaftarkan_Oleh'));
     return { ...v, didaftarkanOleh: nama.get(oleh.toLowerCase()) ?? (oleh || '-'), tglDaftar: fmtWaktu(V(r, 'Tgl_Daftar')), milikSaya: pendaftarSama(oleh, s.email), peringatan: peringatanVendor(v, rows) };
-  });
+  }).reverse(); // terbaru dulu
 }
 
 /** Vendor yang didaftarkan pengguna ini (status pendaftarannya). Rekening disamarkan. */

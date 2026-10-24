@@ -56,7 +56,7 @@ describe('F-05 milikSendiri & antrean', () => {
     const milikCitra = await buat(citra, true);
     expect((await inbox(w.deps, budi)).map((i) => i.id)).toEqual([milikCitra]);
     expect((await dashboard(w.deps, budi)).manager).toMatchObject({ antrean: 1 });
-    expect((await inbox(w.deps, sess({ email: 'fajar@x.id', nama: 'Fajar', roles: [{ brand: 'BRAND A', dept: 'DEPT X', level: 2 }] }))).map((i) => i.id)).toEqual([milikBudi, milikCitra]);
+    expect((await inbox(w.deps, sess({ email: 'fajar@x.id', nama: 'Fajar', roles: [{ brand: 'BRAND A', dept: 'DEPT X', level: 2 }] }))).map((i) => i.id)).toEqual([milikCitra, milikBudi]); // terbaru dulu
   });
 });
 
