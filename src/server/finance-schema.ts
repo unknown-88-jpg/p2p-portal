@@ -21,3 +21,13 @@ export const kembalikanFinanceSchema = z.object({ etag, alasan: txt(ALASAN_MAX).
 
 /** F2-C: e-approve. Identitas & level dari sesi; `sebagai` hanya memilih peran yang diklaim (dicek terhadap capability). */
 export const setujuiFinanceSchema = z.object({ etag, sebagai: z.enum(['finmgr', 'cfo']), notes: txt(CATATAN_MAX).optional() }).strict();
+
+const lvl = z.string().trim().max(120);
+/** F2-D: jurnal COA (bulk, maks. 30). Nomor baris TIDAK pernah dari klien (R-21); identitas dari sesi. */
+export const jurnalSchema = z.object({
+  items: z.array(z.object({
+    id: z.string().regex(/^(TRD|NTR)-\d{5,}$/), etag,
+    lvl1: lvl, lvl2: lvl, lvl3: lvl.default('-'), lvl4: lvl.default('-'), lvl5: lvl.default('-'),
+    budget: z.string().trim().max(60), notes: txt(CATATAN_MAX).optional(),
+  }).strict()).min(1, 'Pilih minimal satu dokumen.').max(30, 'Maksimal 30 dokumen sekali jurnal.'),
+}).strict();

@@ -10,7 +10,7 @@ Status per 2026-10-24: **Fase 1 / M8 (UAT & penutupan) berjalan.** Rincian terki
 |---|---|---|
 | **0** Spike | Sheets/Drive/Upstash/Vercel layak dipakai | ✅ Selesai |
 | **1** Auth, Ajukan, Approval | M0 fondasi · M1 lapisan data · M2 auth · M3 master/PO/pajak · M4a–c pengajuan (server, lampiran, UI) · M5 persetujuan Manager · M6 WhatsApp · M7 detail/voucher/dashboard · M8 hardening & UAT | M0–M7 ✅ · **M8 🟡 berjalan** |
-| **2** Finance | Verifikasi pajak, e-approve Fin. Mgr/CFO (O4: menggantikan TTD basah, tanpa transisi), jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | 🟡 Berjalan: F2-A ✅ (antrean & hak akses), F2-B ✅ (verifikasi pajak), F2-C ✅ (e-approve Fin. Mgr/CFO) |
+| **2** Finance | Verifikasi pajak, e-approve Fin. Mgr/CFO (O4: menggantikan TTD basah, tanpa transisi), jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | 🟡 Berjalan: F2-A ✅ (antrean & hak akses), F2-B ✅ (verifikasi pajak), F2-C ✅ (e-approve Fin. Mgr/CFO), F2-D ✅ (jurnal COA bulk) |
 | **3** Pendukung | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | ⬜ Belum mulai |
 | **4** Go-live | Vercel Pro, `PROD_SHEET_IDS`, Upstash terpisah, cutover dari Apps Script | ⬜ Belum mulai |
 
@@ -214,6 +214,12 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - **Kembalikan ke PIC** dari tahap persetujuan kini juga oleh Fin. Mgr / CFO (approval L4/L5 REJECTED); Finance Staff tetap bisa dari semua tahap Finance.
 - **Voucher:** kotak TTD L4/L5 kini E-Signed (`SIGN_METHOD`); catatan lama ber-Method `WET` tetap tampil "TTD Basah — Terverifikasi".
 - **UI** tab Persetujuan: daftar periksa Fin. Mgr / CFO (siapa sudah menyetujui), tombol "Setujui sebagai Fin. Mgr/CFO" sesuai giliran → dialog 2 langkah (konfirmasi → password), badge "Menunggu CFO" di kartu.
+
+## Fase 2 / F2-D — Jurnal COA (2026-10-24)
+- **`POST /api/finance/jurnal`** `{items: [{id, etag, lvl1..lvl5, budget, notes?}]}` (port `postJournalBulk`, `jurnalCoa`): Finance Staff (L3), **1–30 dokumen**, ID ganda dalam satu permintaan ditolak, Idempotency-Key wajib untuk seluruh batch.
+- Lock semua `trx:` (berurut) → **satu** baca segar `Trx_Pengajuan` + `Master_COA` → validasi per dokumen (status Wet Signed, etag, kombinasi COA, budget) → yang valid diterapkan dalam **satu batch tulis** (30 dokumen = 1 panggilan tulis); yang gagal dilaporkan per dokumen tanpa menggagalkan sisanya; semua gagal = 422 berisi alasan. Fault injection: tulis gagal = tidak ada dokumen setengah berubah.
+- Aturan lama (`validasiJurnal`): Level 1 & 2 wajib, budget wajib (huruf besar), kombinasi harus ada di Master_COA ("-" = level tidak dipilih), `SUB_COA` = level terdalam yang dipilih; `CATEGORY_COA`/`HEAD_COA`/`BUDGET` terisi, `NOTES_FINANCE` diganti catatan jurnal; → **COA Posted** ("Siap Dibayar"); audit `STATUS_CHANGE` + `COA_POST` per dokumen.
+- **UI** tab Jurnal COA: centang beberapa dokumen → isian sama diterapkan ke semua ("isi sama untuk yang dicentang"); dropdown COA bertingkat 5 level (level tanpa turunan otomatis "-"), budget, catatan, pratinjau akun yang dijurnal, dialog konfirmasi, ringkasan hasil per dokumen.
 
 ## Deploy
 - **Trial (sekarang):** repo GitHub privat `unknown-88-jpg/p2p-portal`, branch `main` otomatis ter-deploy ke Vercel (team FAT, Hobby, project `p2p-portal`, URL produksi `https://p2p-portal-flax.vercel.app`). `vercel.json` memaksa region `sin1`. Banner "ENVIRONMENT TRIAL — DATA DUMMY" tampil selama `APP_ENV=trial`.

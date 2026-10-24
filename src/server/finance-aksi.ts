@@ -3,7 +3,7 @@ import { etagCocok, milikSendiri, PREFIX_TOLAK_FINANCE } from '@/domain/approval
 import { butuhCFO, LEVEL } from '@/domain/config';
 import { LEVEL_LABEL } from '@/domain/dokumen';
 import { RuleError } from '@/domain/errors';
-import { cekEApprove, penandaTugasRangkap, persetujuanLengkap, PESAN_I6, statusPersetujuan, STATUS_BOLEH_KEMBALI_FINANCE, type Sebagai } from '@/domain/finance';
+import { cekEApprove, penandaTugasRangkap, persetujuanLengkap, PESAN_I6, statusPersetujuan, STATUS_BOLEH_KEMBALI_FINANCE, validasiJurnal, type Sebagai } from '@/domain/finance';
 import { num, str, upper } from '@/domain/legacy-parse';
 import { rupiah } from '@/domain/pengajuan-form';
 import { checkTransition, STATUS } from '@/domain/status';
@@ -11,14 +11,14 @@ import { hitungPajak } from '@/domain/tax';
 import { AppError } from '@/lib/errors';
 import { toSheetSerial } from '@/lib/time';
 import type { Clock } from '@/lib/clock';
-import type { CellValue, Mutation, RawRow } from '@/ports/store';
+import { FIRST_DATA_ROW, type CellValue, type Mutation, type RawRow } from '@/ports/store';
 import { TRX_APPROVAL, TRX_PENGAJUAN, colIndex } from '@/repo/schema';
 import type { z } from 'zod';
 import { etagOf } from './approval';
 import { appendAudit, auditMutation } from './audit';
 import { requireStepUp, type AuthDeps, type SessionData } from './auth';
-import type { kembalikanFinanceSchema, setujuiFinanceSchema, verifikasiPajakSchema } from './finance-schema';
-import { readPph } from './master-read';
+import type { jurnalSchema, kembalikanFinanceSchema, setujuiFinanceSchema, verifikasiPajakSchema } from './finance-schema';
+import { readCoa, readPph } from './master-read';
 import { findRowById } from './row-index';
 import { runAction } from './uow';
 
@@ -158,6 +158,49 @@ export async function setujuiFinance(d: AuthDeps, s: SessionData, token: string,
       ];
       if (lengkap) mutations.push(statusChange(s, idTrx, dari, STATUS.WET_SIGNED, catatan, clock));
       return { mutations, result: { id: idTrx, status: (lengkap ? STATUS.WET_SIGNED : STATUS.TAX_VERIFIED) as string, sebagai, menungguCFO: !lengkap, penanda } };
+    },
+  });
+}
+
+export interface HasilJurnal { berhasil: { id: string; akun: string }[]; gagal: { id: string; alasan: string }[] }
+
+/**
+ * F2-D (port postJournalBulk): jurnal COA untuk 1..30 dokumen Wet Signed. Hanya Finance Staff (L3).
+ * Lock semua `trx:` (berurut) -> SATU baca segar Trx_Pengajuan + Master_COA -> validasi per dokumen (status, etag, COA, budget) ->
+ * yang valid diterapkan dalam SATU batch; yang gagal dilaporkan per dokumen dan tidak menggagalkan sisanya. Semua gagal = 422.
+ * ID ganda dalam satu permintaan ditolak (R-04). Idempotency-Key wajib untuk seluruh batch.
+ */
+export async function jurnalCoa(d: AuthDeps, s: SessionData, input: z.infer<typeof jurnalSchema>, idemKey: string | undefined): Promise<HasilJurnal> {
+  if (!can(s.roles, 'journal.post')) throw new AppError('FORBIDDEN', 'Hanya Finance Staff yang bisa memposting jurnal COA.');
+  const ids = input.items.map((i) => i.id.toUpperCase());
+  if (new Set(ids).size !== ids.length) throw new AppError('VALIDATION', 'Ada dokumen yang sama lebih dari sekali dalam satu jurnal.');
+  return runAction(d, {
+    name: 'finance.jurnal', actor: s.email || s.phone, money: true, ...idemOf(idemKey), lockKeys: ids.map((id) => `trx:${id}`),
+    execute: async ({ store, clock }) => {
+      const [rows, coa] = await Promise.all([store.readRows(TRX_PENGAJUAN), readCoa(store)]);
+      const posisi = new Map<string, number[]>();
+      rows.forEach((r, i) => { const id = str(cell(r, 'ID_TRX')).toUpperCase(); if (id) posisi.set(id, [...(posisi.get(id) ?? []), i]); });
+      const now = toSheetSerial(clock.now());
+      const mutations: Mutation[] = [];
+      const hasil: HasilJurnal = { berhasil: [], gagal: [] };
+      for (const it of input.items) {
+        const id = it.id.toUpperCase();
+        const idx = posisi.get(id) ?? [];
+        if (idx.length !== 1) { hasil.gagal.push({ id, alasan: idx.length ? 'ID ganda di sheet. Hubungi admin.' : 'Dokumen tidak ditemukan.' }); continue; }
+        const r = rows[idx[0]!]!, dari = str(cell(r, 'STATUS'));
+        if (dari !== STATUS.WET_SIGNED) { hasil.gagal.push({ id, alasan: `Tidak sedang menunggu jurnal (status: ${dari || '-'}).` }); continue; }
+        if (!etagCocok(it.etag, etagOf(r))) { hasil.gagal.push({ id, alasan: 'Dokumen berubah sejak dibuka. Muat ulang.' }); continue; }
+        const v = validasiJurnal(coa, it);
+        if (!v.ok) { hasil.gagal.push({ id, alasan: v.alasan }); continue; }
+        mutations.push(
+          { kind: 'update', schema: TRX_PENGAJUAN, row: idx[0]! + FIRST_DATA_ROW, cells: { CATEGORY_COA: v.kategori, HEAD_COA: v.head, SUB_COA: v.akun, BUDGET: v.budget, NOTES_FINANCE: it.notes ?? '', STATUS: STATUS.COA_POSTED, LAST_UPDATE: now } },
+          statusChange(s, id, dari, STATUS.COA_POSTED, `Jurnal: ${v.akun}`, clock),
+          auditMutation({ actor: s.email, idTrx: id, action: 'COA_POST', field: 'Sub COA', oldValue: '', newValue: v.akun, notes: `Budget: ${v.budget}` }, clock),
+        );
+        hasil.berhasil.push({ id, akun: v.akun });
+      }
+      if (!hasil.berhasil.length) throw new AppError('RULE_VIOLATION', `Tidak ada dokumen yang bisa dijurnal: ${hasil.gagal.map((g) => `${g.id} (${g.alasan})`).join('; ')}`);
+      return { mutations, result: hasil };
     },
   });
 }

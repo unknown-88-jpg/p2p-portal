@@ -106,3 +106,33 @@ export function penandaTugasRangkap(email: string, pengajuEmail: string, st: Sta
   if (st.verifikator && samaEmail(st.verifikator.email, email)) p.push('penyetuju = verifikator pajak');
   return p.length ? `[Penanda SoD: ${p.join(', ')}]` : '';
 }
+
+// ------------------------------------------------------------------ F2-D: jurnal COA (port postJournalBulk)
+export const JURNAL_MAKS = 30;
+export interface IsianJurnal { lvl1: string; lvl2: string; lvl3: string; lvl4: string; lvl5: string; budget: string }
+export type BarisCoa = readonly [string, string, string, string, string];
+const isi = (v: string): string => (v ?? '').trim() || '-';
+
+/**
+ * Validasi isian jurnal terhadap Master_COA (aturan lama): Level 1 & 2 wajib, budget wajib, kombinasi harus ada di master
+ * (level yang "-" = tidak dipilih). Akun yang dijurnal (SUB_COA) = level terdalam yang dipilih. Mengembalikan alasan gagal atau hasil.
+ */
+export function validasiJurnal(coa: readonly BarisCoa[], j: IsianJurnal): { ok: false; alasan: string } | { ok: true; kategori: string; head: string; akun: string; budget: string } {
+  const l = [j.lvl1.trim(), j.lvl2.trim(), isi(j.lvl3), isi(j.lvl4), isi(j.lvl5)] as const;
+  if (!l[0] || !l[1] || l[1] === '-') return { ok: false, alasan: 'COA level 1 & 2 wajib diisi.' };
+  const budget = j.budget.trim().toUpperCase();
+  if (!budget) return { ok: false, alasan: 'Plafon budget wajib diisi.' };
+  const cocok = coa.some((c) => c[0] === l[0] && c[1] === l[1] && (l[2] === '-' || c[2] === l[2]) && (l[3] === '-' || c[3] === l[3]) && (l[4] === '-' || c[4] === l[4]));
+  if (!cocok) return { ok: false, alasan: 'Kombinasi akun COA tidak ada di Master_COA.' };
+  const akun = [...l].reverse().find((x) => x && x !== '-')!;
+  return { ok: true, kategori: l[0], head: l[1], akun, budget };
+}
+
+/** Pilihan untuk dropdown bertingkat: nilai unik di level `n` (0..4) di bawah pilihan level sebelumnya. Level tanpa turunan = []. */
+export function opsiCoa(coa: readonly BarisCoa[], pilihan: readonly string[], n: number): string[] {
+  const set = new Set<string>();
+  for (const c of coa) {
+    if (pilihan.slice(0, n).every((p, i) => c[i] === p) && c[n] && c[n] !== '-') set.add(c[n]);
+  }
+  return [...set];
+}

@@ -68,7 +68,7 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 - `loginApprover` lama menolak level selain 2; di sistem baru login terbuka semua level (sudah, D5).
 - Exit: approval L4/L5 tercatat atas nama penandatangan sebenarnya; gate CFO enforced server-side; test urutan L4 → L5.
 
-**F2-D — Jurnal COA bulk (M)**
+**F2-D — Jurnal COA bulk (M)** — ✅ selesai 2026-10-24 (README §F2-D)
 - Cascading COA 5 level (level tanpa turunan = `-`), validasi kombinasi terhadap `Master_COA`, Sub COA & Budget wajib.
 - Bulk: validasi semua item dulu (baca segar sekali), terapkan yang valid dalam **satu batch**, laporan per item (berhasil/gagal + alasan). "Isi sama untuk yang dicentang".
 - Exit: bulk 30 dokumen = 1 panggilan tulis; sebagian gagal tidak menggagalkan sisanya; tidak ada baris setengah berubah (fault injection).

@@ -8,6 +8,7 @@ import { IkonKlip } from './icons';
 import { LampiranPopup } from './LampiranPopup';
 import { FormVerifikasiPajak } from './FormVerifikasiPajak';
 import { FormPersetujuanFinance, type Peran } from './FormPersetujuanFinance';
+import { FormJurnal } from './FormJurnal';
 
 interface Item {
   id: string; tahap: KunciTahap; status: string; tanggal: string; brand: string; departement: string; tipe: string; pic: string;
@@ -43,6 +44,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
   const [sel, setSel] = useState<string | null>(null);
   const [detailHP, setDetailHP] = useState(false);
   const [info, setInfo] = useState<{ jenis: 'ok' | 'warn'; teks: string } | null>(null);
+  const [pilih, setPilih] = useState<Set<string>>(new Set());
 
   const muat = useCallback(async () => {
     try { setData(await api<Data>('/api/finance/queues', { method: 'GET' })); setGalat(null); }
@@ -51,7 +53,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
   useEffect(() => { void muat(); }, [muat]);
 
   const pilihTahap = (t: KunciTahap) => {
-    setTahap(t); setSel(null); setDetailHP(false);
+    setTahap(t); setSel(null); setDetailHP(false); setPilih(new Set());
     try { window.history.replaceState(null, '', `/finance?tahap=${t}`); } catch { /* abaikan */ }
   };
   const tampil = useMemo(() => {
@@ -66,7 +68,8 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
   if (!data) return <>{kepala}<Skeleton baris={4} /></>;
 
   const ring = data.tahap.find((t) => t.kunci === tahap)!;
-  const selesai = (p: { jenis: 'ok' | 'warn'; teks: string }, ulang: boolean) => { setInfo(p); setSel(null); setDetailHP(false); if (ulang) void muat(); };
+  const selesai = (p: { jenis: 'ok' | 'warn'; teks: string }, ulang: boolean) => { setInfo(p); setSel(null); setDetailHP(false); setPilih(new Set()); if (ulang) void muat(); };
+  const bisaPilih = tahap === 'jurnal' && ring.bisaAksi;
   const cur = tampil.find((i) => i.id === sel) ?? (!detailHP ? tampil[0] ?? null : null);
 
   return (
@@ -112,6 +115,8 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
                       <span className="ib-n num">{rupiah(angka(i))}</span>
                       <span className={`ib-jt${i.jatuhTempoLewat ? ' lewat' : ''}`}>{i.dueDate ? `${i.jatuhTempoLewat ? 'Lewat jatuh tempo' : 'Jatuh tempo'} ${i.dueDate}` : ' '}</span>
                     </button>
+                    {bisaPilih && <label className="pilih-tap"><input type="checkbox" className="pilih-cb" aria-label={`Pilih ${i.id} untuk jurnal sekaligus`} checked={pilih.has(i.id)}
+                      onChange={(e) => setPilih((p) => { const n = new Set(p); if (e.target.checked) n.add(i.id); else n.delete(i.id); return n; })} /></label>}
                   </li>
                 ))}
               </ul>
@@ -158,6 +163,8 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
                 {cur.perluCFO && <p className="cap"><span className="badge-cfo">Butuh persetujuan CFO</span></p>}
                 {cur.tahap === 'pajak' && ring.bisaAksi
                   ? <FormVerifikasiPajak key={`${cur.id}|${cur.etag}`} dok={cur} onSelesai={selesai} />
+                  : cur.tahap === 'jurnal' && ring.bisaAksi
+                  ? <FormJurnal key="jurnal" target={pilih.size ? data.items.filter((i) => pilih.has(i.id)) : [cur]} onSelesai={selesai} />
                   : cur.tahap === 'persetujuan' && (data.peran.finMgr || data.peran.cfo || data.peran.staff)
                   ? <FormPersetujuanFinance key={`${cur.id}|${cur.etag}`} dok={cur} peran={data.peran} onSelesai={selesai} />
                   : <p className="muted cap fin-menyusul">{ring.bisaAksi ? <>Aksi &ldquo;{AKSI_MENYUSUL[cur.tahap]}&rdquo; tersedia di pembaruan berikutnya.</> : <>Tahap ini dikerjakan {ring.aktor}. Anda hanya melihat.</>}</p>}
