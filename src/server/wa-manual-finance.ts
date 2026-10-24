@@ -13,6 +13,7 @@ import { TRX_APPROVAL, TRX_PENGAJUAN, colIndex } from '@/repo/schema';
 import { appendAudit } from './audit';
 import type { AuthDeps, SessionData } from './auth';
 import { findRowById } from './row-index';
+import { galatKirimWa } from './wa-galat';
 import { loadAccounts } from './users';
 
 const P = (r: RawRow, k: string): CellValue => r[colIndex(TRX_PENGAJUAN, k)] ?? null;
@@ -65,11 +66,12 @@ export async function kirimWaFinance(d: AuthDeps, s: SessionData, idTrx: string)
     if (!penerima.length) throw new AppError('RULE_VIOLATION', `Tidak ada ${LABEL[target]} lain dengan nomor WA aktif.`);
     const link = `${d.baseUrl.replace(/\/+$/, '')}/finance?tahap=persetujuan`;
     let terkirim = 0;
+    const gagal: Parameters<typeof galatKirimWa>[0][number][] = [];
     for (const a of penerima) {
       const r = await d.wa.send(a.phone, pesanPengingatFinance({ nama: a.nama, pengirim: s.nama, peran: LABEL[target], id: idTrx, vendor: str(P(f.data, 'VENDOR_NAME')), nominal, finMgr: st.finMgr?.nama ?? null, link }));
-      if (r.ok) terkirim++; else logger.warn('wa_fin_manual_gagal_kirim', { idTrx, to: maskPhone(a.phone), info: r.info });
+      if (r.ok) terkirim++; else { gagal.push({ phone: a.phone, r }); logger.warn('wa_fin_manual_gagal_kirim', { idTrx, to: maskPhone(a.phone), info: r.info }); }
     }
-    if (!terkirim) throw new AppError('UPSTREAM_BUSY', 'WhatsApp belum bisa dikirim. Coba lagi beberapa saat lagi.', undefined, 60);
+    if (!terkirim) throw galatKirimWa(gagal, LABEL[target]);
     await appendAudit(d.store, d.clock, { actor: s.email || s.phone, idTrx, action: 'WA_REMINDER_MANUAL', field: target === 'finmgr' ? 'Level 4' : 'Level 5', newValue: `${terkirim}/${penerima.length}`, notes: `Pengingat WA ke ${LABEL[target]} dikirim Finance` })
       .catch((e: Error) => logger.warn('wa_fin_manual_audit_gagal', { idTrx, err: e.message })); // I15
     return { target, penerima: penerima.length, terkirim };

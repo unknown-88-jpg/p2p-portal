@@ -73,4 +73,18 @@ describe('Kirim WA tahap persetujuan Finance (1x per tujuan)', () => {
     w.store.seed(TRX_APPROVAL, [apr(3, 'dani@x.id', 60), apr(3, 'dani@x.id', 1)]); // dikembalikan lalu diverifikasi ulang
     expect(await kode(kirimWaFinance(w.deps, fs, 'NTR-00001'))).toBe('OK');
   });
+
+  it('alasan gagal disebut: nomor di luar allowlist trial / WA belum dikonfigurasi = 422 (konfigurasi), jatah tetap utuh', async () => {
+    const tolak = (info: string) => { w.deps.wa = { send: async () => ({ ok: false, info }) }; };
+    tolak('diblokir allowlist trial');
+    const e = await kirimWaFinance(w.deps, fs, 'NTR-00001').catch((x: unknown) => x as AppError);
+    expect(e).toMatchObject({ code: 'RULE_VIOLATION', message: expect.stringMatching(/Mode trial: nomor WA Fin\. Mgr \(.*\*.*\) belum ada di daftar izin WA_TRIAL_ALLOWLIST/) });
+    expect((e as AppError).message).not.toContain(HP_FM);
+    tolak('WA belum dikonfigurasi');
+    expect(await kirimWaFinance(w.deps, fs, 'NTR-00001').catch((x: AppError) => x.message)).toMatch(/belum dikonfigurasi/);
+    tolak('HTTP 503 (sesi WhatsApp gateway putus)');
+    expect(await kirimWaFinance(w.deps, fs, 'NTR-00001').catch((x: AppError) => `${x.code} ${x.message}`)).toMatch(/UPSTREAM_BUSY .*sesi WhatsApp gateway putus/);
+    w.deps.wa = w.wa;
+    expect(await kode(kirimWaFinance(w.deps, fs, 'NTR-00001'))).toBe('OK'); // jatah tidak hangus oleh kegagalan di atas
+  });
 });
