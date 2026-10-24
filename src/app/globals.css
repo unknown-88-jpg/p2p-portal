@@ -606,6 +606,43 @@ a.metrik-kartu:focus-visible { outline-offset: 3px; border-radius: var(--r-lg); 
 .pill-st { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 7px 12px 7px 10px; letter-spacing: -0.1px; }
 .pill-st .ikon { width: 15px; height: 15px; }
 .msg { display: flex; align-items: flex-start; gap: 10px; border: 1px solid transparent; }
+.vendor-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; align-items: start; margin-top: 14px; }
+.vendor-saya li { display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--hairline); }
+.vendor-saya li:last-child { border-bottom: 0; }
+.vs-n { display: grid; gap: 2px; min-width: 0; }
+.vendor-saya .vs-n b { color: var(--ink); font-size: 15px; }
+.vendor-saya .pill-st { flex: none; }
+.vendor-antre { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 14px; }
+@media (max-width: 900px) { .vendor-grid { grid-template-columns: minmax(0, 1fr); } }
+/* ---- Fase 3: admin, laporan, audit (tabel data) ---- */
+.toolbar-sub { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0 12px; }
+.toolbar-sub .kartu-t { margin: 0; }
+.cari-admin { flex: 1 1 240px; max-width: 420px; min-height: 40px; padding: 8px 14px; border: 1px solid var(--chip); border-radius: 999px; font: inherit; font-size: 15px; background: #fff; }
+.tabel-gulir { position: relative; overflow-x: auto; margin: 0 -4px; padding: 0 4px; -webkit-overflow-scrolling: touch; }
+.tabel { width: 100%; border-collapse: collapse; font-size: 14px; letter-spacing: -0.15px; }
+.tabel th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; padding: 8px 10px; border-bottom: 1px solid var(--hairline); white-space: nowrap; }
+.tabel td { padding: 10px; border-bottom: 1px solid var(--divider); vertical-align: top; }
+.tabel tr:last-child td { border-bottom: 0; }
+.tabel td.num, .tabel th.num { text-align: right; white-space: nowrap; }
+.tabel td.kode { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vendor-grid > .kartu { margin-top: 0; }
+.vendor-grid .kartu-t + .cap { margin: 4px 0 12px; }
+.tabel tfoot td { font-weight: 600; border-top: 1px solid var(--hairline); }
+.aksi-sel { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.temuan { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.temuan li { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--divider); }
+.temuan li:last-child { border-bottom: 0; }
+.temuan p { margin: 2px 0 0; font-size: 15px; }
+.temuan .pill-st { justify-self: start; align-self: start; }
+.cek { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 15px; cursor: pointer; }
+.cek input { width: 18px; height: 18px; }
+.lap-filter { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 12px; }
+.lap-filter .f { margin: 0; min-width: 150px; flex: 1 1 150px; }
+.lap-ringkas { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.lap-ringkas div { background: var(--pearl); border: 1px solid var(--divider); border-radius: var(--r-md); padding: 10px 12px; }
+.lap-ringkas dt { font-size: 12px; color: var(--muted); }
+.lap-ringkas dd { margin: 2px 0 0; font-size: 17px; font-weight: 600; }
+@media (max-width: 640px) { .temuan li { grid-template-columns: minmax(0, 1fr); gap: 6px; } .aksi-sel { justify-content: flex-start; } }
 .toast-wadah { position: fixed; top: calc(var(--banner-h) + var(--top-h) + 12px); right: 16px; z-index: 60; display: grid; gap: 10px; width: min(420px, calc(100vw - 32px)); pointer-events: none; }
 .toast { pointer-events: auto; display: flex; align-items: flex-start; gap: 10px; padding: 14px 12px 14px 16px; border-radius: var(--r-lg); border: 1px solid var(--hairline); background: var(--canvas); color: var(--ink); font-size: 15px; line-height: 1.4; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16); animation: toast-masuk .18s ease-out; }
 .toast .ikon { width: 20px; height: 20px; margin-top: 1px; flex: none; }

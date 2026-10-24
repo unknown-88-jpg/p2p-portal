@@ -20,10 +20,10 @@ async function fail(r: Response, what: string): Promise<never> {
   throw new AppError('INTERNAL', `Drive ${what} gagal (${status}).`);
 }
 
-let folderOk = false;
+const folderOk = new Set<string>();
 /** D6: folder harus ada di Shared Drive (service account tak punya kuota) dan, di trial, drive-nya berjudul DUMMY. Dicek sekali per instance. */
 async function assertFolderAllowed(folderId: string): Promise<void> {
-  if (folderOk) return;
+  if (folderOk.has(folderId)) return;
   const r = await gfetch(`${API}/files/${folderId}?supportsAllDrives=true&fields=name,driveId,capabilities(canAddChildren)`);
   if (!r.ok) return fail(r, 'cek folder');
   const f = (await r.json()) as { driveId?: string; capabilities?: { canAddChildren?: boolean } };
@@ -34,7 +34,7 @@ async function assertFolderAllowed(folderId: string): Promise<void> {
   const driveName = ((await dr.json()) as { name?: string }).name ?? '';
   const why = checkDriveAllowed({ appEnv: env().APP_ENV, driveName });
   if (why) throw new AppError('FORBIDDEN', why);
-  folderOk = true;
+  folderOk.add(folderId);
 }
 
 export class GoogleDrive implements DrivePort {
@@ -87,6 +87,27 @@ export class GoogleDrive implements DrivePort {
     if (r.status === 404) { await r.body?.cancel().catch(() => undefined); return; }
     if (!r.ok) return fail(r, 'trash');
     await r.body?.cancel().catch(() => undefined);
+  }
+
+  async createFile(a: { name: string; mimeType: string; content: string }): Promise<DriveFileMeta> {
+    await assertFolderAllowed(this.folderId);
+    const boundary = `p2p${crypto.randomUUID().replace(/-/g, '')}`;
+    const body = `--${boundary}\r\ncontent-type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: a.name, parents: [this.folderId], mimeType: a.mimeType })}\r\n`
+      + `--${boundary}\r\ncontent-type: ${a.mimeType}; charset=UTF-8\r\n\r\n${a.content}\r\n--${boundary}--`;
+    const r = await gfetch(`https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=${META_FIELDS}`, {
+      method: 'POST', headers: { 'content-type': `multipart/related; boundary=${boundary}` }, body,
+    });
+    if (!r.ok) return fail(r, 'membuat file');
+    return toMeta((await r.json()) as RawMeta);
+  }
+
+  async copyInto(sourceId: string, name: string): Promise<DriveFileMeta> {
+    await assertFolderAllowed(this.folderId);
+    const r = await gfetch(`${API}/files/${encodeURIComponent(sourceId)}/copy?supportsAllDrives=true&fields=${META_FIELDS}`, {
+      method: 'POST', headers: { 'content-type': 'application/json; charset=UTF-8' }, body: JSON.stringify({ name, parents: [this.folderId] }),
+    }, STREAM_TIMEOUT_MS);
+    if (!r.ok) return fail(r, 'menyalin file');
+    return toMeta((await r.json()) as RawMeta);
   }
 
   async listOld(a: { namePrefix: string; createdBeforeMs: number; limit: number }): Promise<DriveFileMeta[]> {

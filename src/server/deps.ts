@@ -38,3 +38,9 @@ export function productionAuthDeps(): AuthDeps {
     baseUrl: e.APP_BASE_URL,
   };
 }
+
+/** F3-E: Drive untuk folder backup (null bila DRIVE_BACKUP_ID belum diisi). */
+export function productionBackupDrive(): GoogleDrive | null {
+  const id = env().DRIVE_BACKUP_ID;
+  return id ? new GoogleDrive(id) : null;
+}

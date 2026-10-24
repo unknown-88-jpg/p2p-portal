@@ -119,32 +119,32 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 
 ### 3.2 Milestone
 
-**F3-A — Vendor register & approve (M)**
+**F3-A — Vendor register & approve (M)** — ✅ selesai 2026-10-24 (README §F3-A)
 - Daftar vendor: validasi rekening 6–20 digit; **I7** rekening (bank+no) unik — lock `vendor-rek:`; cek duplikat real-time tanpa membocorkan detail vendor lain ke non-Finance.
 - Maker-checker: pendaftar ≠ pengesah. Approve/reject **by kode vendor** (R-21).
 - Antrean pengesahan Finance dengan peringatan (rekening mirip vendor lain, NPWP kosong).
 - ID `VND-xxxx` via `INCR` dalam lock `seq:VND`, bootstrap dari max sheet.
 - Exit: I7, I8 hijau; race pendaftaran rekening sama; pendaftar tidak bisa mengesahkan sendiri.
 
-**F3-B — Export Odoo (M)**
+**F3-B — Export Odoo (M)** — ✅ selesai 2026-10-24 (README §F3-B)
 - Dua jenis jurnal (pembelian, pembayaran); filter `DATE_INVOICE` (fallback timestamp), batas hari **WIB** (bukan UTC server).
 - Output file ke Shared Drive + unduh; **riwayat export** (siapa, kapan, rentang, jumlah entry). CSV di-escape terhadap formula injection.
 - Golden test: hasil identik dengan `Export_Odoo.gs` lama untuk set dokumen contoh.
 - Exit: I16 hijau; selisih nol terhadap ekspor lama pada dummy.
 
-**F3-C — Admin: user, master, health (M)**
+**F3-C — Admin: user, master, health (M)** — ✅ selesai 2026-10-24 (README §F3-C; repair rekening dipersempit, perlu konfirmasi)
 - Peran Level 9 = System Admin (O3). Kelola user (cari, ubah level/brand/dept via form yang menulis ke `Master_User_TTD`, nonaktifkan, kirim link set-password, paksa logout sesi).
 - Master: org/entitas/COA/PPh read + validator (edit tetap di Sheet pada awal).
 - `/admin/health`: validasi header, `validateStruktur`, `auditDataIntegrity`, rekonsiliasi pembayaran (baca-saja + alarm), kesehatan koneksi Sheets/Drive/Redis/WA, status cron terakhir.
 - Aksi repair selalu: snapshot → konfirmasi → eksekusi → laporan.
 - Exit: setara `Repair.gs`/`Diagnostics.gs`; aksi admin masuk audit.
 
-**F3-D — Laporan & viewer audit (M)**
+**F3-D — Laporan & viewer audit (M)** — ✅ selesai 2026-10-24 (README §F3-D)
 - Aging AP (0–30/31–60/>60 hari dari jatuh tempo), outstanding per vendor, per brand/dept/COA/budget per periode, log pembayaran; ekspor CSV.
 - Viewer `Audit_Log` read-only (filter ID/aktor/aksi/tanggal). Semua dihitung dari data yang sama (tidak ada angka ringkasan terpisah).
 - Exit: laporan cocok dengan perhitungan manual contoh.
 
-**F3-E — Arsip, backup, polish (M)**
+**F3-E — Arsip, backup, polish (M)** — 🟡 backup + status cron selesai 2026-10-24; arsip baru kandidat (baca saja) menunggu keputusan (README §F3-E)
 - Arsip: dokumen Paid > 18 bulan (O10) ke tab/file arsip; ID, audit, dan link tetap bisa ditelusuri.
 - Cron backup harian: salin spreadsheet ke folder backup di Shared Drive (7 harian + 4 mingguan). Cron housekeeping (file Drive yatim, idempotency key).
 - Opsional: PDF voucher server-side, dark mode, Google SSO untuk Admin (O9), Apps Script `onEdit` → `/api/cache/bust`, Ctrl+K menyeluruh, pusat notifikasi in-app.

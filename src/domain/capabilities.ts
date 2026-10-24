@@ -16,6 +16,9 @@ export const CAPABILITY_LEVELS = {
   'vendor.approve': [LEVEL.FINANCE_STAFF],
   'export.odoo': [LEVEL.FINANCE_STAFF, LEVEL.FINANCE_MGR, LEVEL.ADMIN],
   'admin.manage': [LEVEL.ADMIN],
+  // F3-D: laporan AP (baca-saja) & viewer Audit_Log. Keputusan default Fase 3 — tercatat di README, bisa diubah user.
+  'report.view': [LEVEL.FINANCE_STAFF, LEVEL.FINANCE_MGR, LEVEL.CFO, LEVEL.ADMIN],
+  'audit.view': [LEVEL.FINANCE_MGR, LEVEL.CFO, LEVEL.ADMIN],
 } as const satisfies Record<string, readonly number[]>;
 export type Capability = keyof typeof CAPABILITY_LEVELS;
 

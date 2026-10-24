@@ -67,12 +67,12 @@ describe('otorisasi', () => {
     const who = (l: number) => capabilitiesOf(roles([l])).sort();
     expect(who(1)).toEqual(['pengajuan.write', 'vendor.register']);
     expect(who(2)).toEqual(['approve.manager', 'vendor.register']);
-    expect(who(3)).toEqual(['export.odoo', 'finance.view', 'journal.post', 'payment.execute', 'tax.verify', 'vendor.approve', 'vendor.register']); // O4: tanpa 'sign.upload'
-    expect(who(4)).toEqual(['export.odoo', 'finance.view', 'sign.eapprove.finmgr']);
-    expect(who(5)).toEqual(['finance.view', 'sign.eapprove.cfo']);
-    expect(who(9)).toEqual(['admin.manage', 'export.odoo', 'vendor.register']);
+    expect(who(3)).toEqual(['export.odoo', 'finance.view', 'journal.post', 'payment.execute', 'report.view', 'tax.verify', 'vendor.approve', 'vendor.register']); // O4: tanpa 'sign.upload'
+    expect(who(4)).toEqual(['audit.view', 'export.odoo', 'finance.view', 'report.view', 'sign.eapprove.finmgr']);
+    expect(who(5)).toEqual(['audit.view', 'finance.view', 'report.view', 'sign.eapprove.cfo']);
+    expect(who(9)).toEqual(['admin.manage', 'audit.view', 'export.odoo', 'report.view', 'vendor.register']);
     expect(who(99)).toEqual([]);
-    expect(Object.keys(CAPABILITY_LEVELS)).toHaveLength(12);
+    expect(Object.keys(CAPABILITY_LEVELS)).toHaveLength(14); // F3-D: report.view, audit.view
   });
   it('canApprove menghormati brand/dept', () => {
     expect(canApprove(roles([2, 'A', 'X']), { brand: 'A', dept: 'X' })).toBe(true);

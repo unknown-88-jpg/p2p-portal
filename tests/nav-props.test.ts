@@ -12,25 +12,32 @@ describe('propsNav: isi sidebar satu sumber untuk semua halaman', () => {
 
   it('pengaju saja: bisa ajukan, tanpa menu persetujuan, antrean tidak dibaca', async () => {
     const { propsNav } = await import('@/app/_lib/nav');
-    expect(await propsNav(sesi([1]))).toEqual({ bisaAjukan: true, bisaSetujui: false });
+    expect(await propsNav(sesi([1]))).toEqual({ bisaAjukan: true, bisaSetujui: false, bisaVendor: true });
     expect(inbox).not.toHaveBeenCalled();
   });
 
   it('Manager saja: persetujuan + jumlah antrean, tanpa Ajukan', async () => {
     inbox.mockResolvedValue([1, 2, 3]);
     const { propsNav } = await import('@/app/_lib/nav');
-    expect(await propsNav(sesi([2]))).toEqual({ bisaAjukan: false, bisaSetujui: true, jumlahMenunggu: 3 });
+    expect(await propsNav(sesi([2]))).toEqual({ bisaAjukan: false, bisaSetujui: true, bisaVendor: true, jumlahMenunggu: 3 });
   });
 
   it('peran ganda (pengaju + Manager): kedua menu tetap ada (regresi halaman Persetujuan)', async () => {
     inbox.mockResolvedValue([1]);
     const { propsNav } = await import('@/app/_lib/nav');
-    expect(await propsNav(sesi([1, 2]))).toEqual({ bisaAjukan: true, bisaSetujui: true, jumlahMenunggu: 1 });
+    expect(await propsNav(sesi([1, 2]))).toEqual({ bisaAjukan: true, bisaSetujui: true, bisaVendor: true, jumlahMenunggu: 1 });
+  });
+
+  it('Fase 3: Finance Staff -> Laporan + Export; Admin -> Admin + Laporan + Export; CFO -> Laporan tanpa Export', async () => {
+    const { propsNav } = await import('@/app/_lib/nav');
+    expect(await propsNav(sesi([3]))).toEqual({ bisaAjukan: false, bisaSetujui: false, bisaFinance: true, bisaVendor: true, bisaLaporan: true, bisaExport: true });
+    expect(await propsNav(sesi([9]))).toEqual({ bisaAjukan: false, bisaSetujui: false, bisaVendor: true, bisaLaporan: true, bisaExport: true, bisaAdmin: true });
+    expect(await propsNav(sesi([5]))).toEqual({ bisaAjukan: false, bisaSetujui: false, bisaFinance: true, bisaLaporan: true });
   });
 
   it('antrean gagal dibaca: halaman tetap jalan, jumlah dihilangkan', async () => {
     inbox.mockRejectedValue(new Error('Sheets 429'));
     const { propsNav } = await import('@/app/_lib/nav');
-    expect(await propsNav(sesi([1, 2]))).toEqual({ bisaAjukan: true, bisaSetujui: true });
+    expect(await propsNav(sesi([1, 2]))).toEqual({ bisaAjukan: true, bisaSetujui: true, bisaVendor: true });
   });
 });
