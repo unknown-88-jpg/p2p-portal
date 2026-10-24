@@ -367,10 +367,25 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); }
 .ds-h { font-weight: 600; letter-spacing: 0.04em; color: var(--muted); }
 .ip-angka { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
 .dlg-ringkas strong { font-size: 22px; font-weight: 600; }
-.fin-tab { padding: 10px 14px; }
-.fin-tab.aktif { padding: 9px 13px; }
-.fin-tab-l { font-size: 13px; }
-.fin-tab-n { font-size: 20px; letter-spacing: -0.02em; }
+/* tahap Finance = segmented tabs seperti filter Pengajuan saya; total per tahap tetap dibacakan (sr-only) & tahap aktif di baris ringkasan */
+.fin-toolbar { margin: 0 0 8px; }
+.fin-tahap { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; margin: 0; width: fit-content; max-width: 100%; background: var(--parchment); border-radius: var(--r-md); }
+.fin-tab, .fin-tab.aktif, .fin-tab.perlu:not(.aktif) { display: inline-flex; align-items: center; gap: 8px; min-height: 30px; padding: 4px 12px; border: 0; border-radius: var(--r-sm); background: transparent; box-shadow: none; font-size: 14px; color: var(--ink-80); white-space: nowrap; }
+.fin-tab:hover { background: rgba(255, 255, 255, 0.6); }
+.fin-tab.aktif, .fin-tab.aktif:hover { background: var(--canvas); color: var(--ink); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
+.fin-tab-l { font-size: 14px; font-weight: 400; color: inherit; }
+.fin-tab-n, .fin-tab.perlu .fin-tab-n { min-width: 22px; padding: 1px 7px; border-radius: var(--r-sm); background: rgba(0, 0, 0, 0.06); color: var(--ink-80); font-size: 12px; font-weight: 500; line-height: 1.5; letter-spacing: 0; text-align: center; }
+.fin-tab.perlu .fin-tab-l::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 8px; border-radius: 50%; background: var(--danger); vertical-align: 1px; }
+.fin-tab.perlu .fin-tab-n { background: var(--danger); color: #fff; }
+.fin-toolbar .fin-alat { margin: 0; flex: 1 1 360px; max-width: 520px; }
+.fin-ringkas { margin: 0 0 14px; }
+.fin-toolbar .fin-urut { margin: 0; }
+@media (min-width: 641px) { .fin-toolbar .cari input, .fin-toolbar .fin-urut select { height: 40px; min-height: 40px; padding-top: 0; padding-bottom: 0; } }
+@media (max-width: 640px) {
+  .fin-tahap { width: 100%; }
+  .fin-tab, .fin-tab.aktif, .fin-tab.perlu:not(.aktif) { min-height: 44px; }
+  .fin-toolbar .fin-alat { flex-basis: 100%; max-width: none; }
+}
 .metrik-n { font-size: 24px; }
 .metrik-n.metrik-uang { font-size: 18px; }
 .lap-ringkas dd { font-size: 16px; }
