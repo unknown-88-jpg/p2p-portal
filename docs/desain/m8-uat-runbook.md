@@ -20,7 +20,7 @@ Tujuan: membuktikan exit Fase 1 — **3 PIC + 2 Manager**, approval via **web da
 | U3 | PIC-1 | Wizard Non-Trade < Rp 5 jt: isi, upload JPG, submit | Status Submitted; badge CFO tidak ada; audit `STATUS_CHANGE` | I1 I2 | |
 | U4 | PIC-1 | Upload file `.exe` dipalsukan jadi `.pdf` | Ditolak (magic bytes) | M4b | |
 | U5 | PIC-1 | Buat pengajuan kedua dengan vendor + no. invoice yang sama | Peringatan duplikat inline; submit ditolak | I9 | |
-| U6 | PIC-2 | Wizard **Trade** dengan PO yang SJ-nya parsial; nominal melebihi plafon retensi | Ditolak dengan pesan plafon; nominal ≤ plafon lolos | I10 I11 | |
+| U6 | PIC-2 | Wizard **Trade** dengan PO yang SJ-nya parsial. *Ekspektasi baru (keputusan 2026-10-24):* nominal kumulatif > **grand total P.O** | Ditolak dengan pesan plafon; nominal ≤ grand total lolos walau SJ parsial; Full Payment/Pelunasan dengan SJ parsial **lolos** (hanya info di Tinjau); klik Full Payment mengisi nilai invoice = sisa tagihan P.O | I10 | |
 | U7 | PIC-2 & PIC-3 | Buat dokumen ≥ Rp 5 jt (mis. 7.500.000) lalu submit | Badge "Butuh TTD CFO"; muncul di inbox Manager berwenang saja | I1 | |
 | U8 | PIC-3 | Buka URL `/pengajuan/<ID milik PIC-1>` | **404** (bukan 403, bukan detail) | I13 | |
 | U9 | Manager-A | Beranda: hitung antrean, buka `/persetujuan`, deep link dari digest WA | Hanya dokumen dept berwenang; angka dashboard = jumlah inbox | I13 | |

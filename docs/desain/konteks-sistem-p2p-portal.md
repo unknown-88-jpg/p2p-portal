@@ -110,6 +110,7 @@ supaya sesi baru tidak "memperbaiki" sesuatu yang sebenarnya sengaja.
   Keputusan: TIDAK memblokir tahap TTD basah (level 4/5) dengan cara yang
   sama — hanya tahap verifikasi pajak yang diminta user.
 - **Anti-overbilling PO — model RETENSI PELUNASAN (revisi final, 2026-09-18).**
+  > **Portal baru (Next.js): aturan ini TIDAK berlaku lagi.** Keputusan pemilik 2026-10-24: retensi dihapus (plafon = grand total P.O penuh) dan syarat "barang diterima penuh" untuk non-DP (I11) dihapus. Bagian di bawah menjelaskan perilaku sistem Apps Script lama.
   Bukan lagi proporsional ketat terhadap qty diterima (versi awal yang
   sempat diimplementasikan lalu direvisi setelah klarifikasi user).
   Aturan final:

@@ -19,11 +19,11 @@ Detail rencana Fase 2–4 (lingkup, milestone, exit criteria, risiko, keputusan 
 Alur status dokumen (stepper di UI): Draft → Menunggu Manager → Menunggu Verifikasi Pajak → Menunggu TTD Basah (Fin. Mgr / CFO) → Menunggu Jurnal COA → Siap Dibayar → Lunas. Fase 1 mencakup dua tahap pertama (sampai Manager Approved); tahap sesudahnya dikerjakan di Fase 2.
 
 ### Sisa M8 (penutupan Fase 1)
-1. Terapkan & deploy Patch 2 (F-11 durasi kunci login, F-12 cek link set-password saat dibuka, F-13 voucher cetak 1 halaman di iOS, F-14 parser WA abaikan `*`/`_`/`~`); verifikasi ulang F-13 di iPhone.
-2. Uji ulang U6/U8 terhadap aturan P.O baru (retensi dihapus, I11 dihapus; lihat M3) atau catat hasil lama berlaku untuk kode sebelum 2026-10-24.
+1. Patch 2 (F-11…F-14) sudah di `main` (PR #18). Sisa: pastikan ter-deploy, lalu verifikasi ulang F-13 (cetak voucher 1 halaman) di iPhone asli.
+2. Uji ulang U6 dengan aturan P.O baru yang sudah **final** (retensi dihapus, I11 dihapus; lihat M3): plafon = grand total P.O penuh, Full Payment/Pelunasan tetap bisa diajukan walau SJ belum lengkap. Hasil U6 lama berlaku untuk kode sebelum 2026-10-24.
 3. U21 Android, U23 (unggah PDF besar dari ponsel), cek baris audit di sheet (U3/U18).
 4. Pembersihan data dummy (nomor Dummy 002 dikembalikan, baris peran tambahan, dokumen uji, reset password) dan cek akun Manager bernomor lama.
-5. Perbarui `m8-hasil.md` & `phase1-status.md`; konfirmasi eksplisit O4/O5.
+5. Konfirmasi eksplisit O4/O5 (`docs/desain/phase1-status.md` & `m8-uat-hasil.md` sudah diperbarui 2026-10-24).
 
 ### Aturan kerja bersama
 - **Data dummy saja** selama trial. Jangan menempel `.env*`, kunci, token, atau secret di chat/PR/screenshot.
@@ -102,7 +102,7 @@ Respons "lupa password" sengaja dikirim **sebelum** token/link/audit dikerjakan 
 - `GET /api/master/{org,entitas,coa,kas,pph}` (cache 10 mnt + stale-if-error 1 jam, `invalidateMaster()` untuk invalidasi), `GET /api/master/vendors?tipe=Trade|Non-Trade` (baca segar, tanpa cache), `GET /api/po/:poNumber[?excludeIdTrx=]`, `POST /api/calc/tax`. Semua wajib login. Org **tanpa email**.
 - `/api/po/:no`: 404 = PO tidak ada di DB_PO; **503 `UPSTREAM_BUSY` = DB_PO/DB_SJ (IMPORTRANGE) sedang error/Loading — bukan "tidak ada"**. Deteksi error dipersempit: kolom kunci (PO / PO_ID) di semua baris + kolom terpakai di baris yang cocok; sel error di kolom lain tidak memblokir.
 - Keputusan 2026-10-12: di **submit** (M4), PO tak ketemu **atau** tak terbaca = **ditolak** (`gatePoSubmit` di `src/domain/po.ts`; sistem lama meloloskan). Preview `/api/calc/tax` memakai cache tarif PPh; submit/verifikasi wajib baca tarif **segar** (`readPph`).
-- Keputusan 2026-10-24: **retensi 10% sistem lama dihapus**. Plafon tagihan P.O = **grand total P.O penuh** (`hitungPlafonSJ`/`cekPlafonPO` di `src/domain/po.ts`), tidak lagi bergantung pada kelengkapan Surat Jalan. Golden test plafon sengaja berbeda dari sistem lama. Aturan I11 (pembayaran non-DP Trade wajib barang diterima penuh) juga **dihapus**: pengajuan tetap bisa diajukan walau Surat Jalan belum lengkap; layar tinjau hanya menampilkan info, tidak memblokir.
+- Keputusan 2026-10-24 (**final, dikonfirmasi pemilik**): **retensi 10% sistem lama dihapus**. Plafon tagihan P.O = **grand total P.O penuh** (`hitungPlafonSJ`/`cekPlafonPO` di `src/domain/po.ts`), tidak lagi bergantung pada kelengkapan Surat Jalan. Golden test plafon sengaja berbeda dari sistem lama. Aturan I11 (pembayaran non-DP Trade wajib barang diterima penuh) juga **dihapus**: pengajuan tetap bisa diajukan walau Surat Jalan belum lengkap; layar tinjau hanya menampilkan info, tidak memblokir.
 - Golden test = **keluaran kode lama dijalankan apa adanya** (`node scripts/gen-golden.mjs` → `tests/golden/*.json`; 1.230 vektor pajak, 620 plafon). Ini bukan ekspor data produksi.
 - Beda yang disengaja dari sistem lama: tarif PPh di luar 0..1 ditolak (lama: bisa memotong 200%); `Infinity` ditolak; `/api/calc/tax` menerima angka bertipe number + enum PPN (lebih ketat); kode vendor kosong tidak pernah cocok; Master_Setting/COA/PPh dibaca posisional (header aslinya belum terdaftar, `strictHeader:false`).
 

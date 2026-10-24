@@ -28,7 +28,7 @@ Fase 2 menyentuh kontrol uang. Sebelum satu baris kode Fase 2 ditulis, minta kon
 | O5a | Approver L2 ≠ pembuat dokumen | Sudah aktif di Fase 1 (flag `SOD_APPROVER_NOT_CREATOR`) | Konfirmasi tetap dicatat |
 | O5b | Pembayar ≠ verifikator pajak ≠ pengunggah TTD | Peringatan + penanda audit, **bukan blokir** | Pilihan alternatif: blokir keras. Perlu dijawab |
 | I6 | Pengaju ≠ verifikator pajak | Blokir keras (perilaku lama) | Dipindah dari Fase 1 ke Fase 2 |
-| — | Aturan PO (#16 retensi dihapus, #17 Full Payment) | Tercatat sebagai keputusan 2026-10-24 di README | Konfirmasi final di PR; U6/U8 UAT lama memakai aturan lama |
+| — | Aturan PO (#16 retensi dihapus, #17 I11 dihapus + Full Payment isi otomatis) | **Final** — dikonfirmasi pemilik 2026-10-24 (README M3) | Selesai; tinggal uji ulang U6 dengan aturan baru |
 | — | Kas list / rekening sumber bayar | Placeholder | Perlu keputusan sumber data final |
 
 Sisa dari Fase 1 yang harus tutup dulu: PR `patch2-wa-uat` merge, verifikasi Production (F-13 iPhone, F-12 link kedaluwarsa), pembersihan data dummy, F-16.
@@ -227,7 +227,7 @@ F3-A (vendor) tidak bergantung pada Fase 2 kecuali pilihan dummy; boleh dimajuka
 
 1. O4 — e-approve L4/L5 menggantikan TTD basah, dan kapan jalur scan dimatikan.
 2. O5b — peringatan saja atau blokir keras untuk pembayar = verifikator/pengunggah.
-3. Konfirmasi final aturan PO #16/#17.
+3. ~~Konfirmasi final aturan PO #16/#17~~ — sudah final (pemilik, 2026-10-24).
 4. Sumber data kas list (rekening sumber bayar).
 5. Opsional: Google SSO Admin (O9), PDF server-side, dark mode.
 6. Tanggal target go-live dan jendela cutover.

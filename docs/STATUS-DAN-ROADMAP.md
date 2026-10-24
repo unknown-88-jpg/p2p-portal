@@ -1,6 +1,6 @@
 # P2P Finance Portal — Status & Roadmap
 
-Diperbarui: 2026-10-24. Basis kode: `main` b2ad115 + Patch 2 (lihat bawah). Trial = **DATA DUMMY saja**; Vercel Hobby, Pro saat go-live.
+Diperbarui: 2026-10-24. Basis kode: `main` (termasuk Patch 2, PR #18, dan dokumen desain di `docs/desain/`). Trial = **DATA DUMMY saja**; Vercel Hobby, Pro saat go-live.
 Stack: Next.js 16 (App Router) di Vercel, Google Sheets sebagai DB, Drive (Shared Drive) untuk file, Upstash Redis, login nomor HP + password, WA via gateway Lixus.
 Dokumen lengkap (hasil UAT, desain, risiko) ada di Project "P2P Finance Portal" di claude.ai, antara lain `claude/m8-uat-hasil.md`.
 
@@ -22,11 +22,11 @@ Dokumen lengkap (hasil UAT, desain, risiko) ada di Project "P2P Finance Portal" 
 - Digest WA ke Manager: GitHub Actions `digest-approval` aktif (hari kerja 09/12/15/17 WIB; secret `APP_URL`, `CRON_SECRET` terpasang; run manual #5 sukses). Catatan: **WA ke Manager hanya lewat digest**, tidak otomatis saat submit (F-15).
 
 ## Fase 1 / M8 — belum selesai
-1. **Terapkan Patch 2** (F-11 durasi kunci login, F-12 cek link set-password saat halaman dibuka, F-13 voucher cetak 1 halaman di iOS, F-14 parser WA abaikan `*`/`_`/`~`) lalu deploy. F-13 **harus diverifikasi ulang di iPhone** (hasil di sini baru simulasi Chromium).
-2. **Aturan P.O. baru (#16 & #17)** tercatat di README (M3) sebagai keputusan 2026-10-24: retensi 10% dihapus (plafon = grand total P.O. penuh) dan aturan "Pelunasan butuh barang diterima penuh" (I11) dihapus. Pemilik mohon konfirmasi di PR bahwa ini final. U6/U8 diuji dengan aturan LAMA: uji ulang atau catat berlaku untuk kode sebelum 2026-10-24.
+1. **Patch 2 sudah di kode** (PR #18: F-11 durasi kunci login, F-12 cek link set-password saat halaman dibuka, F-13 voucher cetak 1 halaman di iOS, F-14 parser WA abaikan `*`/`_`/`~`). Sisa: pastikan ter-deploy; F-13 **harus diverifikasi ulang di iPhone** (hasil di sini baru simulasi Chromium).
+2. **Aturan P.O. baru (#16 & #17) — FINAL** (dikonfirmasi pemilik 2026-10-24, tercatat di README M3): retensi 10% dihapus (plafon = grand total P.O. penuh) dan I11 "Trade non-DP butuh barang diterima penuh" dihapus. Sisa: **uji ulang U6** dengan ekspektasi baru (hasil U6 lama berlaku untuk kode sebelum 2026-10-24). U8 (akses dokumen) tidak terpengaruh.
 3. U21 Android; U23 (unggah PDF 3–10 MB dari ponsel; ditunda); cek baris audit di sheet (U3, U18).
 4. Pembersihan data dummy: kembalikan nomor Dummy 002 (2 baris) ke `08000005002`; hapus baris peran tambahan (Dummy 002 Level 1, Dummy 003 Level 2); hapus dokumen uji (NTR-00001…13, TRD-00001/3/4, draf INV-U6-B); reset password Dummy 001/003/007; cek akun Manager yang masih bernomor lama (F-16).
-5. Perbarui `m8-hasil.md` & `phase1-status.md`; konfirmasi eksplisit O4/O5.
+5. Konfirmasi eksplisit O4/O5. (`docs/desain/m8-uat-hasil.md` & `phase1-status.md` diperbarui 2026-10-24.)
 
 ## Temuan terbuka (tidak menghalangi Fase 1)
 - F-02: invoice PDF tidak bisa dicetak gabungan dengan voucher (CSP `object-src 'none'`).
@@ -37,7 +37,7 @@ Dokumen lengkap (hasil UAT, desain, risiko) ada di Project "P2P Finance Portal" 
 
 ## Aturan kerja bersama
 - **Data dummy saja** selama trial. Jangan menempel `.env*`, kunci, token, atau isi secret di chat/PR/screenshot.
-- Perubahan kontrol uang/keamanan (plafon, SoD, step-up, ambang Rp 5 jt, jalur WA) **dijelaskan dulu dan dikonfirmasi pemilik** sebelum merge. Commit #16 dan #17 (aturan P.O.) termasuk kategori ini.
+- Perubahan kontrol uang/keamanan (plafon, SoD, step-up, ambang Rp 5 jt, jalur WA) **dijelaskan dulu dan dikonfirmasi pemilik** sebelum merge. Commit #16 dan #17 (aturan P.O.) termasuk kategori ini dan sudah dikonfirmasi pemilik.
 - Kerja lewat branch + PR; `npm run check` (typecheck + lint + test) harus hijau sebelum merge.
 - Rute tanpa sesi (`session: 'none'`) dikunci oleh `tests/m8-security.test.ts`; menambahnya harus disengaja dan diberi alasan.
 - Hasil UAT & keputusan dicatat di Project (bukan hanya di chat).
