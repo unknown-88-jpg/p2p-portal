@@ -316,19 +316,25 @@ export function PengajuanWizard({ roles, email, nama, awal }: WizardProps) {
   const judul = awal ? `Ubah ${awal.id}` : 'Pengajuan baru';
 
   return (
-    <main className="wrap wrap-form">
+    <main className="wrap-wide wrap-form">
       <h1 className="sr-only">{judul}</h1>
+      <div className="wiz">
       <div className="stepper">
         <div className="seg" aria-hidden="true">{LANGKAH.map((l, i) => <span key={l} className={i <= idx ? 'on' : ''} />)}</div>
         <div className="judul">{judul} · Langkah {idx + 1} dari {LANGKAH.length}</div>
         <ol aria-label="Langkah pengajuan">
           {LANGKAH.map((l, i) => (
             <li key={l} className={i === idx ? 'on' : i < idx ? 'done' : ''} aria-current={i === idx ? 'step' : undefined}>
-              <button type="button" disabled={!bisaKe(i) || i === idx} onClick={() => kLangkah(l)}>{i + 1}. {JUDUL_LANGKAH[l]}</button>
+              <button type="button" disabled={!bisaKe(i) || i === idx} onClick={() => kLangkah(l)}>
+                <span className="st-no" aria-hidden="true">{i < idx ? '✓' : i + 1}</span>
+                <span className="st-t"><span className="sr-only">{i + 1}. </span>{JUDUL_LANGKAH[l]}</span>
+              </button>
             </li>
           ))}
         </ol>
       </div>
+
+      <div className="wiz-isi">
 
       {pulih && (
         <Pesan jenis="info" role="status">
@@ -339,8 +345,12 @@ export function PengajuanWizard({ roles, email, nama, awal }: WizardProps) {
       )}
       {awal?.status === 'Revision Needed' && <Pesan jenis="warn"><b>Dikembalikan untuk revisi.</b>{awal.notesFinance ? ` ${catatanTampil(awal.notesFinance)}` : ' Perbaiki data lalu ajukan kembali.'}</Pesan>}
 
-      <h2 className="langkah-h" tabIndex={-1} ref={judulRef}>{JUDUL_LANGKAH[langkah]}</h2>
-      <p className="langkah-sub">{SUB[langkah]}</p>
+      <section className="kartu wiz-kartu" aria-labelledby="wiz-h">
+      <div className="wiz-kepala">
+        <span className="wiz-ke" aria-hidden="true">Langkah {idx + 1} dari {LANGKAH.length}</span>
+        <h2 className="langkah-h" id="wiz-h" tabIndex={-1} ref={judulRef}>{JUDUL_LANGKAH[langkah]}</h2>
+        <p className="langkah-sub">{SUB[langkah]}</p>
+      </div>
 
       {langkah === 'jenis' && <LangkahJenis form={form} ubah={ubah} galat={galat} po={po} onTarikPo={() => { tandai('poNumber'); if (form.poNumber.trim()) void tarikPo(form.poNumber); }} />}
       {langkah === 'entitas' && <LangkahEntitas form={form} ubah={ubah} galat={galat} org={org} brands={brands} depts={depts} pic={pic} company={company} namaPengaju={nama} onCobaLagiOrg={() => void muatOrg()} />}
@@ -355,12 +365,15 @@ export function PengajuanWizard({ roles, email, nama, awal }: WizardProps) {
             idTrx={idTrx} punyaLampiran={punyaLampiran} stagedNama={staged?.file.name ?? null} po={poData} poLagi={poLagi} peringatan={peringatan} onUbah={kLangkah} />
         </div>
       )}
+      </section>
 
       {galatServer && <Pesan jenis="err">{galatServer}</Pesan>}
       <div className="toast-wadah"><Toast isi={toastSimpan} onTutup={() => setInfoSimpan(null)} /></div>
       {(langkah === 'tagihan' || langkah === 'tinjau') && (
         <div className="tombol-baris pt"><button type="button" className="link" onClick={() => void simpanDraft()} disabled={sibuk}>{busy === 'simpan' && !unggah ? 'Menyimpan…' : 'Simpan sebagai draft'}</button></div>
       )}
+      </div>
+      </div>
 
       <div className="aksi-spacer" />
       <div className="aksi-bar">

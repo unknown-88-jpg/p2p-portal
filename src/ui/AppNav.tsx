@@ -19,6 +19,7 @@ export function AppNav({ nama, bisaAjukan, bisaSetujui = false, bisaFinance = fa
       <aside className="sidebar" id="sidebar">
         <a className="sb-brand" href="/"><span className="sb-logo" aria-hidden="true">P</span><span>P2P Finance</span></a>
         <nav className="sb-nav" aria-label="Navigasi utama">
+          <span className="sb-label" aria-hidden="true">Menu</span>
           <a href="/" {...cur('beranda')}><IkonBeranda />Beranda</a>
           {bisaAjukan && <a href="/pengajuan" {...cur('pengajuan')}><IkonDokumen />Pengajuan saya</a>}
           {bisaSetujui && <a href="/persetujuan" {...cur('persetujuan')}><IkonSetuju />Persetujuan{jumlahMenunggu ? ` (${jumlahMenunggu})` : ''}</a>}

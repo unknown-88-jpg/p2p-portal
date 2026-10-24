@@ -28,6 +28,9 @@ export function DaftarPengajuan({ data, kelompokAwal = 'semua' }: { data: Dokume
       {tampil.length === 0 ? (
         <div className="kosong" role="status">{data.length === 0 ? <><p>Belum ada pengajuan.</p><div className="cta-row cta-tengah"><a className="btn btn-primary" href="/pengajuan/baru">Buat pengajuan pertama</a></div></> : <p>Tidak ada pengajuan yang cocok dengan filter atau kata kunci.</p>}</div>
       ) : (
+        <div className="daftar-wrap">
+        {/* Kepala kolom hanya tampilan (layar lebar); tiap baris tetap membawa label <dt> sendiri untuk pembaca layar. */}
+        <div className="daftar-head" aria-hidden="true"><span>Vendor</span><span>ID</span><span>Tanggal</span><span>Referensi</span><span>Status</span><span className="kanan">Nominal</span></div>
         <ul className="daftar">
           {tampil.map((d) => (
             <li key={d.id}>
@@ -46,6 +49,7 @@ export function DaftarPengajuan({ data, kelompokAwal = 'semua' }: { data: Dokume
             </li>
           ))}
         </ul>
+        </div>
       )}
     </>
   );
