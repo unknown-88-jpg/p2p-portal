@@ -70,7 +70,8 @@ export function FormBayar({ target, onSelesai }: { target: readonly DokBayar[]; 
     catch (e) { setGalat(errMessage(e)); }
     setSibuk(false);
   };
-  const tutup = () => { if (!sibuk) { setDlg(null); setGalat(null); setPw(''); } };
+  // Hanya dialog yang masih AKTIF yang boleh mereset state (event 'close' juga terpicu saat pindah dialog lewat kode).
+  const tutup = (k: Dlg) => () => { if (!sibuk && dlg === k) { setDlg(null); setGalat(null); setPw(''); } };
 
   if (galatKas) return <div className="vp"><Pesan jenis="err">Daftar rekening kas belum bisa dimuat: {galatKas}</Pesan></div>;
   return (
@@ -107,7 +108,7 @@ export function FormBayar({ target, onSelesai }: { target: readonly DokBayar[]; 
         </>
       )}
 
-      <Dialog buka={dlg === 'konfirmasi'} onTutup={tutup} judul="Konfirmasi pembayaran" langkah="Langkah 1 dari 2" lebar>
+      <Dialog buka={dlg === 'konfirmasi'} onTutup={tutup('konfirmasi')} judul="Konfirmasi pembayaran" langkah="Langkah 1 dari 2" lebar>
         <form onSubmit={(e) => { e.preventDefault(); void kirim(); }}>
           <table className="tbl by-ringkas"><thead><tr><th scope="col">Dokumen</th><th scope="col" className="num">Nominal</th><th scope="col">Hasil</th></tr></thead>
             <tbody>{siap.map((t) => <tr key={t.id}><td>{t.id}<span className="tbl-sub">{t.vendorNama || '—'}</span></td><td className="num">{rupiah(n(t.id))}</td><td>{n(t.id) >= t.sisa - 1000 ? 'Lunas' : `Sebagian, sisa ${rupiah(t.sisa - n(t.id))}`}</td></tr>)}</tbody>
@@ -115,12 +116,12 @@ export function FormBayar({ target, onSelesai }: { target: readonly DokBayar[]; 
           <p className="muted">Total <b className="num">{rupiah(total)}</b> dari <b>{rek}</b>, tanggal {tgl}{ref.trim() ? `, ref ${ref.trim()}` : ''}. Pembayaran tidak bisa dibatalkan dari portal.</p>
           {galat && <Pesan jenis="err">{galat}</Pesan>}
           <div className="dlg-aksi">
-            <button type="button" className="btn btn-secondary" onClick={tutup} disabled={sibuk}>Batal</button>
+            <button type="button" className="btn btn-secondary" onClick={() => { setDlg(null); setGalat(null); }} disabled={sibuk}>Batal</button>
             <button type="submit" className="btn btn-primary" disabled={sibuk}>{sibuk ? 'Memproses…' : 'Lanjut'}</button>
           </div>
         </form>
       </Dialog>
-      <Dialog buka={dlg === 'stepup'} onTutup={tutup} judul="Konfirmasi password" langkah="Langkah 2 dari 2">
+      <Dialog buka={dlg === 'stepup'} onTutup={tutup('stepup')} judul="Konfirmasi password" langkah="Langkah 2 dari 2">
         <form onSubmit={(e) => { e.preventDefault(); void konfirmasiPw(); }}>
           <div className="dlg-ringkas"><span>{siap.length} dokumen · {rek}</span><strong className="num">{rupiah(total)}</strong></div>
           <div className="f">
@@ -138,12 +139,12 @@ export function FormBayar({ target, onSelesai }: { target: readonly DokBayar[]; 
           </div>
         </form>
       </Dialog>
-      <Dialog buka={dlg === 'duplikat'} onTutup={tutup} judul="Pembayaran kembar?">
+      <Dialog buka={dlg === 'duplikat'} onTutup={tutup('duplikat')} judul="Pembayaran kembar?">
         <form onSubmit={(e) => { e.preventDefault(); void kirim(false, true); }}>
           <Pesan jenis="warn">{galat}</Pesan>
           <p className="muted">Lanjutkan hanya bila ini memang transfer terpisah (bukan klik ulang).</p>
           <div className="dlg-aksi">
-            <button type="button" className="btn btn-secondary" onClick={tutup} disabled={sibuk}>Batal</button>
+            <button type="button" className="btn btn-secondary" onClick={() => { setDlg(null); setGalat(null); }} disabled={sibuk}>Batal</button>
             <button type="submit" className="btn btn-danger" disabled={sibuk}>{sibuk ? 'Memproses…' : 'Ya, catat lagi'}</button>
           </div>
         </form>
