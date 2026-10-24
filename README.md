@@ -11,7 +11,7 @@ Status per 2026-10-24: **Fase 1 / M8 (UAT & penutupan) berjalan.** Rincian terki
 | **0** Spike | Sheets/Drive/Upstash/Vercel layak dipakai | ✅ Selesai |
 | **1** Auth, Ajukan, Approval | M0 fondasi · M1 lapisan data · M2 auth · M3 master/PO/pajak · M4a–c pengajuan (server, lampiran, UI) · M5 persetujuan Manager · M6 WhatsApp · M7 detail/voucher/dashboard · M8 hardening & UAT | M0–M7 ✅ · **M8 🟡 berjalan** |
 | **2** Finance | Verifikasi pajak, e-approve Fin. Mgr/CFO (O4: menggantikan TTD basah, tanpa transisi), jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | 🟡 Berjalan: F2-A ✅ (antrean & hak akses), F2-B ✅ (verifikasi pajak), F2-C ✅ (e-approve Fin. Mgr/CFO), F2-D ✅ (jurnal COA bulk), F2-E ✅ (pembayaran), F2-F ✅ (notif, riwayat bayar, digest Finance), F2-G 🟡 (kode & review selesai; UAT menunggu) |
-| **3** Pendukung | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | 🟡 Berjalan: F3-A ✅ (vendor), F3-B ✅ (export Odoo), F3-C ✅ (admin) |
+| **3** Pendukung | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | 🟡 Berjalan: F3-A ✅ (vendor), F3-B ✅ (export Odoo), F3-C ✅ (admin), F3-D ✅ (laporan & audit) |
 | **4** Go-live | Vercel Pro, `PROD_SHEET_IDS`, Upstash terpisah, cutover dari Apps Script | ⬜ Belum mulai |
 
 Detail rencana Fase 2–4 (lingkup, milestone, exit criteria, risiko, keputusan terbuka): [`docs/ROADMAP-FASE-2-4.md`](docs/ROADMAP-FASE-2-4.md).
@@ -272,6 +272,15 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - **Repair** = pratinjau (snapshot rencana, Redis 15 mnt, tidak menulis) → konfirmasi → eksekusi (`POST /api/admin/repair/jalankan`: password + Idempotency-Key; rencana dihitung ulang dari baca segar di dalam lock `trx:{id}` semua baris; beda dari pratinjau → 409) → laporan. Satu batch: perubahan + audit `REPAIR` + audit `REPAIR_ROW` per baris berisi nilai sebelum/sesudah (rollback manual). Maks. 100 baris/eksekusi.
   - **Rekonsiliasi pembayaran** (port `reconcilePayments`): TOTAL_PAID/OS_BALANCE/PAY_STATUS dari Trx_Payment_Log; kelebihan bayar → Paid + dilaporkan. Beda: hanya baris ber-ID yang punya pembayaran dan nilainya berbeda (lama menulis ulang semua baris termasuk baris kosong).
   - **Nol di depan rekening** — **perlu konfirmasi user:** port `repairNoRekening` DIPERSEMPIT ke kasus nol hilang saja. Lama menimpa rekening/bank/NPWP/nama/kode SEMUA dokumen dari Master_Vendor per nama vendor, yang bisa mengalihkan tujuan bayar dokumen belum dibayar; kasus lain tetap dilaporkan di Integritas untuk ditangani manual.
+
+## Fase 3 / F3-D — Laporan & viewer audit (2026-10-24)
+- **UI `/laporan`** + menu "Laporan" (`src/domain/laporan.ts`, `src/server/laporan.ts`). Capability baru (keputusan default, bisa diubah user): **`report.view`** = Finance Staff, Fin. Mgr, CFO, Admin; **`audit.view`** = Fin. Mgr, CFO, Admin.
+- **Satu sumber angka:** semua laporan dihitung dari baris Trx_Pengajuan + Trx_Payment_Log yang sama; "dibayar" selalu = jumlah Payment Log (bukan kolom TOTAL_PAID), sama dengan rekonsiliasi. Dibaca lewat cache tampilan 15 dtk (laporan baca saja; penanda "salinan lama" bila Sheets sibuk).
+- `GET /api/laporan/aging`: **aging AP** dokumen yang sudah lolos Manager dan belum lunas (Manager Approved … Partially Paid), umur dari **jatuh tempo** (WIB): belum jatuh tempo / 0–30 / 31–60 / > 60 hari / tanpa jatuh tempo; ringkasan per kelompok + **outstanding per vendor** (sisa, lewat terlama) + rincian.
+- `GET /api/laporan/rekap?dari&sampai&dimensi=brand|dept|coa|budget|vendor`: rekap per periode (tanggal invoice, kosong → submit — sama dengan export Odoo; dokumen Submitted … Paid, tanpa Draft/Revisi/Ditolak): jumlah dokumen, nominal, dibayar, sisa + total.
+- `GET /api/laporan/pembayaran?dari&sampai`: log pembayaran per tanggal bayar + total.
+- `GET /api/audit?id&aktor&aksi&dari&sampai`: **viewer Audit_Log** baca-saja, terbaru dulu, maks. 300 baris (jumlah cocok tetap ditampilkan); penanda idempotensi disembunyikan.
+- Semua tabel bisa diunduh CSV (sel teks di-escape anti formula). Test `tests/f3d-laporan.test.ts` memakai contoh perhitungan manual (total sisa Rp 16.000.000, dsb.).
 
 ## Deploy
 - **Trial (sekarang):** repo GitHub privat `unknown-88-jpg/p2p-portal`, branch `main` otomatis ter-deploy ke Vercel (team FAT, Hobby, project `p2p-portal`, URL produksi `https://p2p-portal-flax.vercel.app`). `vercel.json` memaksa region `sin1`. Banner "ENVIRONMENT TRIAL — DATA DUMMY" tampil selama `APP_ENV=trial`.

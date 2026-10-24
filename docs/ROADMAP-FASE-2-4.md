@@ -139,7 +139,7 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 - Aksi repair selalu: snapshot → konfirmasi → eksekusi → laporan.
 - Exit: setara `Repair.gs`/`Diagnostics.gs`; aksi admin masuk audit.
 
-**F3-D — Laporan & viewer audit (M)**
+**F3-D — Laporan & viewer audit (M)** — ✅ selesai 2026-10-24 (README §F3-D)
 - Aging AP (0–30/31–60/>60 hari dari jatuh tempo), outstanding per vendor, per brand/dept/COA/budget per periode, log pembayaran; ekspor CSV.
 - Viewer `Audit_Log` read-only (filter ID/aktor/aksi/tanggal). Semua dihitung dari data yang sama (tidak ada angka ringkasan terpisah).
 - Exit: laporan cocok dengan perhitungan manual contoh.
