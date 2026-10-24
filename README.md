@@ -11,7 +11,7 @@ Status per 2026-10-24: **Fase 1 / M8 (UAT & penutupan) berjalan.** Rincian terki
 | **0** Spike | Sheets/Drive/Upstash/Vercel layak dipakai | ✅ Selesai |
 | **1** Auth, Ajukan, Approval | M0 fondasi · M1 lapisan data · M2 auth · M3 master/PO/pajak · M4a–c pengajuan (server, lampiran, UI) · M5 persetujuan Manager · M6 WhatsApp · M7 detail/voucher/dashboard · M8 hardening & UAT | M0–M7 ✅ · **M8 🟡 berjalan** |
 | **2** Finance | Verifikasi pajak, e-approve Fin. Mgr/CFO (O4: menggantikan TTD basah, tanpa transisi), jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | 🟡 Berjalan: F2-A ✅ (antrean & hak akses), F2-B ✅ (verifikasi pajak), F2-C ✅ (e-approve Fin. Mgr/CFO), F2-D ✅ (jurnal COA bulk), F2-E ✅ (pembayaran), F2-F ✅ (notif, riwayat bayar, digest Finance), F2-G 🟡 (kode & review selesai; UAT menunggu) |
-| **3** Pendukung | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | 🟡 Berjalan: F3-A ✅ (vendor) |
+| **3** Pendukung | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | 🟡 Berjalan: F3-A ✅ (vendor), F3-B ✅ (export Odoo) |
 | **4** Go-live | Vercel Pro, `PROD_SHEET_IDS`, Upstash terpisah, cutover dari Apps Script | ⬜ Belum mulai |
 
 Detail rencana Fase 2–4 (lingkup, milestone, exit criteria, risiko, keputusan terbuka): [`docs/ROADMAP-FASE-2-4.md`](docs/ROADMAP-FASE-2-4.md).
@@ -254,6 +254,14 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - **Pengesahan berdasarkan KODE** (`POST /api/vendors/{kode}/approve|reject`, menutup **R-21**): Finance Staff; di dalam lock dari baca segar: status harus Pending (Rejected tidak bisa dihidupkan), rekening yang dilihat pengesah harus sama dengan sheet (409), **maker-checker** pendaftar ≠ pengesah (menolak miliknya sendiri boleh), I7 dicek ulang saat mengesahkan. Tolak: alasan wajib (dicatat di audit `VENDOR_REJECT`).
 - **`GET /api/vendors?status=pending`**: antrean pengesahan (Finance Staff) dengan peringatan (NPWP kosong, nomor rekening sama di bank lain, nama vendor sama); tanpa parameter = vendor yang saya daftarkan (rekening disamarkan).
 - **UI `/vendor`** + menu "Vendor": form daftar, daftar vendor saya + status, tab "Menunggu pengesahan" (Sahkan / Tolak + dialog); wizard langkah Vendor menautkan "Daftarkan vendor baru". Vendor baru dipakai di pengajuan setelah Approved (I8).
+
+## Fase 3 / F3-B — Export jurnal Odoo (2026-10-24, I16)
+- **`POST /api/finance/export/odoo`** `{dari, sampai, jenis}` (port `exportJurnalOdoo`, `src/domain/odoo.ts` + `src/server/export-odoo.ts`): capability `export.odoo` (Finance Staff / Fin. Mgr / Admin). Baca **segar** Trx_Pengajuan + Trx_Payment_Log (tidak dari cache).
+- Dua jurnal persis sistem lama: **Pembelian** (status COA Posted / Partially Paid / Paid, difilter `DATE_INVOICE`, kosong → `TIMESTAMP`; beban = DPP + biaya lain − diskon, PPN Masukan, Hutang PPh, Hutang Usaha = nominal akhir) dan **Pembayaran** (per baris Payment Log: debit Hutang Usaha, kredit akun kas `Sumber_Rekening`; kosong → Hutang Usaha seperti lama). Akun perantara tetap `1-10500 PPN Masukan`, `2-10100 Hutang Usaha`, `2-10300 Hutang PPh`. Nama file `Odoo_{jenis}_{yyyyMMdd}_{yyyyMMdd}.csv`.
+- **Rentang = hari WIB inklusif** (lama: zona script; server baru UTC → dibandingkan per tanggal WIB). Golden test `tests/golden/odoo.json` = hasil rumus lama untuk set contoh (selisih nol).
+- **Beda dari lama (tercatat):** (1) sel teks yang diawali `= + - @ TAB CR` diberi apostrof (anti formula injection; `-` tunggal tetap); (2) **peringatan** tanpa mengubah CSV: entry debit ≠ kredit (pembulatan), pembayaran tanpa akun kas, tanggal invoice kosong; (3) maks. 6 export/menit/pengguna.
+- File CSV disimpan ke folder Shared Drive (`DRIVE_ROOT_ID`, prefix `Odoo_` — tidak tersentuh pembersih lampiran yatim yang hanya `invoice_`) **dan** langsung terunduh di browser. **Riwayat** = baris Audit_Log `EXPORT_ODOO` (siapa, kapan, jenis, rentang, jumlah entry, nama+ID file); `GET /api/finance/export/odoo` daftar terbaru, `GET /api/finance/export/odoo/{fileId}` unduh ulang — hanya file yang tercatat di riwayat dan masih di folder.
+- **UI `/export`** + menu "Export Odoo".
 
 ## Deploy
 - **Trial (sekarang):** repo GitHub privat `unknown-88-jpg/p2p-portal`, branch `main` otomatis ter-deploy ke Vercel (team FAT, Hobby, project `p2p-portal`, URL produksi `https://p2p-portal-flax.vercel.app`). `vercel.json` memaksa region `sin1`. Banner "ENVIRONMENT TRIAL — DATA DUMMY" tampil selama `APP_ENV=trial`.

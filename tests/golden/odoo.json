@@ -1,0 +1,40 @@
+{
+  "_catatan": "Expected dihitung manual dengan rumus exportJurnalOdoo() di Export_Odoo.gs (toFixed(2), urutan baris sheet, fallback TIMESTAMP, akun kas fallback Hutang Usaha). Data dummy.",
+  "dari": "2026-10-01",
+  "sampai": "2026-10-31",
+  "pengajuan": [
+    { "ID_TRX": "TRX-0001", "TIMESTAMP": 46299.5, "STATUS": "COA Posted", "DATE_INVOICE": 46300, "VENDOR_NAME": "PT Dummy Satu", "NO_INVOICE": "INV-01", "DESCRIPTION": "Sewa sound", "BUDGET": "EVENT-A", "SUB_COA": "6-10100 Beban Sewa", "DPP": 1000000, "PPN_AMOUNT": 110000, "BIAYA_LAIN": 0, "DISKON": 0, "JENIS_PPH": "PPh 23", "PPH_AMOUNT": 20000, "FINAL_AMOUNT": 1090000 },
+    { "ID_TRX": "TRX-0002", "TIMESTAMP": 46305.416666666664, "STATUS": "Paid", "DATE_INVOICE": "", "VENDOR_NAME": "CV Dummy Dua", "NO_INVOICE": "INV-02", "DESCRIPTION": "Konsumsi", "BUDGET": "EVENT-B", "SUB_COA": "6-20100 Beban Konsumsi", "DPP": 500000, "PPN_AMOUNT": 0, "BIAYA_LAIN": 25000, "DISKON": 5000, "JENIS_PPH": "", "PPH_AMOUNT": 0, "FINAL_AMOUNT": 520000 },
+    { "ID_TRX": "TRX-0003", "TIMESTAMP": 46300, "STATUS": "Tax Verified", "DATE_INVOICE": 46300, "VENDOR_NAME": "PT Dummy Tiga", "NO_INVOICE": "INV-03", "DESCRIPTION": "Belum diakui", "BUDGET": "", "SUB_COA": "", "DPP": 100, "PPN_AMOUNT": 0, "BIAYA_LAIN": 0, "DISKON": 0, "JENIS_PPH": "", "PPH_AMOUNT": 0, "FINAL_AMOUNT": 100 },
+    { "ID_TRX": "TRX-0004", "TIMESTAMP": 46300, "STATUS": "COA Posted", "DATE_INVOICE": 46327, "VENDOR_NAME": "PT Dummy Empat", "NO_INVOICE": "INV-04", "DESCRIPTION": "Di luar rentang", "BUDGET": "", "SUB_COA": "6-10100 Beban Sewa", "DPP": 100, "PPN_AMOUNT": 0, "BIAYA_LAIN": 0, "DISKON": 0, "JENIS_PPH": "", "PPH_AMOUNT": 0, "FINAL_AMOUNT": 100 },
+    { "ID_TRX": "TRX-0005", "TIMESTAMP": 46314, "STATUS": "Partially Paid", "DATE_INVOICE": 46315, "VENDOR_NAME": "Toko Dummy Lima", "NO_INVOICE": "INV-05", "DESCRIPTION": "Banner \"besar\"", "BUDGET": "", "SUB_COA": "6-30100 Beban Promosi", "DPP": 200000, "PPN_AMOUNT": 0, "BIAYA_LAIN": 0, "DISKON": 0, "JENIS_PPH": "", "PPH_AMOUNT": 0, "FINAL_AMOUNT": 200000 }
+  ],
+  "pembayaran": [
+    { "Log_ID": "PAY-A", "ID_Trx": "TRX-0002", "Tgl_Bayar": 46307, "Nominal": 520000, "Sumber_Rekening": "1-10100 Bank BCA Dummy", "Ref_No": "TRF01" },
+    { "Log_ID": "PAY-B", "ID_Trx": "TRX-0005", "Tgl_Bayar": 46326, "Nominal": 100000, "Sumber_Rekening": "", "Ref_No": "" },
+    { "Log_ID": "PAY-C", "ID_Trx": "TRX-0001", "Tgl_Bayar": 46328, "Nominal": 1090000, "Sumber_Rekening": "1-10100 Bank BCA Dummy", "Ref_No": "TRF03" },
+    { "Log_ID": "PAY-D", "ID_Trx": "trx-9999", "Tgl_Bayar": 46310, "Nominal": 50000, "Sumber_Rekening": "1-10100 Bank BCA Dummy", "Ref_No": "TRF04" },
+    { "Log_ID": "PAY-E", "ID_Trx": "TRX-0001", "Tgl_Bayar": 46310, "Nominal": 0, "Sumber_Rekening": "1-10100 Bank BCA Dummy", "Ref_No": "TRF05" }
+  ],
+  "expected": {
+    "jumlahPembelian": 3,
+    "jumlahPembayaran": 3,
+    "rows": [
+      ["Number", "Date", "Journal", "Partner", "Reference", "Label", "Account", "Analytic Account", "Debit", "Credit"],
+      ["TRX-0001", "2026-10-05", "Purchase", "PT Dummy Satu", "INV-01", "Sewa sound", "6-10100 Beban Sewa", "EVENT-A", "1000000.00", "0.00"],
+      ["", "", "", "", "", "PPN Masukan INV-01", "1-10500 PPN Masukan", "EVENT-A", "110000.00", "0.00"],
+      ["", "", "", "", "", "PPh 23 INV-01", "2-10300 Hutang PPh", "EVENT-A", "0.00", "20000.00"],
+      ["", "", "", "", "", "Hutang PT Dummy Satu", "2-10100 Hutang Usaha", "EVENT-A", "0.00", "1090000.00"],
+      ["TRX-0002", "-", "Purchase", "CV Dummy Dua", "INV-02", "Konsumsi", "6-20100 Beban Konsumsi", "EVENT-B", "520000.00", "0.00"],
+      ["", "", "", "", "", "Hutang CV Dummy Dua", "2-10100 Hutang Usaha", "EVENT-B", "0.00", "520000.00"],
+      ["TRX-0005", "2026-10-20", "Purchase", "Toko Dummy Lima", "INV-05", "Banner \"besar\"", "6-30100 Beban Promosi", "", "200000.00", "0.00"],
+      ["", "", "", "", "", "Hutang Toko Dummy Lima", "2-10100 Hutang Usaha", "", "0.00", "200000.00"],
+      ["PAY-A", "2026-10-12", "Bank", "CV Dummy Dua", "TRF01", "Pelunasan TRX-0002", "2-10100 Hutang Usaha", "EVENT-B", "520000.00", "0.00"],
+      ["", "", "", "", "", "Kas keluar TRX-0002", "1-10100 Bank BCA Dummy", "EVENT-B", "0.00", "520000.00"],
+      ["PAY-B", "2026-10-31", "Bank", "Toko Dummy Lima", "TRX-0005", "Pelunasan TRX-0005", "2-10100 Hutang Usaha", "", "100000.00", "0.00"],
+      ["", "", "", "", "", "Kas keluar TRX-0005", "2-10100 Hutang Usaha", "", "0.00", "100000.00"],
+      ["PAY-D", "2026-10-15", "Bank", "TRX-9999", "TRF04", "Pelunasan TRX-9999", "2-10100 Hutang Usaha", "", "50000.00", "0.00"],
+      ["", "", "", "", "", "Kas keluar TRX-9999", "1-10100 Bank BCA Dummy", "", "0.00", "50000.00"]
+    ]
+  }
+}

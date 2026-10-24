@@ -126,7 +126,7 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 - ID `VND-xxxx` via `INCR` dalam lock `seq:VND`, bootstrap dari max sheet.
 - Exit: I7, I8 hijau; race pendaftaran rekening sama; pendaftar tidak bisa mengesahkan sendiri.
 
-**F3-B — Export Odoo (M)**
+**F3-B — Export Odoo (M)** — ✅ selesai 2026-10-24 (README §F3-B)
 - Dua jenis jurnal (pembelian, pembayaran); filter `DATE_INVOICE` (fallback timestamp), batas hari **WIB** (bukan UTC server).
 - Output file ke Shared Drive + unduh; **riwayat export** (siapa, kapan, rentang, jumlah entry). CSV di-escape terhadap formula injection.
 - Golden test: hasil identik dengan `Export_Odoo.gs` lama untuk set dokumen contoh.

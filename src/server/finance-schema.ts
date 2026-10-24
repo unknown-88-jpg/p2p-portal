@@ -44,3 +44,8 @@ export const bayarSchema = z.object({
   /** Pembayaran kembar (ID+tanggal+nominal+ref sama dalam 10 menit) hanya diproses bila dikonfirmasi eksplisit (R-04). */
   konfirmasiDuplikat: z.boolean().optional(),
 }).strict();
+
+const ymd = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format tanggal YYYY-MM-DD.');
+/** F3-B: export jurnal Odoo. Rentang = tanggal WIB inklusif. */
+export const exportOdooSchema = z.object({ dari: ymd, sampai: ymd, jenis: z.enum(['keduanya', 'pembelian', 'pembayaran']).default('keduanya') }).strict();
+export const fileIdParam = z.string().regex(/^[A-Za-z0-9_-]{10,100}$/);

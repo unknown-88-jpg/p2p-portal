@@ -89,6 +89,18 @@ export class GoogleDrive implements DrivePort {
     await r.body?.cancel().catch(() => undefined);
   }
 
+  async createFile(a: { name: string; mimeType: string; content: string }): Promise<DriveFileMeta> {
+    await assertFolderAllowed(this.folderId);
+    const boundary = `p2p${crypto.randomUUID().replace(/-/g, '')}`;
+    const body = `--${boundary}\r\ncontent-type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: a.name, parents: [this.folderId], mimeType: a.mimeType })}\r\n`
+      + `--${boundary}\r\ncontent-type: ${a.mimeType}; charset=UTF-8\r\n\r\n${a.content}\r\n--${boundary}--`;
+    const r = await gfetch(`https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=${META_FIELDS}`, {
+      method: 'POST', headers: { 'content-type': `multipart/related; boundary=${boundary}` }, body,
+    });
+    if (!r.ok) return fail(r, 'membuat file');
+    return toMeta((await r.json()) as RawMeta);
+  }
+
   async listOld(a: { namePrefix: string; createdBeforeMs: number; limit: number }): Promise<DriveFileMeta[]> {
     const esc = (s: string): string => s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     const q = `'${this.folderId}' in parents and trashed=false and name contains '${esc(a.namePrefix)}' and createdTime < '${new Date(a.createdBeforeMs).toISOString()}'`;

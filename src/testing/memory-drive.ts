@@ -47,6 +47,14 @@ export class MemoryDrive implements DrivePort {
     return { mimeType: f.meta.mimeType, size: bytes.length, body: new ReadableStream({ start(c) { c.enqueue(bytes); c.close(); } }) };
   }
   async trash(id: string): Promise<void> { this.guard('trash'); const f = this.files.get(id); if (f) f.meta.trashed = true; }
+  async createFile(a: { name: string; mimeType: string; content: string }): Promise<DriveFileMeta> {
+    this.guard('createFile');
+    const id = `FILE${String(++this.n).padStart(16, '0')}`;
+    const bytes = new TextEncoder().encode(a.content);
+    const meta = { id, name: a.name, size: bytes.length, mimeType: a.mimeType, parents: [this.folderId], trashed: false, createdMs: this.clock.now() };
+    this.files.set(id, { bytes, meta });
+    return { ...meta };
+  }
   async listOld(a: { namePrefix: string; createdBeforeMs: number; limit: number }): Promise<DriveFileMeta[]> {
     this.guard('listOld');
     return [...this.files.values()].map((f) => f.meta).filter((m) => !m.trashed && m.name.startsWith(a.namePrefix) && m.createdMs < a.createdBeforeMs).slice(0, a.limit).map((m) => ({ ...m }));

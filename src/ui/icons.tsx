@@ -27,3 +27,6 @@ export const IkonMataCoret = () => <Ikon><path d="M4 4l16 16" /><path d="M9.9 5.
 /** Logo WhatsApp (gelembung + gagang telepon), garis seperti ikon lain. */
 export const IkonWA = () => <Ikon><path d="M20.5 11.7a8.5 8.5 0 0 1-12.4 7.5L3.5 20.5l1.4-4.4a8.5 8.5 0 1 1 15.6-4.4z" /><path d="M9.2 8.3c-.4.9-.2 2.4 1.2 4.1 1.5 1.8 3.2 2.6 4.3 2.2l.8-1.2-1.8-1-.9.6a4.3 4.3 0 0 1-2.2-2.2l.6-.9-1-1.8z" /></Ikon>;
 export const IkonToko = () => <Ikon><path d="M4 9.5 5.5 4h13L20 9.5" /><path d="M4 9.5h16v1a2.7 2.7 0 0 1-5.3 0 2.7 2.7 0 0 1-5.4 0 2.7 2.7 0 0 1-5.3 0z" /><path d="M5.5 12.5V20h13v-7.5" /><path d="M10 20v-4h4v4" /></Ikon>;
+export const IkonUnduh = () => <Ikon><path d="M12 4v11M7 10.5l5 5 5-5" /><path d="M4 19.5h16" /></Ikon>;
+export const IkonGrafik = () => <Ikon><path d="M4 20V4" /><path d="M4 20h16" /><path d="M8 16v-5M12 16V8M16 16v-3" /></Ikon>;
+export const IkonGerigi = () => <Ikon><circle cx="12" cy="12" r="3" /><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" /></Ikon>;
