@@ -82,7 +82,7 @@ export function HalamanVendor({ bisaDaftar, bisaSahkan, tabAwal }: { bisaDaftar:
     <>
       <div className="toast-wadah"><Toast isi={toast} onTutup={() => setToast(null)} /></div>
       <div className="toolbar"><h1 className="page-h">Vendor</h1></div>
-      {tabs.length > 1 && <Chips label="Bagian" labelTersembunyi kecil nilai={tab} onPilih={setTab} pilihan={tabs} />}
+      {tabs.length > 1 && <Chips label="Bagian" labelTersembunyi kecil segmen nilai={tab} onPilih={setTab} pilihan={tabs} />}
       {galatMuat && <Pesan jenis="err">{galatMuat} <button type="button" className="link" onClick={() => void muat()}>Coba lagi</button></Pesan>}
 
       {tab === 'daftar' && bisaDaftar && (

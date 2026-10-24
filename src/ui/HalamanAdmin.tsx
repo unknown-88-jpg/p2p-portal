@@ -148,7 +148,7 @@ export function HalamanAdmin({ emailSaya, tabAwal }: { emailSaya: string; tabAwa
     <>
       <div className="toast-wadah"><Toast isi={toast} onTutup={() => setToast(null)} /></div>
       <div className="toolbar"><h1 className="page-h">Admin</h1></div>
-      <Chips label="Bagian" labelTersembunyi kecil nilai={tab} onPilih={(t) => { setTab(t); setGalatTab(null); }} pilihan={tabs} />
+      <Chips label="Bagian" labelTersembunyi kecil segmen nilai={tab} onPilih={(t) => { setTab(t); setGalatTab(null); }} pilihan={tabs} />
       {galatTab && <Pesan jenis="err">{galatTab}</Pesan>}
 
       {tab === 'pengguna' && (

@@ -21,7 +21,7 @@ export function DaftarPengajuan({ data, kelompokAwal = 'semua' }: { data: Dokume
   return (
     <>
       <div className="toolbar">
-        <Chips label="Filter status" labelTersembunyi kecil nilai={kel} onPilih={setKel}
+        <Chips label="Filter status" labelTersembunyi kecil segmen nilai={kel} onPilih={setKel}
           pilihan={KELOMPOK_STATUS.map((k) => ({ nilai: k.kunci, teks: k.label, nada: NADA[k.kunci], jumlah: hitung[k.kunci] ?? 0 }))} />
         <div className="cari"><input type="search" aria-label="Cari pengajuan" placeholder="Cari ID, vendor, invoice, P.O" value={q} onChange={(e) => setQ(e.target.value)} /></div>
       </div>
