@@ -6,6 +6,8 @@ const schema = z.object({
   SHEET_ID: z.string().min(10),
   PROD_SHEET_IDS: z.string().optional().default(''),
   DRIVE_ROOT_ID: z.string().min(5),
+  /** F3-E: folder backup harian spreadsheet (Shared Drive TERPISAH dari lampiran; isinya memuat hash password -> akses dibatasi). Kosong = backup dilewati. */
+  DRIVE_BACKUP_ID: z.string().min(5).optional(),
   GOOGLE_SA_JSON: z.string().min(50),
   JWT_SECRET: z.string().min(32),
   UPSTASH_REDIS_REST_URL: z.string().url(),

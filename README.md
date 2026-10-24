@@ -11,7 +11,7 @@ Status per 2026-10-24: **Fase 1 / M8 (UAT & penutupan) berjalan.** Rincian terki
 | **0** Spike | Sheets/Drive/Upstash/Vercel layak dipakai | ✅ Selesai |
 | **1** Auth, Ajukan, Approval | M0 fondasi · M1 lapisan data · M2 auth · M3 master/PO/pajak · M4a–c pengajuan (server, lampiran, UI) · M5 persetujuan Manager · M6 WhatsApp · M7 detail/voucher/dashboard · M8 hardening & UAT | M0–M7 ✅ · **M8 🟡 berjalan** |
 | **2** Finance | Verifikasi pajak, e-approve Fin. Mgr/CFO (O4: menggantikan TTD basah, tanpa transisi), jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | 🟡 Berjalan: F2-A ✅ (antrean & hak akses), F2-B ✅ (verifikasi pajak), F2-C ✅ (e-approve Fin. Mgr/CFO), F2-D ✅ (jurnal COA bulk), F2-E ✅ (pembayaran), F2-F ✅ (notif, riwayat bayar, digest Finance), F2-G 🟡 (kode & review selesai; UAT menunggu) |
-| **3** Pendukung | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | 🟡 Berjalan: F3-A ✅ (vendor), F3-B ✅ (export Odoo), F3-C ✅ (admin), F3-D ✅ (laporan & audit) |
+| **3** Pendukung | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | 🟡 Berjalan: F3-A ✅ (vendor), F3-B ✅ (export Odoo), F3-C ✅ (admin), F3-D ✅ (laporan & audit), F3-E 🟡 (backup ✅; arsip kandidat saja — tunggu keputusan) |
 | **4** Go-live | Vercel Pro, `PROD_SHEET_IDS`, Upstash terpisah, cutover dari Apps Script | ⬜ Belum mulai |
 
 Detail rencana Fase 2–4 (lingkup, milestone, exit criteria, risiko, keputusan terbuka): [`docs/ROADMAP-FASE-2-4.md`](docs/ROADMAP-FASE-2-4.md).
@@ -281,6 +281,14 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - `GET /api/laporan/pembayaran?dari&sampai`: log pembayaran per tanggal bayar + total.
 - `GET /api/audit?id&aktor&aksi&dari&sampai`: **viewer Audit_Log** baca-saja, terbaru dulu, maks. 300 baris (jumlah cocok tetap ditampilkan); penanda idempotensi disembunyikan.
 - Semua tabel bisa diunduh CSV (sel teks di-escape anti formula). Test `tests/f3d-laporan.test.ts` memakai contoh perhitungan manual (total sisa Rp 16.000.000, dsb.).
+
+## Fase 3 / F3-E — Backup, arsip (kandidat), housekeeping (2026-10-24)
+- **Backup harian** (`/api/cron/backup`, Vercel Cron `30 18 * * *` UTC = 01:30 WIB, Bearer `CRON_SECRET`): salin spreadsheet ke folder **`DRIVE_BACKUP_ID`** (env baru, opsional; Shared Drive terpisah dari lampiran karena salinan memuat hash password; trial: drive harus berjudul DUMMY). Nama `BACKUP_P2P_YYYY-MM-DD` (tanggal WIB), sekali per hari (idempoten). **Retensi 7 harian + 4 mingguan**; hanya file bernama format backup yang di-trash. Audit `BACKUP`. Env kosong → "dilewati" (tercatat di Admin › Kesehatan).
+- **Status cron** (`cron:last:*` di Redis): digest, lampiran-yatim, backup → tampil di Admin › Kesehatan.
+- **Housekeeping:** file lampiran yatim (sudah ada, harian); kunci idempotensi & lock di Redis kedaluwarsa sendiri (TTL) — tidak perlu cron.
+- **Arsip (O10) — baru kandidat, perlu keputusan user:** Admin › Arsip & backup menampilkan dokumen Paid yang lunas > 18 bulan (baca saja). Pemindahan **belum** diimplementasikan karena: (1) menghapus baris menggeser nomor baris yang dipakai aksi lain yang sedang berjalan (R-21) — usulan aman: salin ke tab `Arsip_Pengajuan` lalu **kosongkan** baris asli (tanpa geser), di bawah lock per dokumen; (2) butuh tab baru di sheet (header validator akan memblokir tulis sampai tab dibuat); (3) detail/voucher/pencarian/laporan harus ikut membaca tab arsip agar "ID tetap bisa ditelusuri" dan "arsip tidak merusak laporan". Data dummy belum punya dokumen > 18 bulan, jadi belum bisa di-UAT.
+- **Opsional** (PDF voucher server-side, dark mode, SSO admin, `onEdit` → bust cache, pusat notifikasi) belum dikerjakan.
+- Runbook UAT Fase 3 + uji restore: `docs/desain/f3-uat-runbook.md`.
 
 ## Deploy
 - **Trial (sekarang):** repo GitHub privat `unknown-88-jpg/p2p-portal`, branch `main` otomatis ter-deploy ke Vercel (team FAT, Hobby, project `p2p-portal`, URL produksi `https://p2p-portal-flax.vercel.app`). `vercel.json` memaksa region `sin1`. Banner "ENVIRONMENT TRIAL — DATA DUMMY" tampil selama `APP_ENV=trial`.

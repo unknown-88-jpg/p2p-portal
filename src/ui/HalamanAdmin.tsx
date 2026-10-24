@@ -5,7 +5,7 @@ import { Chips, Dialog, Field, Pesan, Skeleton, Toast, type IsiToast } from './k
 import { useStepUp } from './StepUp';
 import { unduhTeks } from './unduh';
 
-type Tab = 'pengguna' | 'kesehatan' | 'integritas' | 'master' | 'repair';
+type Tab = 'pengguna' | 'kesehatan' | 'integritas' | 'master' | 'repair' | 'arsip';
 interface User { row: number; etag: string; brand: string; dept: string; level: number; jabatan: string; nama: string; email: string; aktif: boolean; noHp: string; punyaPassword: boolean }
 interface Temuan { kategori: string; level: 'KRITIS' | 'TINGGI' | 'SEDANG'; id: string; masalah: string; saran: string }
 interface Koneksi { nama: string; ok: boolean; info: string; ms: number }
@@ -14,6 +14,7 @@ interface Health {
   header: { ok: true; writable: boolean; tabs: { tab: string; ok: boolean; missingTab?: boolean; issues: { position: number; expected: string; found: string }[] }[] } | { ok: false; pesan: string };
 }
 interface Ubah { row: number; id: string; cells: Record<string, string | number>; sebelum: Record<string, string | number> }
+interface Arsip { jumlahBaris: number; batas: string; kandidat: { id: string; vendor: string; nominal: number; lunas: string }[] }
 interface Pratinjau { token: string; jenis: string; total: number; ubah: Ubah[]; lebihBayar: string[]; dibatasi: boolean }
 
 const LEVEL_LABEL: Record<number, string> = { 1: 'L1 PIC', 2: 'L2 Manager', 3: 'L3 Finance Staff', 4: 'L4 Fin. Mgr', 5: 'L5 CFO', 9: 'L9 Admin' };
@@ -92,6 +93,7 @@ export function HalamanAdmin({ emailSaya }: { emailSaya: string }) {
   const [health, setHealth] = useState<Health | null>(null);
   const [integ, setInteg] = useState<Temuan[] | null>(null);
   const [master, setMaster] = useState<{ jumlah: Record<string, number>; temuan: Temuan[] } | null>(null);
+  const [arsip, setArsip] = useState<Arsip | null>(null);
   const [muat, setMuat] = useState<Tab | null>(null);
   const [galatTab, setGalatTab] = useState<string | null>(null);
   const jalankan = async (t: Tab) => {
@@ -99,11 +101,12 @@ export function HalamanAdmin({ emailSaya }: { emailSaya: string }) {
     try {
       if (t === 'kesehatan') setHealth(await api<Health>('/api/admin/health', { method: 'GET' }));
       if (t === 'integritas') setInteg((await api<{ temuan: Temuan[] }>('/api/admin/integritas', { method: 'GET' })).temuan);
+      if (t === 'arsip') setArsip(await api<Arsip>('/api/admin/arsip', { method: 'GET' }));
       if (t === 'master') setMaster(await api<{ jumlah: Record<string, number>; temuan: Temuan[] }>('/api/admin/master', { method: 'GET' }));
     } catch (e) { setGalatTab(errMessage(e)); }
     finally { setMuat(null); }
   };
-  useEffect(() => { if (tab === 'kesehatan' && !health) void jalankan('kesehatan'); if (tab === 'master' && !master) void jalankan('master'); }, [tab]);
+  useEffect(() => { if (tab === 'kesehatan' && !health) void jalankan('kesehatan'); if (tab === 'master' && !master) void jalankan('master'); if (tab === 'arsip' && !arsip) void jalankan('arsip'); }, [tab]);
 
   // ---- repair
   const [jenisRepair, setJenisRepair] = useState<'rekonsiliasi' | 'nol-rekening'>('rekonsiliasi');
@@ -136,7 +139,7 @@ export function HalamanAdmin({ emailSaya }: { emailSaya: string }) {
 
   const tabs = useMemo(() => [
     { nilai: 'pengguna' as const, teks: 'Pengguna' }, { nilai: 'kesehatan' as const, teks: 'Kesehatan' }, { nilai: 'integritas' as const, teks: 'Integritas data' },
-    { nilai: 'master' as const, teks: 'Master' }, { nilai: 'repair' as const, teks: 'Repair' },
+    { nilai: 'master' as const, teks: 'Master' }, { nilai: 'repair' as const, teks: 'Repair' }, { nilai: 'arsip' as const, teks: 'Arsip & backup' },
   ], []);
   const ubahF = <K extends keyof typeof kosong>(k: K) => (v: (typeof kosong)[K]) => setForm((f) => (f ? { ...f, v: { ...f.v, [k]: v } } : f));
 
@@ -239,6 +242,23 @@ export function HalamanAdmin({ emailSaya }: { emailSaya: string }) {
                   <div className="cta-row"><button type="button" className="btn btn-danger" disabled={sibuk} onClick={() => setKonfirmasi(true)}>Jalankan perbaikan</button></div>
                 </>
               )}
+            </>
+          )}
+        </section>
+      )}
+
+      {tab === 'arsip' && (
+        <section className="kartu">
+          <div className="toolbar-sub"><h2 className="kartu-t">Arsip & backup</h2><button type="button" className="btn btn-secondary btn-sm" disabled={muat === 'arsip'} onClick={() => void jalankan('arsip')}>Periksa ulang</button></div>
+          <p className="muted cap">Backup: spreadsheet disalin otomatis tiap malam (01:30 WIB) ke folder backup Shared Drive — disimpan 7 harian + 4 mingguan. Status terakhir ada di tab Kesehatan (cron "backup").</p>
+          <p className="muted cap">Arsip (O10): dokumen Paid yang lunas lebih dari 18 bulan. Saat ini hanya ditampilkan; pemindahan ke tab arsip belum dijalankan sampai diputuskan.</p>
+          {!arsip ? <Skeleton baris={3} /> : arsip.kandidat.length === 0 ? <Pesan jenis="ok">Tidak ada dokumen yang lunas sebelum {arsip.batas}. Trx_Pengajuan berisi {arsip.jumlahBaris} baris.</Pesan> : (
+            <>
+              <p className="muted cap">{arsip.kandidat.length} dokumen lunas sebelum {arsip.batas} (dari {arsip.jumlahBaris} baris).</p>
+              <div className="tabel-gulir"><table className="tabel">
+                <thead><tr><th>Dokumen</th><th>Vendor</th><th>Lunas</th><th className="num">Nominal</th></tr></thead>
+                <tbody>{arsip.kandidat.map((k) => <tr key={k.id}><td className="num">{k.id}</td><td>{k.vendor}</td><td className="num">{k.lunas}</td><td className="num">Rp {k.nominal.toLocaleString('id-ID')}</td></tr>)}</tbody>
+              </table></div>
             </>
           )}
         </section>

@@ -55,6 +55,13 @@ export class MemoryDrive implements DrivePort {
     this.files.set(id, { bytes, meta });
     return { ...meta };
   }
+  async copyInto(sourceId: string, name: string): Promise<DriveFileMeta> {
+    this.guard('copyInto');
+    const id = `FILE${String(++this.n).padStart(16, '0')}`;
+    const meta = { id, name, size: 0, mimeType: 'application/vnd.google-apps.spreadsheet', parents: [this.folderId], trashed: false, createdMs: this.clock.now() };
+    this.files.set(id, { bytes: new TextEncoder().encode(`copy-of:${sourceId}`), meta });
+    return { ...meta };
+  }
   async listOld(a: { namePrefix: string; createdBeforeMs: number; limit: number }): Promise<DriveFileMeta[]> {
     this.guard('listOld');
     return [...this.files.values()].map((f) => f.meta).filter((m) => !m.trashed && m.name.startsWith(a.namePrefix) && m.createdMs < a.createdBeforeMs).slice(0, a.limit).map((m) => ({ ...m }));

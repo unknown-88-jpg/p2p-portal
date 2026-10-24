@@ -1,1 +1,1 @@
-{ "regions": ["sin1"], "crons": [{ "path": "/api/cron/lampiran-yatim", "schedule": "0 19 * * *" }] }
+{ "regions": ["sin1"], "crons": [{ "path": "/api/cron/lampiran-yatim", "schedule": "0 19 * * *" }, { "path": "/api/cron/backup", "schedule": "30 18 * * *" }] }

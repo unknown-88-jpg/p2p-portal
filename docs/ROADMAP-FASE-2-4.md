@@ -144,7 +144,7 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 - Viewer `Audit_Log` read-only (filter ID/aktor/aksi/tanggal). Semua dihitung dari data yang sama (tidak ada angka ringkasan terpisah).
 - Exit: laporan cocok dengan perhitungan manual contoh.
 
-**F3-E — Arsip, backup, polish (M)**
+**F3-E — Arsip, backup, polish (M)** — 🟡 backup + status cron selesai 2026-10-24; arsip baru kandidat (baca saja) menunggu keputusan (README §F3-E)
 - Arsip: dokumen Paid > 18 bulan (O10) ke tab/file arsip; ID, audit, dan link tetap bisa ditelusuri.
 - Cron backup harian: salin spreadsheet ke folder backup di Shared Drive (7 harian + 4 mingguan). Cron housekeeping (file Drive yatim, idempotency key).
 - Opsional: PDF voucher server-side, dark mode, Google SSO untuk Admin (O9), Apps Script `onEdit` → `/api/cache/bust`, Ctrl+K menyeluruh, pusat notifikasi in-app.

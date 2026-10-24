@@ -19,4 +19,6 @@ export interface DrivePort {
   listOld(a: { namePrefix: string; createdBeforeMs: number; limit: number }): Promise<DriveFileMeta[]>;
   /** Buat file kecil (teks, mis. CSV export) dari server di folder ini. */
   createFile(a: { name: string; mimeType: string; content: string }): Promise<DriveFileMeta>;
+  /** Salin file lain (mis. spreadsheet untuk backup) ke folder ini. */
+  copyInto(sourceId: string, name: string): Promise<DriveFileMeta>;
 }

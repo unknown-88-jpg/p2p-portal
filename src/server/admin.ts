@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import {
   auditIntegritas, rencanaNolRekening, rencanaRekonsiliasi, validasiMaster, validasiUser, type IsianUser, type Temuan, type UbahSel,
 } from '@/domain/admin';
+import { kandidatArsip } from '@/domain/backup';
 import { can } from '@/domain/capabilities';
 import { LEVEL } from '@/domain/config';
 import { str } from '@/domain/legacy-parse';
@@ -10,6 +11,7 @@ import { isAktif, parseLevel } from '@/domain/roles';
 import { SETPASS_TTL_MS } from '@/infra/link-tokens';
 import { AppError } from '@/lib/errors';
 import { logger } from '@/lib/logger';
+import { wibDate } from '@/lib/time';
 import { FIRST_DATA_ROW, type Mutation, type RawRow } from '@/ports/store';
 import { DB_PO, DB_SJ, MASTER_COA, MASTER_PPH, MASTER_SETTING, MASTER_USER_TTD, MASTER_VENDOR, TRX_PAYMENT_LOG, TRX_PENGAJUAN, colIndex } from '@/repo/schema';
 import { appendAudit, auditMutation } from './audit';
@@ -163,12 +165,19 @@ export async function cekIntegritas(d: AuthDeps, s: SessionData): Promise<Temuan
   });
 }
 
+/** F3-E: dokumen yang memenuhi syarat arsip (O10: Paid > 18 bulan). BACA SAJA — pemindahan menunggu keputusan (lihat README §F3-E). */
+export async function cekArsip(d: AuthDeps, s: SessionData) {
+  wajibAdmin(s);
+  const rows = await d.store.readRows(TRX_PENGAJUAN);
+  return { jumlahBaris: rows.length, ...kandidatArsip(rows.map((r) => keObjek(TRX_PENGAJUAN, r)), wibDate(d.clock.now())) };
+}
+
 /** Penanda cron terakhir jalan (dibaca halaman health). Gagal dicatat tidak pernah menggagalkan cron. */
-export async function catatCron(d: Pick<AuthDeps, 'redis' | 'clock'>, nama: string, hasil: 'ok' | 'gagal'): Promise<void> {
+export async function catatCron(d: Pick<AuthDeps, 'redis' | 'clock'>, nama: string, hasil: 'ok' | 'gagal' | 'dilewati'): Promise<void> {
   try { await d.redis.set(`cron:last:${nama}`, JSON.stringify({ at: d.clock.now(), hasil }), { pxMs: 30 * 86_400_000 }); }
   catch (e) { logger.error('cron_mark_failed', { err: (e as Error).message }); }
 }
-export const CRON_DIPANTAU = ['digest', 'lampiran-yatim', 'backup', 'housekeeping'] as const;
+export const CRON_DIPANTAU = ['digest', 'lampiran-yatim', 'backup'] as const;
 
 export interface Koneksi { nama: string; ok: boolean; info: string; ms: number }
 export async function cekKoneksi(d: AuthDeps, s: SessionData, extra: { waTerkonfigurasi: boolean }): Promise<{ koneksi: Koneksi[]; cron: { nama: string; at: number | null; hasil: string }[] }> {
