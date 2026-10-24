@@ -23,7 +23,7 @@ Dokumen lengkap (hasil UAT, desain, risiko) ada di Project "P2P Finance Portal" 
 
 ## Fase 1 / M8 — belum selesai
 1. **Terapkan Patch 2** (F-11 durasi kunci login, F-12 cek link set-password saat halaman dibuka, F-13 voucher cetak 1 halaman di iOS, F-14 parser WA abaikan `*`/`_`/`~`) lalu deploy. F-13 **harus diverifikasi ulang di iPhone** (hasil di sini baru simulasi Chromium).
-2. **Konfirmasi aturan uang #16 & #17** (plafon P.O. = grand total penuh; aturan "Pelunasan butuh barang diterima penuh" dihapus). U6/U8 diuji dengan aturan LAMA: uji ulang atau catat berlaku untuk kode sebelum #16.
+2. **Aturan P.O. baru (#16 & #17)** tercatat di README (M3) sebagai keputusan 2026-10-24: retensi 10% dihapus (plafon = grand total P.O. penuh) dan aturan "Pelunasan butuh barang diterima penuh" (I11) dihapus. Pemilik mohon konfirmasi di PR bahwa ini final. U6/U8 diuji dengan aturan LAMA: uji ulang atau catat berlaku untuk kode sebelum 2026-10-24.
 3. U21 Android; U23 (unggah PDF 3–10 MB dari ponsel; ditunda); cek baris audit di sheet (U3, U18).
 4. Pembersihan data dummy: kembalikan nomor Dummy 002 (2 baris) ke `08000005002`; hapus baris peran tambahan (Dummy 002 Level 1, Dummy 003 Level 2); hapus dokumen uji (NTR-00001…13, TRD-00001/3/4, draf INV-U6-B); reset password Dummy 001/003/007; cek akun Manager yang masih bernomor lama (F-16).
 5. Perbarui `m8-hasil.md` & `phase1-status.md`; konfirmasi eksplisit O4/O5.
@@ -37,7 +37,7 @@ Dokumen lengkap (hasil UAT, desain, risiko) ada di Project "P2P Finance Portal" 
 
 ## Aturan kerja bersama
 - **Data dummy saja** selama trial. Jangan menempel `.env*`, kunci, token, atau isi secret di chat/PR/screenshot.
-- Perubahan kontrol uang/keamanan (plafon, SoD, step-up, ambang Rp 5 jt, jalur WA) **dijelaskan dulu dan dikonfirmasi pemilik** sebelum merge. Commit #16 dan #17 termasuk kategori ini.
+- Perubahan kontrol uang/keamanan (plafon, SoD, step-up, ambang Rp 5 jt, jalur WA) **dijelaskan dulu dan dikonfirmasi pemilik** sebelum merge. Commit #16 dan #17 (aturan P.O.) termasuk kategori ini.
 - Kerja lewat branch + PR; `npm run check` (typecheck + lint + test) harus hijau sebelum merge.
 - Rute tanpa sesi (`session: 'none'`) dikunci oleh `tests/m8-security.test.ts`; menambahnya harus disengaja dan diberi alasan.
 - Hasil UAT & keputusan dicatat di Project (bukan hanya di chat).
