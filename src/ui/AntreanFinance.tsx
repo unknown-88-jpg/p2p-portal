@@ -66,6 +66,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
       .sort(URUT[urut]);
   }, [data, tahap, q, urut]);
 
+  const terpilih = useMemo(() => (data && (tahap === 'jurnal' || tahap === 'bayar') ? data.items.filter((i) => i.tahap === tahap && pilih.has(i.id)) : []), [data, tahap, pilih]);
   const kepala = <div className="inbox-top"><h1 className="page-h">Antrean Finance</h1></div>;
   if (galat && !data) return <>{kepala}<Pesan jenis="err">{galat} <button type="button" className="link" onClick={() => void muat()}>Coba lagi</button></Pesan></>;
   if (!data) return <>{kepala}<Skeleton baris={4} /></>;
@@ -153,6 +154,16 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
               </section>
 
               <aside className="inbox-aksi" aria-label="Rincian">
+                {terpilih.length > 0 ? <>
+                  {/* Bulk (jurnal/bayar): ringkasan = item yang DICENTANG, bukan dokumen yang sedang dibuka. */}
+                  <div className="fin-st"><span className="pill-st biru">{terpilih.length} dokumen dicentang</span></div>
+                  <span className="ds-l">{tahap === 'bayar' ? 'Total sisa tagihan' : 'Total nominal'}</span>
+                  <div className="ip-angka num">{rupiah(terpilih.reduce((a, i) => a + angka(i), 0))}</div>
+                  <dl className="ip-rincian">
+                    {terpilih.map((i) => <div key={i.id}><dt>{i.id} · {i.vendorNama || '—'}</dt><dd className="num">{rupiah(angka(i))}</dd></div>)}
+                    <div className="ip-total"><dt>Total</dt><dd className="num">{rupiah(terpilih.reduce((a, i) => a + angka(i), 0))}</dd></div>
+                  </dl>
+                </> : <>
                 <div className="fin-st"><StatusPill status={cur.status} /></div>
                 <span className="ds-l">{cur.tahap === 'bayar' ? 'Sisa tagihan' : 'Nominal akhir'}</span>
                 <div className="ip-angka num">{rupiah(angka(cur))}</div>
@@ -164,12 +175,13 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
                   <div className="ip-total"><dt>Nominal akhir</dt><dd className="num">{rupiah(cur.nominal)}</dd></div>
                 </dl>}
                 {cur.perluCFO && <p className="cap"><span className="badge-cfo">Butuh persetujuan CFO</span></p>}
+                </>}
                 {cur.tahap === 'pajak' && ring.bisaAksi
                   ? <FormVerifikasiPajak key={`${cur.id}|${cur.etag}`} dok={cur} onSelesai={selesai} />
                   : cur.tahap === 'jurnal' && ring.bisaAksi
-                  ? <FormJurnal key="jurnal" target={pilih.size ? data.items.filter((i) => pilih.has(i.id)) : [cur]} onSelesai={selesai} />
+                  ? <FormJurnal key="jurnal" target={terpilih.length ? terpilih : [cur]} onSelesai={selesai} />
                   : cur.tahap === 'bayar' && ring.bisaAksi
-                  ? <FormBayar key="bayar" target={pilih.size ? data.items.filter((i) => pilih.has(i.id)) : [cur]} onSelesai={selesai} />
+                  ? <FormBayar key="bayar" target={terpilih.length ? terpilih : [cur]} onSelesai={selesai} />
                   : cur.tahap === 'persetujuan' && (data.peran.finMgr || data.peran.cfo || data.peran.staff)
                   ? <FormPersetujuanFinance key={`${cur.id}|${cur.etag}`} dok={cur} peran={data.peran} onSelesai={selesai} />
                   : <p className="muted cap fin-menyusul">{ring.bisaAksi ? <>Aksi &ldquo;{AKSI_MENYUSUL[cur.tahap]}&rdquo; tersedia di pembaruan berikutnya.</> : <>Tahap ini dikerjakan {ring.aktor}. Anda hanya melihat.</>}</p>}
