@@ -127,3 +127,10 @@ export function pesanDigestFinance(p: { nama: string; baris: readonly BarisDiges
   const isi = p.baris.filter((b) => b.jumlah > 0).map((b) => `• *${b.label}*: ${b.jumlah} dokumen · ${rupiah(b.total)}\n   ${b.link}`).join('\n');
   return `📊 *Ringkasan Finance*\nHalo ${p.nama || 'Finance'}, antrean yang menunggu Anda:\n\n${isi}\n\n_Tindakan dilakukan di portal (bukan lewat WA)._`;
 }
+
+/** WA manual tahap persetujuan Finance: pengingat ke Fin. Mgr / CFO. Tanpa kode balasan — persetujuan hanya lewat web + password (O4). */
+export function pesanPengingatFinance(p: { nama: string; pengirim: string; peran: 'Fin. Mgr' | 'CFO'; id: string; vendor: string; nominal: number; finMgr?: string | null; link: string }): string {
+  return `🔔 *Menunggu persetujuan ${p.peran}*\nHalo ${p.nama || p.peran}, ${p.pengirim || 'Finance'} meminta persetujuan untuk dokumen berikut:\n\n` +
+    `*${p.id}* · ${p.vendor || '-'}\n${rupiah(p.nominal)}` + (p.finMgr ? `\n✅ Sudah disetujui Fin. Mgr: ${p.finMgr}` : '') +
+    `\n\n_Persetujuan dilakukan di portal (dengan konfirmasi password), bukan lewat WA._\n${p.link}`;
+}

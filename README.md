@@ -296,6 +296,12 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - Semua bacaan lewat cache tampilan 15 dtk (tidak menambah beban kuota Sheets); sumber yang gagal dibaca dilewati. Baca saja — penjaga aksi tetap di server.
 - Warna alert: tab/chip antrean yang menunggu tindakan Anda (mis. "Menunggu pengesahan" vendor, tahap Finance yang bisa Anda kerjakan) berlatar merah muda dengan angka merah. `/vendor?tab=pengesahan` dan `/admin?tab=…` membuka tab langsung.
 
+## Kirim WA di tahap persetujuan Finance (2026-10-24)
+- Panel tahap **Persetujuan Fin. Mgr / CFO** punya tombol **Kirim WA** di atas "Kembalikan ke PIC" (`src/ui/KirimWaFinance.tsx`, `POST /api/finance/{id}/kirim-wa`, `src/server/wa-manual-finance.ts`). Bisa ditekan Finance (L3/L4/L5).
+- Tujuan otomatis = penyetuju **berikutnya**: Fin. Mgr (semua L4 aktif ber-nomor WA); setelah Fin. Mgr menyetujui dan dokumen butuh CFO (≥ Rp 5 jt / REQUIRE_CFO) → **CFO** (tidak termasuk orang yang sudah menyetujui sebagai Fin. Mgr). Persetujuan lengkap → tombol hilang.
+- **Manual maks. 1x per tujuan** per siklus verifikasi (kunci Redis `wa:fin-manual:{id}:{finmgr|cfo}:{siklus}`; dikembalikan lalu diverifikasi ulang = siklus baru). Pengingat berikutnya lewat digest Finance terjadwal. Tidak ada yang terkirim → jatah dikembalikan.
+- Pesan tanpa kode balasan (persetujuan Finance hanya lewat web + password, O4). Audit `WA_REMINDER_MANUAL` (Level 4 / Level 5).
+
 ## Urutan daftar: terbaru dulu (2026-10-24, keputusan user)
 - Semua daftar di dashboard kini **terbaru dulu**: antrean Finance (default "Terbaru"; pilihan "Terlama di tahap" / jatuh tempo / nominal tetap ada), inbox persetujuan Manager, antrean pengesahan vendor, daftar user Admin, rincian aging AP (jatuh tempo terbaru dulu, tanpa jatuh tempo di akhir), kandidat arsip. Yang sudah terbaru dulu: pengajuan saya, vendor saya, beranda, log pembayaran, audit, riwayat export, pencarian.
 - Beda dari sebelumnya: antrean Finance & inbox Manager dulu tertua dulu (FIFO). Timeline riwayat di detail dokumen tetap kronologis.
