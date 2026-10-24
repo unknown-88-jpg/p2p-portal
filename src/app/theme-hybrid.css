@@ -292,11 +292,11 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); }
 /* =============================================================================
    Penyelarasan semua halaman ke tata letak canvas: jarak judul, padding kontainer, segmented tabs, kepala tabel.
    ============================================================================= */
-/* judul halaman: jarak atas sama dengan halaman antrean (.inbox-top) */
-.pt > .toolbar:first-child, .pt > .toast-wadah:first-child + .toolbar { margin-top: 0; margin-bottom: 18px; }
+/* (judul halaman mengikuti referensi Pengajuan saya: .toolbar margin 22px; halaman antrean disamakan) */
+.pt > .inbox-top:first-child, .pt > .toast-wadah:first-child + .inbox-top { margin-top: 22px; }
 /* kontainer: tepi kiri sejajar beranda (.dash) */
 .wrap, .wrap-wide, .wrap-xl { padding-left: 24px; padding-right: 24px; }
-@media (max-width: 760px) { .wrap, .wrap-wide, .wrap-xl { padding-left: 16px; padding-right: 16px; } }
+@media (max-width: 760px) { .wrap, .wrap-wide, .wrap-xl, .dash { padding-left: 20px; padding-right: 20px; } }
 
 /* segmented tabs dipakai juga untuk bagian halaman (Admin, Laporan, Vendor) */
 .chips.segmen { width: fit-content; max-width: 100%; }
@@ -305,10 +305,10 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); }
 .f:has(> .chips.segmen) { margin-bottom: 16px; }
 .toolbar > .f:has(> .chips.segmen) { min-width: 0; max-width: 100%; margin-bottom: 0; }
 @media (max-width: 640px) {
-  /* satu baris yang bisa digeser, bukan membungkus jadi dua baris */
-  .chips.segmen { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-  .chips.segmen::-webkit-scrollbar { display: none; }
-  .chips.segmen .chip { flex: none; white-space: nowrap; }
+  /* sesuai referensi: membungkus ke baris berikut di dalam wadah abu-abu, semua pilihan tetap terlihat */
+  .chips.segmen { width: 100%; }
+  .toolbar > .f:has(> .chips.segmen) { flex: 1 1 100%; }
+  .chips.segmen .chip { white-space: nowrap; }
 }
 
 /* tabel data: kepala kolom sama dengan daftar pengajuan */
