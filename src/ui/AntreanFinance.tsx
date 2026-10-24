@@ -84,14 +84,25 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
       {kepala}
       <div className="toast-wadah"><Toast isi={info} onTutup={() => setInfo(null)} /></div>
       {data.basi && <Pesan jenis="warn">Data mungkin belum terbaru (Google Sheets sedang lambat). Angka di bawah dari salinan beberapa menit lalu. <button type="button" className="link" onClick={() => void muat()}>Muat ulang</button></Pesan>}
-      <div className="fin-tahap" role="tablist" aria-label="Tahap Finance">
-        {data.tahap.map((t) => (
-          <button key={t.kunci} type="button" role="tab" aria-selected={t.kunci === tahap} className={`fin-tab${t.kunci === tahap ? ' aktif' : ''}${t.bisaAksi && t.jumlah > 0 ? ' perlu' : ''}`} onClick={() => pilihTahap(t.kunci)}>
-            <span className="fin-tab-l">{t.label}</span>
-            <span className="fin-tab-n num">{t.jumlah}</span>
-            <span className="fin-tab-s num">{t.jumlah ? rupiah(t.total) : 'Kosong'}</span>
-          </button>
-        ))}
+      {/* Toolbar seperti Pengajuan saya: tahap = segmented tabs (kiri), cari + urut (kanan). */}
+      <div className="toolbar fin-toolbar">
+        <div className="fin-tahap" role="tablist" aria-label="Tahap Finance">
+          {data.tahap.map((t) => (
+            <button key={t.kunci} type="button" role="tab" aria-selected={t.kunci === tahap} className={`fin-tab${t.kunci === tahap ? ' aktif' : ''}${t.bisaAksi && t.jumlah > 0 ? ' perlu' : ''}`} onClick={() => pilihTahap(t.kunci)}>
+              <span className="fin-tab-l">{t.label}</span>
+              <span className="fin-tab-n num">{t.jumlah}</span>
+              <span className="sr-only">, {t.jumlah ? rupiah(t.total) : 'kosong'}</span>
+            </button>
+          ))}
+        </div>
+        {ring.jumlah > 0 && !dokRuang && <div className="fin-alat">
+          <div className="cari"><input type="search" aria-label="Cari di antrean" placeholder="Cari ID, vendor, invoice, PIC" value={q} onChange={(e) => setQ(e.target.value)} /></div>
+          <label className="fin-urut"><span className="sr-only">Urutkan</span>
+            <select value={urut} onChange={(e) => setUrut(e.target.value as Urut)}>
+              <option value="terbaru">Terbaru</option><option value="umur">Terlama di tahap</option><option value="jatuh-tempo">Jatuh tempo terdekat</option><option value="nominal">Nominal terbesar</option>
+            </select>
+          </label>
+        </div>}
       </div>
       <p className="muted cap fin-ringkas">
         {ring.jumlah} dokumen · {ring.kunci === 'bayar' ? 'sisa tagihan' : 'total'} {rupiah(ring.total)}{ring.tertuaHari !== null ? ` · tertua ${umurTeks(ring.tertuaHari)}` : ''} · dikerjakan {ring.aktor}{ring.bisaAksi ? '' : ' (Anda hanya melihat)'}
@@ -101,20 +112,15 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
         <div className="kosong" role="status"><h2>Tidak ada dokumen di tahap ini</h2><p className="muted">Dokumen akan muncul di sini setelah tahap sebelumnya selesai.</p></div>
       ) : (
         <>
-        {!dokRuang && <div className="fin-alat">
-          <div className="cari"><input type="search" aria-label="Cari di antrean" placeholder="Cari ID, vendor, invoice, PIC" value={q} onChange={(e) => setQ(e.target.value)} /></div>
-          <label className="fin-urut"><span className="sr-only">Urutkan</span>
-            <select value={urut} onChange={(e) => setUrut(e.target.value as Urut)}>
-              <option value="terbaru">Terbaru</option><option value="umur">Terlama di tahap</option><option value="jatuh-tempo">Jatuh tempo terdekat</option><option value="nominal">Nominal terbesar</option>
-            </select>
-          </label>
-        </div>}
         {dokRuang ? (
           <FormVerifikasiPajak key={`${dokRuang.id}|${dokRuang.etag}`} dok={dokRuang} onSelesai={selesai} onKembali={() => { setSel(null); setDetailHP(false); }} />
         ) : (
         <div className="inbox-wrap"><div className={`inbox${detailHP ? ' hp-detail' : ''}${ruangPajak ? ' hanya-daftar' : ''}`}>
           <section className="inbox-list" aria-label={ring.label}>
             {tampil.length === 0 ? <p className="muted" role="status">Tidak ada yang cocok dengan kata kunci.</p> : (
+              <div className={ruangPajak ? 'fin-tabel' : undefined}>
+              {/* Kepala kolom hanya tampilan (layar lebar, daftar penuh); tiap baris tetap membawa label sendiri untuk pembaca layar. */}
+              {ruangPajak && <div className="daftar-head" aria-hidden="true"><span>Vendor</span><span>ID</span><span>Umur</span><span>Jatuh tempo</span><span>Keterangan</span><span className="kanan">Nominal</span></div>}
               <ul className="ib-daftar">
                 {tampil.map((i) => (
                   <li key={i.id} className={`inbox-row${cur?.id === i.id ? ' aktif' : ''}`}>
@@ -134,6 +140,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
                   </li>
                 ))}
               </ul>
+              </div>
             )}
           </section>
 

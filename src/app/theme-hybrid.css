@@ -339,6 +339,26 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); }
 .ib-dd.lewat, .ib-dt:has(+ .ib-dd.lewat) { color: var(--danger); font-weight: 600; }
 .ib-n { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
 .pilih-tap { top: -1px; bottom: auto; right: 2px; margin: 0; } /* checkbox di pojok kanan atas, sejajar nama vendor (nominal di kanan bawah) */
+/* Finance — daftar penuh (Verifikasi pajak): baris tabel seperti daftar Pengajuan saya di layar lebar, kartu di HP */
+.fin-tabel .daftar-head { display: none; }
+@media (min-width: 1100px) {
+  .fin-tabel { --fcols: minmax(0, 1.6fr) 112px 80px 112px minmax(0, 1fr) 150px; background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); box-shadow: var(--shadow-xs); overflow: hidden; }
+  .fin-tabel .daftar-head { display: grid; grid-template-columns: var(--fcols); gap: 16px; padding: 10px 16px; background: var(--pearl); border-bottom: 1px solid var(--hairline); font-size: 12px; font-weight: 500; color: var(--muted); }
+  .fin-tabel .daftar-head .kanan { text-align: right; }
+  .inbox.hanya-daftar .fin-tabel .ib-daftar { display: block; margin: 0; }
+  .fin-tabel .inbox-row + .inbox-row { border-top: 1px solid var(--divider); }
+  .fin-tabel .ib-kartu { display: grid; grid-template-columns: var(--fcols); gap: 16px; align-items: center; padding: 12px 16px; border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+  .fin-tabel .ib-kartu:hover { background: var(--pearl); }
+  .fin-tabel .ib-h, .fin-tabel .ib-meta, .fin-tabel .ib-b, .fin-tabel .ib-k { display: contents; }
+  .fin-tabel .ib-h > *, .fin-tabel .ib-meta > *, .fin-tabel .ib-k > * { grid-row: 1; min-width: 0; }
+  .fin-tabel .ib-v { grid-column: 1; font-size: 14px; font-weight: 500; padding-right: 0; }
+  .fin-tabel .dok-id { grid-column: 2; justify-self: start; }
+  .fin-tabel .ib-umur { grid-column: 3; font-size: 14px; color: var(--ink-80); }
+  .fin-tabel .ib-k:first-child .ib-dd { grid-column: 4; }
+  .fin-tabel .fin-badges { grid-column: 5; margin-left: 0; justify-content: flex-start; }
+  .fin-tabel .ib-n { grid-column: 6; text-align: right; }
+  .fin-tabel .ib-dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+}
 /* vendor: chip kode sama dengan chip ID pengajuan */
 .vs-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 2px; }
 .vendor-antre .dok-h { margin-bottom: 4px; }
@@ -347,10 +367,25 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); }
 .ds-h { font-weight: 600; letter-spacing: 0.04em; color: var(--muted); }
 .ip-angka { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
 .dlg-ringkas strong { font-size: 22px; font-weight: 600; }
-.fin-tab { padding: 10px 14px; }
-.fin-tab.aktif { padding: 9px 13px; }
-.fin-tab-l { font-size: 13px; }
-.fin-tab-n { font-size: 20px; letter-spacing: -0.02em; }
+/* tahap Finance = segmented tabs seperti filter Pengajuan saya; total per tahap tetap dibacakan (sr-only) & tahap aktif di baris ringkasan */
+.fin-toolbar { margin: 0 0 8px; }
+.fin-tahap { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; margin: 0; width: fit-content; max-width: 100%; background: var(--parchment); border-radius: var(--r-md); }
+.fin-tab, .fin-tab.aktif, .fin-tab.perlu:not(.aktif) { display: inline-flex; align-items: center; gap: 8px; min-height: 30px; padding: 4px 12px; border: 0; border-radius: var(--r-sm); background: transparent; box-shadow: none; font-size: 14px; color: var(--ink-80); white-space: nowrap; }
+.fin-tab:hover { background: rgba(255, 255, 255, 0.6); }
+.fin-tab.aktif, .fin-tab.aktif:hover { background: var(--canvas); color: var(--ink); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
+.fin-tab-l { font-size: 14px; font-weight: 400; color: inherit; }
+.fin-tab-n, .fin-tab.perlu .fin-tab-n { min-width: 22px; padding: 1px 7px; border-radius: var(--r-sm); background: rgba(0, 0, 0, 0.06); color: var(--ink-80); font-size: 12px; font-weight: 500; line-height: 1.5; letter-spacing: 0; text-align: center; }
+.fin-tab.perlu .fin-tab-l::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 8px; border-radius: 50%; background: var(--danger); vertical-align: 1px; }
+.fin-tab.perlu .fin-tab-n { background: var(--danger); color: #fff; }
+.fin-toolbar .fin-alat { margin: 0; flex: 1 1 360px; max-width: 520px; }
+.fin-ringkas { margin: 0 0 14px; }
+.fin-toolbar .fin-urut { margin: 0; }
+@media (min-width: 641px) { .fin-toolbar .cari input, .fin-toolbar .fin-urut select { height: 40px; min-height: 40px; padding-top: 0; padding-bottom: 0; } }
+@media (max-width: 640px) {
+  .fin-tahap { width: 100%; }
+  .fin-tab, .fin-tab.aktif, .fin-tab.perlu:not(.aktif) { min-height: 44px; }
+  .fin-toolbar .fin-alat { flex-basis: 100%; max-width: none; }
+}
 .metrik-n { font-size: 24px; }
 .metrik-n.metrik-uang { font-size: 18px; }
 .lap-ringkas dd { font-size: 16px; }
