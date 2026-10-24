@@ -193,7 +193,7 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - **Patch 1** (F-01…F-09): label revisi, SoD di label antrean, antrean/ringkasan hanya dokumen relevan, pesan upload, cache vendor 15 dtk + single-flight (submit tetap validasi vendor segar).
 - **Patch 2** (F-11…F-14): pesan kunci login menyebut durasi; `POST /api/auth/set-password/cek` (rute publik, hanya mengintip validitas link tanpa menghanguskan atau membocorkan data akun; pembatas sendiri 20 kegagalan/IP/15 mnt, terpisah dari `setpass`); CSS cetak voucher dipaksa tata letak A4 agar 1 halaman; parser WA mengabaikan penanda format WhatsApp di sekitar perintah/kode.
 - **Bukti kapasitas (Vercel Hobby sin1, 2026-10-22):** Sheets API puncak ±15% dari batas baca, Vercel 0% error/timeout, Upstash ±19K dari 500K command/bulan, bundle client 748 KB; load test CONC=10/30 tanpa 5xx dan tanpa persetujuan ganda.
-- **Catatan desain terbuka:** pembatas `setpass` memakai kunci nomor `'-'` yang global (10 kegagalan dari IP mana pun mengunci pengiriman password semua orang 15 menit); perlu dirancang ulang per IP/per token.
+- **Pembatas `setpass` (diperbaiki 2026-10-24):** dulu plafon global 10 kegagalan (dari IP mana pun) mengunci set-password semua orang 15 menit. Sekarang `SETPASS_RULE`: 10 link tak valid / 15 mnt **per IP**, plafon global longgar 500 / 15 mnt (rem penyalahgunaan massal). Token 256-bit.
 
 ## Deploy
 - **Trial (sekarang):** repo GitHub privat `unknown-88-jpg/p2p-portal`, branch `main` otomatis ter-deploy ke Vercel (team FAT, Hobby, project `p2p-portal`, URL produksi `https://p2p-portal-flax.vercel.app`). `vercel.json` memaksa region `sin1`. Banner "ENVIRONMENT TRIAL — DATA DUMMY" tampil selama `APP_ENV=trial`.

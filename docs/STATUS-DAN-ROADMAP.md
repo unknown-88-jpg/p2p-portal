@@ -30,7 +30,6 @@ Dokumen lengkap (hasil UAT, desain, risiko) ada di Project "P2P Finance Portal" 
 
 ## Temuan terbuka (tidak menghalangi Fase 1)
 - F-02: invoice PDF tidak bisa dicetak gabungan dengan voucher (CSP `object-src 'none'`).
-- Pembatas set-password `setpass` memakai kunci nomor `'-'` yang **global**: 10 kegagalan dari IP mana pun mengunci pengiriman password untuk semua orang 15 menit. Perlu dirancang ulang (per IP/per token).
 - Daftar kas (placeholder), screenshot Master_COA produksi, rekening di Master_COA dummy terlihat nyata, folder Drive `upload-test` berisi file lain, perbandingan 5 voucher dengan sistem lama (syarat keluar M7), label data basah (stale) di UI.
 - Sebelum go-live: tambah `1zau0TiAc0r9OIFuVUHpQzq5tgBUr2AepS0RfgLLAzwg` ke `PROD_SHEET_IDS`; ganti nama/pisahkan database Upstash (`p2p-spike`); hitung ulang kuota Upstash dengan jumlah user nyata; rotasi API key gateway lama bersama Script Properties.
 

@@ -143,8 +143,7 @@ export async function requireStepUp(d: AuthDeps, token: string): Promise<void> {
 /**
  * F-12: pemeriksaan link set-password SAAT HALAMAN DIBUKA, supaya pengguna tidak mengetik password dulu baru tahu link mati.
  * Hanya mengintip (`peek`): token TIDAK dihanguskan dan nomor TIDAK dikembalikan (hanya benar/tidak).
- * Pembatas TERPISAH dari `setpass` (kunci nomor '-' di sana bersifat global: 10 kegagalan dari IP mana pun mengunci pengiriman password
- * untuk semua orang). Pemeriksaan dihitung per IP (20 link tak valid / 15 mnt) dengan plafon global longgar; token 256-bit, jadi ini
+ * Pembatas TERPISAH dari `setpass` (lihat `SETPASS_RULE`). Pemeriksaan dihitung per IP (20 link tak valid / 15 mnt) dengan plafon global longgar; token 256-bit, jadi ini
  * hanya penahan penyalahgunaan, bukan satu-satunya pertahanan.
  */
 const CEK_LINK_RULE: ThrottleRule = { pair: 20, perPhone: 500, perIp: 20, windowMs: 15 * 60_000 };
@@ -156,8 +155,15 @@ export async function cekLinkSetPassword(d: AuthDeps, input: z.infer<typeof cekL
   return { valid: true };
 }
 
+/**
+ * Pembatas link tak valid saat menyimpan password. Kunci nomor selalu '-' (nomor belum diketahui sebelum token dicek), jadi:
+ * `pair` & `perIp` = batas PER IP (10 / 15 mnt), `perPhone` = plafon GLOBAL longgar (500 / 15 mnt) sebagai rem penyalahgunaan massal.
+ * Dulu plafon global = 10: 10 kegagalan dari IP mana pun mengunci set-password untuk SEMUA orang 15 menit (temuan STATUS, 2026-10-24).
+ * Token 256-bit, jadi pembatas ini bukan satu-satunya pertahanan terhadap tebakan.
+ */
+export const SETPASS_RULE: ThrottleRule = { pair: 10, perPhone: 500, perIp: 10, windowMs: 15 * 60_000 };
 export async function setPasswordViaToken(d: AuthDeps, input: z.infer<typeof setPasswordSchema>, ip: string): Promise<void> {
-  const th = throttleOf(d, 'setpass', { pair: 10, perPhone: 10, perIp: 30, windowMs: 15 * 60_000 });
+  const th = throttleOf(d, 'setpass', SETPASS_RULE);
   await th.assertOpen('-', ip);
   const peek = await d.tokens.peek(input.token);
   if (!peek) {

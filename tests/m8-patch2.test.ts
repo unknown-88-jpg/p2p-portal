@@ -121,3 +121,20 @@ describe('F-14: parser WA mengabaikan penanda format', () => {
 });
 
 beforeEach(() => { __setAuthDepsForTests(authWorld().deps); });
+
+describe('setpass: pembatas per IP, bukan global (temuan STATUS 2026-10-24)', () => {
+  const bad = (i: number) => ({ token: `${'k'.repeat(30)}${String(i).padStart(3, '0')}`, password: 'Kopi-Manis-47' });
+  it('10 link tak valid dari satu IP mengunci IP itu saja; orang lain (IP lain) tetap bisa menyimpan password', async () => {
+    const w = authWorld();
+    for (let i = 0; i < 10; i++) expect(await code(setPasswordViaToken(w.deps, bad(i), '10.9.0.1'))).toBe('VALIDATION');
+    expect(await code(setPasswordViaToken(w.deps, bad(99), '10.9.0.1'))).toBe('RATE_LIMITED');
+    const { link } = await issueSetPasswordLink(w.deps, P.budi);
+    expect(await code(setPasswordViaToken(w.deps, { token: tokenOf(link), password: 'Kopi-Manis-47' }, '10.9.0.2'))).toBe('OK');
+  });
+  it('serangan terdistribusi: banyak IP x 9 kegagalan tetap tidak mengunci pengguna sah sampai plafon global longgar tercapai', async () => {
+    const w = authWorld();
+    for (let ip = 0; ip < 20; ip++) for (let i = 0; i < 9; i++) await code(setPasswordViaToken(w.deps, bad(ip * 10 + i), `10.8.${ip}.1`)); // 180 gagal
+    const { link } = await issueSetPasswordLink(w.deps, P.citra);
+    expect(await code(setPasswordViaToken(w.deps, { token: tokenOf(link), password: 'Teh-Pahit-99x' }, '10.7.0.1'))).toBe('OK');
+  });
+});
