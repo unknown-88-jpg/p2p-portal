@@ -179,6 +179,14 @@ export async function catatCron(d: Pick<AuthDeps, 'redis' | 'clock'>, nama: stri
 }
 export const CRON_DIPANTAU = ['digest', 'lampiran-yatim', 'backup'] as const;
 
+/** Status terakhir tiap cron yang dipantau (Redis). Tidak pernah melempar. */
+export async function bacaCron(d: Pick<AuthDeps, 'redis'>): Promise<{ nama: string; at: number | null; hasil: string }[]> {
+  return Promise.all(CRON_DIPANTAU.map(async (nama) => {
+    try { const raw = await d.redis.get(`cron:last:${nama}`); const v = raw ? (JSON.parse(raw) as { at: number; hasil: string }) : null; return { nama, at: v?.at ?? null, hasil: v?.hasil ?? 'belum pernah' }; }
+    catch { return { nama, at: null, hasil: 'tidak terbaca' }; }
+  }));
+}
+
 export interface Koneksi { nama: string; ok: boolean; info: string; ms: number }
 export async function cekKoneksi(d: AuthDeps, s: SessionData, extra: { waTerkonfigurasi: boolean }): Promise<{ koneksi: Koneksi[]; cron: { nama: string; at: number | null; hasil: string }[] }> {
   wajibAdmin(s);
@@ -193,11 +201,7 @@ export async function cekKoneksi(d: AuthDeps, s: SessionData, extra: { waTerkonf
     uji('Drive', async () => { const m = await d.drive.getMeta(d.drive.folderId); if (!m) throw new AppError('NOT_FOUND', 'folder tidak terlihat'); return `folder "${m.name}"`; }),
     uji('WhatsApp', async () => { if (!extra.waTerkonfigurasi) throw new AppError('UPSTREAM_BUSY', 'gateway belum dikonfigurasi (link dikirim lewat jalur dev)'); return 'gateway terkonfigurasi'; }),
   ]);
-  const cron = await Promise.all(CRON_DIPANTAU.map(async (nama) => {
-    try { const raw = await d.redis.get(`cron:last:${nama}`); const v = raw ? (JSON.parse(raw) as { at: number; hasil: string }) : null; return { nama, at: v?.at ?? null, hasil: v?.hasil ?? 'belum pernah' }; }
-    catch { return { nama, at: null, hasil: 'tidak terbaca' }; }
-  }));
-  return { koneksi, cron };
+  return { koneksi, cron: await bacaCron(d) };
 }
 
 // ---------------------------------------------------------------- repair (snapshot -> konfirmasi -> eksekusi -> laporan)

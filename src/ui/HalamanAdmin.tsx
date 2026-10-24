@@ -40,8 +40,9 @@ function DaftarTemuan({ temuan, namaFile }: { temuan: Temuan[]; namaFile: string
 }
 
 /** F3-C: halaman System Admin — pengguna (Master_User_TTD), kesehatan, integritas data, master, repair. */
-export function HalamanAdmin({ emailSaya }: { emailSaya: string }) {
-  const [tab, setTab] = useState<Tab>('pengguna');
+const TAB_ADMIN: readonly Tab[] = ['pengguna', 'kesehatan', 'integritas', 'master', 'repair', 'arsip'];
+export function HalamanAdmin({ emailSaya, tabAwal }: { emailSaya: string; tabAwal?: string }) {
+  const [tab, setTab] = useState<Tab>(TAB_ADMIN.find((t) => t === tabAwal) ?? 'pengguna');
   const [toast, setToast] = useState<IsiToast | null>(null);
   const stepUp = useStepUp('Perubahan oleh admin memerlukan password.');
 
