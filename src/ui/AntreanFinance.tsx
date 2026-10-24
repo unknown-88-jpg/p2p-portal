@@ -119,11 +119,15 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
                 {tampil.map((i) => (
                   <li key={i.id} className={`inbox-row${cur?.id === i.id ? ' aktif' : ''}`}>
                     <button type="button" className="ib-kartu" aria-current={cur?.id === i.id ? 'true' : undefined} onClick={() => { setSel(i.id); setDetailHP(true); }}>
-                      <span className="ib-top"><span className="ib-id num"><span>{i.id}</span> · <span>{umurTeks(i.umurHari) || i.tanggal}</span></span>
-                        <span className="fin-badges">{i.persetujuan?.finMgr && !i.persetujuan.cfo && i.perluCFO && <span className="badge-tunggu">Menunggu CFO</span>}{i.blokirBayar && <span className="badge-saya">Belum boleh dibayar</span>}{i.ajuanSendiri && <span className="badge-saya">Ajuan Anda</span>}{i.perluCFO && <span className="badge-cfo">CFO</span>}</span></span>
-                      <span className="ib-v">{i.vendorNama || '—'}</span>
-                      <span className="ib-n num">{rupiah(angka(i))}</span>
-                      <span className={`ib-jt${i.jatuhTempoLewat ? ' lewat' : ''}`}>{i.dueDate ? `${i.jatuhTempoLewat ? 'Lewat jatuh tempo' : 'Jatuh tempo'} ${i.dueDate}` : ' '}</span>
+                      <span className="ib-h">
+                        <span className="ib-v">{i.vendorNama || '—'}</span>
+                        <span className="ib-meta"><span className="dok-id num">{i.id}</span><span className="ib-umur">{umurTeks(i.umurHari) || i.tanggal}</span>
+                          <span className="fin-badges">{i.persetujuan?.finMgr && !i.persetujuan.cfo && i.perluCFO && <span className="badge-tunggu">Menunggu CFO</span>}{i.blokirBayar && <span className="badge-saya">Belum boleh dibayar</span>}{i.ajuanSendiri && <span className="badge-saya">Ajuan Anda</span>}{i.perluCFO && <span className="badge-cfo">CFO</span>}</span></span>
+                      </span>
+                      <span className="ib-b">
+                        <span className="ib-k"><span className="ib-dt">{i.jatuhTempoLewat ? 'Lewat jatuh tempo' : 'Jatuh tempo'}</span><span className={`ib-dd num${i.jatuhTempoLewat ? ' lewat' : ''}`}>{i.dueDate || '—'}</span></span>
+                        <span className="ib-k kanan"><span className="ib-dt">{i.tahap === 'bayar' ? 'Sisa tagihan' : 'Nominal'}</span><span className="ib-dd ib-n num">{rupiah(angka(i))}</span></span>
+                      </span>
                     </button>
                     {bisaPilih && <label className="pilih-tap"><input type="checkbox" className="pilih-cb" aria-label={`Pilih ${i.id} untuk ${tahap === 'bayar' ? 'dibayar' : 'dijurnal'} sekaligus`} checked={pilih.has(i.id)}
                       onChange={(e) => setPilih((p) => { const n = new Set(p); if (e.target.checked) n.add(i.id); else n.delete(i.id); return n; })} /></label>}

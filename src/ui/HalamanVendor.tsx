@@ -107,7 +107,7 @@ export function HalamanVendor({ bisaDaftar, bisaSahkan, tabAwal }: { bisaDaftar:
             <h2 className="kartu-t" id="h-saya">Vendor yang saya daftarkan</h2>
             {!saya ? <Skeleton baris={3} /> : saya.length === 0 ? <p className="muted">Belum ada.</p> : (
               <ul className="ringkas vendor-saya">{saya.map((v) => (
-                <li key={v.kode}><span className="vs-n"><b>{v.nama}</b><span className="muted cap">{v.kode} · {v.tipe} · {v.bank} {v.noRekening}</span></span><span className={`pill-st ${pill(v.status)}`}>{labelSt(v.status)}</span></li>
+                <li key={v.kode}><span className="vs-n"><b>{v.nama}</b><span className="muted cap vs-meta"><span className="dok-id num">{v.kode}</span><span>{v.tipe} · {v.bank} {v.noRekening}</span></span></span><span className={`pill-st ${pill(v.status)}`}>{labelSt(v.status)}</span></li>
               ))}</ul>
             )}
           </section>
@@ -118,7 +118,7 @@ export function HalamanVendor({ bisaDaftar, bisaSahkan, tabAwal }: { bisaDaftar:
         !antre ? <Skeleton baris={3} /> : antre.length === 0 ? <div className="kosong" role="status"><h2>Tidak ada vendor yang menunggu pengesahan</h2></div> : (
           <ul className="vendor-antre">{antre.map((v) => (
             <li key={v.kode} className="kartu">
-              <div className="kartu-judul"><h2 className="kartu-t">{v.nama}</h2><span className="muted cap num">{v.kode} · {v.tipe}</span></div>
+              <div className="dok-h"><h2 className="dok-v">{v.nama}</h2><span className="dok-id num">{v.kode}</span><span className="dok-st muted cap">{v.tipe}</span></div>
               <dl className="ds-grid">
                 <div><dt>Bank</dt><dd>{v.bank}</dd></div><div><dt>No. rekening</dt><dd className="num">{v.noRekening}</dd></div>
                 <div><dt>Pemilik rekening</dt><dd>{v.namaRekening}</dd></div><div><dt>NPWP</dt><dd>{v.npwp || '—'}</dd></div>

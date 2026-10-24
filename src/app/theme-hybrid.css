@@ -320,12 +320,29 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); }
 
 
 /* ---- skala tipografi kartu (acuan: daftar pengajuan) — judul halaman 30, judul kartu 16, isi 14, angka utama 18–26; bobot maks. 600 ---- */
-.ib-kartu { gap: 2px; padding: 12px 14px; }
+/* kartu antrean (Persetujuan / Finance) = kartu daftar pengajuan L1 (.dok): vendor, chip ID, garis, Jatuh tempo | Nominal */
+.ib-kartu { display: block; padding: 12px 14px; }
 .inbox-row.aktif .ib-kartu { padding: 11px 13px; }
 @media (max-width: 899px) { .inbox:not(.hp-detail) .inbox-row.aktif .ib-kartu { padding: 12px 14px; } }
-.ib-v { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; }
-.ib-n { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; margin-top: 2px; }
-.ib-jt { font-size: 12px; }
+.ib-h { display: flex; flex-direction: column; gap: 6px; padding-bottom: 10px; border-bottom: 1px solid var(--divider); }
+.ib-v { font-size: 15px; line-height: 1.25; font-weight: 600; letter-spacing: -0.01em; }
+.inbox-row:has(.pilih-cb) .ib-v { padding-right: 34px; }
+.ib-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; min-height: 22px; }
+.ib-umur { font-size: 12px; color: var(--muted); }
+.ib-meta .fin-badges { margin-left: auto; }
+.ib-meta .badge-cfo { font-size: 12px; padding: 2px 8px; }
+.ib-b { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 10px; }
+.ib-k { display: grid; gap: 1px; min-width: 0; }
+.ib-k.kanan { text-align: right; }
+.ib-dt { font-size: 12px; color: var(--muted); }
+.ib-dd { font-size: 14px; font-weight: 500; color: var(--ink); }
+.ib-dd.lewat, .ib-dt:has(+ .ib-dd.lewat) { color: var(--danger); font-weight: 600; }
+.ib-n { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
+.pilih-tap { top: -1px; bottom: auto; right: 2px; margin: 0; } /* checkbox di pojok kanan atas, sejajar nama vendor (nominal di kanan bawah) */
+/* vendor: chip kode sama dengan chip ID pengajuan */
+.vs-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 2px; }
+.vendor-antre .dok-h { margin-bottom: 4px; }
+.vendor-antre .dok-v { margin: 0; }
 .ds-nama { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
 .ds-h { font-weight: 600; letter-spacing: 0.04em; color: var(--muted); }
 .ip-angka { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
