@@ -163,13 +163,13 @@ export function HalamanAdmin({ emailSaya }: { emailSaya: string }) {
               <tbody>{tampil.map((u) => (
                 <tr key={u.row}>
                   <td><b>{u.nama}</b><div className="muted cap">{u.jabatan} · {u.email || '— tanpa email'}</div></td>
-                  <td className="num">{u.noHp}</td><td>{u.brand} / {u.dept}</td><td>{LEVEL_LABEL[u.level] ?? `L${u.level}`}</td>
+                  <td className="kode">{u.noHp}</td><td>{u.brand} / {u.dept}</td><td>{LEVEL_LABEL[u.level] ?? `L${u.level}`}</td>
                   <td>{u.aktif ? <span className="pill-st hijau-muda">Aktif</span> : <span className="pill-st abu">Nonaktif</span>}{!u.punyaPassword && <div className="muted cap">belum punya password</div>}</td>
-                  <td className="aksi-sel">
+                  <td><div className="aksi-sel">
                     <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setGalatForm({}); setForm({ row: u.row, etag: u.etag, v: { brand: u.brand, dept: u.dept, level: u.level, jabatan: u.jabatan, nama: u.nama, email: u.email, aktif: u.aktif, noHp: u.noHp } }); }}>Ubah</button>
                     {u.aktif && <button type="button" className="btn btn-secondary btn-sm" onClick={() => void aksiNomor(u, 'link')}>Kirim link password</button>}
                     {u.email !== emailSaya && <button type="button" className="btn btn-secondary btn-sm" onClick={() => void aksiNomor(u, 'logout')}>Paksa logout</button>}
-                  </td>
+                  </div></td>
                 </tr>
               ))}</tbody>
             </table></div>
@@ -237,7 +237,7 @@ export function HalamanAdmin({ emailSaya }: { emailSaya: string }) {
                   <p className="muted cap">{prat.total} baris akan diubah{prat.dibatasi ? ` (eksekusi ini 100 pertama)` : ''}.</p>
                   <div className="tabel-gulir"><table className="tabel">
                     <thead><tr><th>Dokumen</th><th>Sebelum</th><th>Sesudah</th></tr></thead>
-                    <tbody>{prat.ubah.map((u) => <tr key={u.id}><td className="num">{u.id}</td><td className="num cap">{Object.entries(u.sebelum).map(([k, v]) => `${k}=${v}`).join(' · ')}</td><td className="num cap">{Object.entries(u.cells).map(([k, v]) => `${k}=${v}`).join(' · ')}</td></tr>)}</tbody>
+                    <tbody>{prat.ubah.map((u) => <tr key={u.id}><td className="kode">{u.id}</td><td className="kode cap">{Object.entries(u.sebelum).map(([k, v]) => `${k}=${v}`).join(' · ')}</td><td className="kode cap">{Object.entries(u.cells).map(([k, v]) => `${k}=${v}`).join(' · ')}</td></tr>)}</tbody>
                   </table></div>
                   <div className="cta-row"><button type="button" className="btn btn-danger" disabled={sibuk} onClick={() => setKonfirmasi(true)}>Jalankan perbaikan</button></div>
                 </>
@@ -257,7 +257,7 @@ export function HalamanAdmin({ emailSaya }: { emailSaya: string }) {
               <p className="muted cap">{arsip.kandidat.length} dokumen lunas sebelum {arsip.batas} (dari {arsip.jumlahBaris} baris).</p>
               <div className="tabel-gulir"><table className="tabel">
                 <thead><tr><th>Dokumen</th><th>Vendor</th><th>Lunas</th><th className="num">Nominal</th></tr></thead>
-                <tbody>{arsip.kandidat.map((k) => <tr key={k.id}><td className="num">{k.id}</td><td>{k.vendor}</td><td className="num">{k.lunas}</td><td className="num">Rp {k.nominal.toLocaleString('id-ID')}</td></tr>)}</tbody>
+                <tbody>{arsip.kandidat.map((k) => <tr key={k.id}><td className="kode">{k.id}</td><td>{k.vendor}</td><td className="kode">{k.lunas}</td><td className="num">Rp {k.nominal.toLocaleString('id-ID')}</td></tr>)}</tbody>
               </table></div>
             </>
           )}
