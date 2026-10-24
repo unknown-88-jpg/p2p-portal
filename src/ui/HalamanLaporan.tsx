@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { amankanSel, keCsv } from '@/domain/odoo';
 import { api, errMessage } from './api';
 import { Chips, Field, Pesan, Skeleton } from './kit';
@@ -37,11 +37,17 @@ export function HalamanLaporan({ bisaAudit, hariIni, awalBulan }: { bisaAudit: b
   const [audit, setAudit] = useState<Audit | null>(null);
   const [fa, setFa] = useState({ id: '', aktor: '', aksi: '', dari: '', sampai: '' });
 
-  const muat = useCallback(async (t: Tab) => {
+  const [dimRekap, setDimRekap] = useState<Dimensi>('brand'); // dimensi data rekap yang sedang tampil
+  const urutRekap = useRef(0); // abaikan respons rekap yang kalah cepat (ganti kelompok berturut-turut)
+  const muat = useCallback(async (t: Tab, dim: Dimensi = dimensi) => {
     setSibuk(true); setGalat(null);
     try {
       if (t === 'aging') setAging(await api<Aging>('/api/laporan/aging', { method: 'GET' }));
-      if (t === 'rekap') setRekap(await api<Rekap>(`/api/laporan/rekap?${qs({ dari, sampai, dimensi })}`, { method: 'GET' }));
+      if (t === 'rekap') {
+        const ke = ++urutRekap.current;
+        const r = await api<Rekap>(`/api/laporan/rekap?${qs({ dari, sampai, dimensi: dim })}`, { method: 'GET' });
+        if (ke === urutRekap.current) { setRekap(r); setDimRekap(dim); }
+      }
       if (t === 'bayar') setBayar(await api<Bayar>(`/api/laporan/pembayaran?${qs({ dari, sampai })}`, { method: 'GET' }));
       if (t === 'audit') setAudit(await api<Audit>(`/api/audit?${qs(fa)}`, { method: 'GET' }));
     } catch (e) { setGalat(errMessage(e)); }
@@ -100,14 +106,14 @@ export function HalamanLaporan({ bisaAudit, hariIni, awalBulan }: { bisaAudit: b
         <section className="kartu">
           <h2 className="kartu-t">Rekap per periode</h2>
           <div className="lap-filter">{rentang}<button type="button" className="btn btn-primary btn-sm" disabled={sibuk} onClick={() => void muat('rekap')}>{sibuk ? 'Memuat…' : 'Tampilkan'}</button></div>
-          <Chips label="Kelompokkan per" kecil segmen nilai={dimensi} onPilih={setDimensi} pilihan={DIMENSI} />
+          <Chips label="Kelompokkan per" kecil segmen nilai={dimensi} onPilih={(d) => { setDimensi(d); void muat('rekap', d); }} pilihan={DIMENSI} />
           <p className="muted cap">Dokumen yang sudah diajukan (bukan draft/ditolak), difilter tanggal invoice (kosong → tanggal submit) — sama dengan export Odoo.</p>
           {rekap && (
             <>
               <Basi basi={rekap.basi} />
-              <div className="toolbar-sub"><span /><button type="button" className="btn btn-secondary btn-sm" onClick={() => unduhTeks(`rekap-${dimensi}-${dari}-${sampai}.csv`, csv([DIMENSI.find((x) => x.nilai === dimensi)!.teks, 'Dokumen', 'Nominal', 'Dibayar', 'Sisa'], [...rekap.baris.map((b) => [b.kunci, b.jumlah, b.total, b.dibayar, b.sisa]), ['Total', rekap.total.jumlah, rekap.total.total, rekap.total.dibayar, rekap.total.sisa]]))}>Unduh CSV</button></div>
+              <div className="toolbar-sub"><span /><button type="button" className="btn btn-secondary btn-sm" onClick={() => unduhTeks(`rekap-${dimRekap}-${dari}-${sampai}.csv`, csv([DIMENSI.find((x) => x.nilai === dimRekap)!.teks, 'Dokumen', 'Nominal', 'Dibayar', 'Sisa'], [...rekap.baris.map((b) => [b.kunci, b.jumlah, b.total, b.dibayar, b.sisa]), ['Total', rekap.total.jumlah, rekap.total.total, rekap.total.dibayar, rekap.total.sisa]]))}>Unduh CSV</button></div>
               <div className="tabel-gulir"><table className="tabel">
-                <thead><tr><th>{DIMENSI.find((x) => x.nilai === dimensi)!.teks}</th><th className="num">Dokumen</th><th className="num">Nominal</th><th className="num">Dibayar</th><th className="num">Sisa</th></tr></thead>
+                <thead><tr><th>{DIMENSI.find((x) => x.nilai === dimRekap)!.teks}</th><th className="num">Dokumen</th><th className="num">Nominal</th><th className="num">Dibayar</th><th className="num">Sisa</th></tr></thead>
                 <tbody>{rekap.baris.map((b) => <tr key={b.kunci}><td>{b.kunci}</td><td className="num">{b.jumlah}</td><td className="num">{rp(b.total)}</td><td className="num">{rp(b.dibayar)}</td><td className="num">{rp(b.sisa)}</td></tr>)}</tbody>
                 <tfoot><tr><td>Total</td><td className="num">{rekap.total.jumlah}</td><td className="num">{rp(rekap.total.total)}</td><td className="num">{rp(rekap.total.dibayar)}</td><td className="num">{rp(rekap.total.sisa)}</td></tr></tfoot>
               </table></div>
