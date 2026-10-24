@@ -74,11 +74,23 @@ export const idemKeyWA = (messageId: string): string => `wa-${messageId.replace(
 export interface ItemDigest { idTrx: string; vendor: string; pic: string; nominal: number; perluCFO: boolean; kode: string | null; link: string }
 
 /** Dokumen >= ambang tidak diberi kode (D9): hanya ringkasan + link web. */
+const barisItem = (it: ItemDigest, i: number): string =>
+  `${i + 1}. *${it.idTrx}* · ${it.vendor || '—'}\n   ${rupiah(it.nominal)}${it.perluCFO ? ' ⚠️CFO' : ''} · PIC ${it.pic}\n` +
+  (it.kode ? `   Balas *SETUJU ${it.kode}* / *TOLAK ${it.kode} <alasan>*` : `   Nominal besar: setujui di web\n   ${it.link}`);
+
+/** Jadwal digest otomatis ke Manager (WIB, hari kerja). HARUS sama dengan cron `.github/workflows/digest.yml` (dijaga test). */
+export const JADWAL_DIGEST_WIB = ['09.00', '12.00', '15.00', '17.00'] as const;
+export const JADWAL_DIGEST_TEKS = `${JADWAL_DIGEST_WIB.join(', ')} WIB (Senin–Jumat)`;
+
+/** F-15: pengingat yang dikirim PIC lewat tombol "Kirim WA" (maks. 1x/hari/dokumen). Isi item sama dengan digest (kode hanya < Rp 5 jt). */
+export function pesanPengingatPIC(p: { nama: string; pengirim: string; item: ItemDigest; linkInbox: string }): string {
+  return `🔔 *Pengingat persetujuan*\nHalo ${p.nama || 'Manager'}, ${p.pengirim || 'PIC'} meminta persetujuan untuk pengajuan berikut:\n\n${barisItem(p.item, 0)}` +
+    (p.item.kode ? '' : '\n\n_Dokumen ≥ Rp 5.000.000 hanya bisa disetujui lewat web (dengan konfirmasi password)._') +
+    `\n\n_Buka portal: ${p.linkInbox}_`;
+}
+
 export function pesanDigest(p: { nama: string; items: readonly ItemDigest[]; sisa: number; linkInbox: string }): string {
-  const baris = p.items.map((it, i) =>
-    `${i + 1}. *${it.idTrx}* · ${it.vendor || '—'}\n   ${rupiah(it.nominal)}${it.perluCFO ? ' ⚠️CFO' : ''} · PIC ${it.pic}\n` +
-    (it.kode ? `   Balas *SETUJU ${it.kode}* / *TOLAK ${it.kode} <alasan>*` : `   Nominal besar: setujui di web\n   ${it.link}`),
-  ).join('\n\n');
+  const baris = p.items.map(barisItem).join('\n\n');
   const total = p.items.length + p.sisa;
   const adaBesar = p.items.some((i) => !i.kode);
   return `📋 *Ringkasan Approval*\nHalo ${p.nama || 'Manager'}, ada *${total}* pengajuan menunggu persetujuan Anda:\n\n${baris}` +

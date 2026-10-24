@@ -8,8 +8,10 @@ import { DIGEST_MAKS_ITEM, pesanDigest, type ItemDigest } from '@/domain/wa';
 import { STATUS } from '@/domain/status';
 import { logger } from '@/lib/logger';
 import { TRX_PENGAJUAN, colIndex } from '@/repo/schema';
+import type { RawRow } from '@/ports/store';
 import { etagOf, sodAktif } from './approval';
 import type { AuthDeps } from './auth';
+import type { Account } from '@/domain/roles';
 import { loadAccounts } from './users';
 import { terbitkanKode } from './wa-kode';
 
@@ -31,10 +33,30 @@ export async function kirimDigestManager(d: AuthDeps, o: { sod?: boolean; force?
   const docs = rows.filter((r) => str(r[T('ID_TRX')]) && str(r[T('STATUS')]) === STATUS.SUBMITTED);
   if (!docs.length) return { dokumen: 0, manager: 0, terkirim: 0, gagal: 0, dilewati: 'tidak ada dokumen menunggu' };
 
-  const accounts = [...(await loadAccounts(d.store)).values()].filter((a) => a.aktif && a.phone && can(a.roles, 'approve.manager'));
-  const perMgr = new Map<string, { acc: (typeof accounts)[number]; items: ItemDigest[]; sisa: number }>();
+  const perMgr = await itemPerManager(d, docs, sod);
   const base = d.baseUrl.replace(/\/+$/, '');
 
+  let terkirim = 0, gagal = 0;
+  for (const [phone, g] of perMgr) {
+    if (!g.items.length) continue;
+    const res = await d.wa.send(phone, pesanDigest({ nama: g.acc.nama, items: g.items, sisa: g.sisa, linkInbox: `${base}/persetujuan` }));
+    if (res.ok) terkirim++; else { gagal++; logger.warn('digest_gagal_kirim', { to: maskPhone(phone), info: res.info }); }
+  }
+  logger.info('digest_manager', { dokumen: docs.length, manager: perMgr.size, terkirim, gagal });
+  return { dokumen: docs.length, manager: perMgr.size, terkirim, gagal };
+}
+
+export interface GrupManager { acc: Account; items: ItemDigest[]; sisa: number }
+
+/**
+ * Penerima digest per Manager untuk dokumen Submitted yang diberikan: hanya Manager berwenang atas brand/dept dokumen,
+ * pembuat dilewati bila SoD aktif. Kode SETUJU/TOLAK diterbitkan hanya untuk nominal < Rp 5 jt (D9/I14).
+ * Dipakai digest terjadwal DAN tombol "Kirim WA" PIC (F-15), supaya aturan penerima & kode selalu sama.
+ */
+export async function itemPerManager(d: AuthDeps, docs: readonly RawRow[], sod: boolean): Promise<Map<string, GrupManager>> {
+  const accounts = [...(await loadAccounts(d.store)).values()].filter((a) => a.aktif && a.phone && can(a.roles, 'approve.manager'));
+  const perMgr = new Map<string, GrupManager>();
+  const base = d.baseUrl.replace(/\/+$/, '');
   for (const r of docs) {
     const brand = str(r[T('BRAND')]), dept = str(r[T('DEPARTEMENT')]);
     const nominal = num(r[T('FINAL_AMOUNT')]);
@@ -49,13 +71,5 @@ export async function kirimDigestManager(d: AuthDeps, o: { sod?: boolean; force?
       g.items.push({ idTrx: id, vendor: str(r[T('VENDOR_NAME')]), pic: str(r[T('PIC')]), nominal, perluCFO: upper(r[T('REQUIRE_CFO')]) === 'YES', kode, link: `${base}/persetujuan?id=${encodeURIComponent(id)}` });
     }
   }
-
-  let terkirim = 0, gagal = 0;
-  for (const [phone, g] of perMgr) {
-    if (!g.items.length) continue;
-    const res = await d.wa.send(phone, pesanDigest({ nama: g.acc.nama, items: g.items, sisa: g.sisa, linkInbox: `${base}/persetujuan` }));
-    if (res.ok) terkirim++; else { gagal++; logger.warn('digest_gagal_kirim', { to: maskPhone(phone), info: res.info }); }
-  }
-  logger.info('digest_manager', { dokumen: docs.length, manager: perMgr.size, terkirim, gagal });
-  return { dokumen: docs.length, manager: perMgr.size, terkirim, gagal };
+  return perMgr;
 }

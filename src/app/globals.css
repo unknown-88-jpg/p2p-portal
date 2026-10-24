@@ -428,6 +428,21 @@ body:has(> #isi > .sidebar) { background: var(--parchment); }
 .tbl .tbl-sub { display: block; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
 .tbl .tbl-wkt { text-align: right; white-space: nowrap; }
 .bar-list { display: grid; gap: 18px; margin-top: 18px; }
+/* F-15: tombol Kirim WA di samping status + catatan jadwal digest */
+.tbl td:first-child b { white-space: nowrap; }
+.st-aksi { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.kirim-wa { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn-wa { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 5px 12px; border: 1px solid #b7e2c6; border-radius: 999px; background: #e9f7ee; color: #146c39; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.btn-wa .ikon { width: 16px; height: 16px; }
+.btn-wa:hover:not(:disabled) { background: #d8f0e1; }
+.btn-wa:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.btn-wa:disabled { cursor: default; background: #f1f1f3; border-color: var(--hairline); color: #6e6e73; }
+.kirim-wa-ket { font-size: 12px; color: var(--muted); }
+.kirim-wa-ket:empty { display: none; }
+.kirim-wa-ket.galat { color: #b3261e; }
+.catatan-wa { display: flex; gap: 10px; align-items: flex-start; margin: 20px 0 0; padding: 12px 14px; border-radius: 12px; background: #f2f9f4; color: #3a3a3c; font-size: 13px; line-height: 1.45; }
+.catatan-wa .ikon { flex: none; width: 18px; height: 18px; color: #146c39; margin-top: 1px; }
+@media (max-width: 640px) { .btn-wa { min-height: 44px; } }
 .bar-ket { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 8px; }
 @media (max-width: 1100px) { .dash-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 760px) { .dash { padding-left: 16px; padding-right: 16px; } .tbl .tbl-wkt { display: none; } }

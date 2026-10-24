@@ -6,8 +6,12 @@ import { dashboard } from '@/server/dokumen';
 import { listMine } from '@/server/pengajuan';
 import { authDeps } from '@/server/runtime';
 import { AppNav } from '@/ui/AppNav';
-import { IkonPanah, IkonPerhatian, IkonProses, IkonSelesai, IkonSetuju, IkonUang } from '@/ui/icons';
+import { IkonPanah, IkonPerhatian, IkonProses, IkonSelesai, IkonSetuju, IkonUang, IkonWA } from '@/ui/icons';
 import { StatusPill } from '@/ui/kit';
+import { KirimWa } from '@/ui/KirimWa';
+import { JADWAL_DIGEST_TEKS } from '@/domain/wa';
+import { STATUS } from '@/domain/status';
+import { sudahKirimHariIni } from '@/server/wa-manual';
 import { wajibSesi } from './_lib/sesi';
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +24,7 @@ export default async function Home() {
   const bisaSetuju = can(s.roles, 'approve.manager');
   const menunggu = bisaSetuju ? (await inbox(authDeps(), s)).length : 0;
   const dash = await dashboard(authDeps(), s);
+  const waHariIni = bisa ? await sudahKirimHariIni(authDeps(), dash.pic.terbaru.filter((t) => t.status === STATUS.SUBMITTED).map((t) => t.id)) : new Set<string>();
   const n = (k: string) => daftar.filter((d) => KELOMPOK_STATUS.find((x) => x.kunci === k)!.cocok(d.status)).length;
   const total = daftar.length;
   const metrik = [
@@ -83,7 +88,7 @@ export default async function Home() {
                     <tbody>{dash.pic.terbaru.map((t) => (
                       <tr key={t.id}>
                         <td><a href={`/pengajuan/${encodeURIComponent(t.id)}`}><b>{t.id}</b></a><span className="tbl-sub">{t.vendor || '—'}</span></td>
-                        <td><StatusPill status={t.status} /></td>
+                        <td><div className="st-aksi"><StatusPill status={t.status} />{t.status === STATUS.SUBMITTED && <KirimWa id={t.id} sudahHariIni={waHariIni.has(t.id)} />}</div></td>
                         <td className="tbl-wkt muted cap">{t.waktu}</td>
                       </tr>
                     ))}</tbody>
@@ -102,6 +107,7 @@ export default async function Home() {
                   </div>
                 ))}
               </div>
+              <p className="catatan-wa"><IkonWA /><span>Pengingat WA ke Manager dikirim <b>otomatis</b> pukul {JADWAL_DIGEST_TEKS}. Tombol <b>Kirim WA</b> mengirim sekarang, maks. 1× per hari per pengajuan.</span></p>
             </section>
           </div>
         )}
