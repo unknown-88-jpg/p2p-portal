@@ -21,12 +21,13 @@ interface Item {
   blokirBayar?: string | null; tugasRangkap?: string[];
 }
 interface Data { tahap: RingkasTahap[]; items: Item[]; basi: boolean; peran: Peran }
-type Urut = 'umur' | 'jatuh-tempo' | 'nominal';
+type Urut = 'terbaru' | 'umur' | 'jatuh-tempo' | 'nominal';
 
 const Info = ({ l, v }: { l: string; v: string }) => (v ? <div><dt>{l}</dt><dd>{v}</dd></div> : null);
 const umurTeks = (h: number | null): string => (h === null ? '' : h === 0 ? 'hari ini' : `${h} hari`);
 const angka = (i: Item): number => (i.tahap === 'bayar' ? i.sisa : i.nominal);
 const URUT: Record<Urut, (a: Item, b: Item) => number> = {
+  terbaru: (a, b) => (a.umurHari ?? 1e9) - (b.umurHari ?? 1e9) || b.id.localeCompare(a.id),
   umur: (a, b) => (b.umurHari ?? -1) - (a.umurHari ?? -1),
   'jatuh-tempo': (a, b) => (a.dueDate || '9999').localeCompare(b.dueDate || '9999'),
   nominal: (a, b) => angka(b) - angka(a),
@@ -42,7 +43,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
   const [galat, setGalat] = useState<string | null>(null);
   const [tahap, setTahap] = useState<KunciTahap>(tahapAwal ?? 'pajak');
   const [q, setQ] = useState('');
-  const [urut, setUrut] = useState<Urut>('umur');
+  const [urut, setUrut] = useState<Urut>('terbaru');
   const [sel, setSel] = useState<string | null>(null);
   const [detailHP, setDetailHP] = useState(false);
   const [info, setInfo] = useState<{ jenis: 'ok' | 'warn'; teks: string } | null>(null);
@@ -100,7 +101,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
           <div className="cari"><input type="search" aria-label="Cari di antrean" placeholder="Cari ID, vendor, invoice, PIC" value={q} onChange={(e) => setQ(e.target.value)} /></div>
           <label className="fin-urut"><span className="sr-only">Urutkan</span>
             <select value={urut} onChange={(e) => setUrut(e.target.value as Urut)}>
-              <option value="umur">Terlama di tahap</option><option value="jatuh-tempo">Jatuh tempo terdekat</option><option value="nominal">Nominal terbesar</option>
+              <option value="terbaru">Terbaru</option><option value="umur">Terlama di tahap</option><option value="jatuh-tempo">Jatuh tempo terdekat</option><option value="nominal">Nominal terbesar</option>
             </select>
           </label>
         </div>

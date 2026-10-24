@@ -84,9 +84,9 @@ describe('F2-A service: antreanFinance', () => {
   it('PIC / Manager / Admin = 403 FORBIDDEN', async () => {
     for (const l of [1, 2, 9]) expect(await kode(antreanFinance(w.deps, sess('x@x.id', l)))).toBe('FORBIDDEN');
   });
-  it('L3: semua tahap, ringkasan benar, tertua dulu, Submitted/Paid tidak ikut', async () => {
+  it('L3: semua tahap, ringkasan benar, terbaru dulu, Submitted/Paid tidak ikut', async () => {
     const r = await antreanFinance(w.deps, sess('dani@x.id', 3));
-    expect(r.items.map((i) => i.id)).toEqual(['NTR-00005', 'NTR-00002', 'NTR-00004', 'NTR-00001', 'NTR-00003']);
+    expect(r.items.map((i) => i.id)).toEqual(['NTR-00003', 'NTR-00001', 'NTR-00004', 'NTR-00002', 'NTR-00005']);
     const t = Object.fromEntries(r.tahap.map((x) => [x.kunci, x]));
     expect(t.pajak).toMatchObject({ jumlah: 2, total: 8_000_000, tertuaHari: 5, bisaAksi: true });
     expect(t.persetujuan).toMatchObject({ jumlah: 1, bisaAksi: false });

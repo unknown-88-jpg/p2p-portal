@@ -296,6 +296,10 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - Semua bacaan lewat cache tampilan 15 dtk (tidak menambah beban kuota Sheets); sumber yang gagal dibaca dilewati. Baca saja — penjaga aksi tetap di server.
 - Warna alert: tab/chip antrean yang menunggu tindakan Anda (mis. "Menunggu pengesahan" vendor, tahap Finance yang bisa Anda kerjakan) berlatar merah muda dengan angka merah. `/vendor?tab=pengesahan` dan `/admin?tab=…` membuka tab langsung.
 
+## Urutan daftar: terbaru dulu (2026-10-24, keputusan user)
+- Semua daftar di dashboard kini **terbaru dulu**: antrean Finance (default "Terbaru"; pilihan "Terlama di tahap" / jatuh tempo / nominal tetap ada), inbox persetujuan Manager, antrean pengesahan vendor, daftar user Admin, rincian aging AP (jatuh tempo terbaru dulu, tanpa jatuh tempo di akhir), kandidat arsip. Yang sudah terbaru dulu: pengajuan saya, vendor saya, beranda, log pembayaran, audit, riwayat export, pencarian.
+- Beda dari sebelumnya: antrean Finance & inbox Manager dulu tertua dulu (FIFO). Timeline riwayat di detail dokumen tetap kronologis.
+
 ## Deploy
 - **Trial (sekarang):** repo GitHub privat `unknown-88-jpg/p2p-portal`, branch `main` otomatis ter-deploy ke Vercel (team FAT, Hobby, project `p2p-portal`, URL produksi `https://p2p-portal-flax.vercel.app`). `vercel.json` memaksa region `sin1`. Banner "ENVIRONMENT TRIAL — DATA DUMMY" tampil selama `APP_ENV=trial`.
 - **Environment variable** (nama saja; nilai jangan pernah masuk repo/chat): `APP_ENV`, `APP_BASE_URL` (harus sama dengan URL yang dibuka; dipakai cek origin/CSRF, jadi login di URL preview akan ditolak), `SHEET_ID`, `PROD_SHEET_IDS`, `DRIVE_ROOT_ID`, `GOOGLE_SA_JSON`, `JWT_SECRET`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `CRON_SECRET`, `HEALTH_TOKEN`, `WA_GATEWAY_URL`, `WA_API_KEY`, `WA_WEBHOOK_SECRET`, `WA_TRIAL_ALLOWLIST`. Perubahan variabel butuh redeploy.

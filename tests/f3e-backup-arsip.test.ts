@@ -40,7 +40,7 @@ describe('F3-E domain', () => {
       { ID_TRX: 'E', STATUS: 'Paid' },
     ], '2026-10-24');
     expect(k.batas).toBe('2025-04-24');
-    expect(k.kandidat.map((x) => [x.id, x.lunas])).toEqual([['D', '2024-12-01'], ['A', '2025-04-24']]);
+    expect(k.kandidat.map((x) => [x.id, x.lunas])).toEqual([['A', '2025-04-24'], ['D', '2024-12-01']]) // terbaru dulu;
   });
 });
 

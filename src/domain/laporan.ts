@@ -38,7 +38,7 @@ export function agingAP(pengajuan: readonly Baris[], pembayaran: readonly Baris[
     const dueDate = tglYmd(r.DUE_DATE);
     baris.push({ id, vendor: str(r.VENDOR_NAME) || '(tanpa vendor)', brand: str(r.BRAND), dept: str(r.DEPARTEMENT), status, dueDate, ...bucketAging(dueDate, hariIni), total, dibayar, sisa });
   }
-  baris.sort((a, b) => (b.hariLewat ?? -1e9) - (a.hariLewat ?? -1e9) || a.id.localeCompare(b.id));
+  baris.sort((a, b) => (b.dueDate || '0000').localeCompare(a.dueDate || '0000') || b.id.localeCompare(a.id)); // jatuh tempo terbaru dulu
   const perBucket = BUCKET_AGING.map((bucket) => { const xs = baris.filter((x) => x.bucket === bucket); return { bucket, jumlah: xs.length, sisa: xs.reduce((s, x) => s + x.sisa, 0) }; });
   const pv = new Map<string, { vendor: string; jumlah: number; sisa: number; terlama: number | null }>();
   for (const x of baris) {

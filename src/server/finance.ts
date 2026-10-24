@@ -64,7 +64,7 @@ function itemOf(r: RawRow, s: SessionData, now: number, hariIni: string): ItemFi
 /**
  * Antrean Finance per tahap (port getFinanceQueues): lintas brand/divisi seperti sistem lama, hanya untuk L3/L4/L5 (lainnya 403).
  * Bacaan TAMPILAN ber-cache (15 dtk); aksi Finance (F2-B..F2-E) selalu baca segar di dalam lock. `basi` = salinan lama dipakai karena Sheets gagal.
- * Urutan: tertua di tahap dulu. `tahap` opsional menyaring item (ringkasan tetap semua tahap).
+ * Urutan: terbaru dulu. `tahap` opsional menyaring item (ringkasan tetap semua tahap).
  */
 export async function antreanFinance(d: AuthDeps, s: SessionData, tahap?: string | null): Promise<AntreanFinance> {
   assertFinance(s);
@@ -72,7 +72,7 @@ export async function antreanFinance(d: AuthDeps, s: SessionData, tahap?: string
   const { rows, basi } = await bacaTampilanDetail(d, TRX_PENGAJUAN);
   const now = d.clock.now(), hariIni = wibDate(now);
   const semua = rows.map((r) => itemOf(r, s, now, hariIni)).filter((x): x is ItemFinance => x !== null)
-    .sort((a, b) => (b.umurHari ?? -1) - (a.umurHari ?? -1));
+    .sort((a, b) => (a.umurHari ?? 1e9) - (b.umurHari ?? 1e9) || b.id.localeCompare(a.id)); // terbaru dulu (UI bisa urut ulang)
   const tunggu = semua.filter((i) => i.tahap === 'persetujuan' || i.tahap === 'bayar');
   if (tunggu.length) {
     const baris = new Map(rows.map((r) => [str(cell(r, 'ID_TRX')).toUpperCase(), r]));

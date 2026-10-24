@@ -63,6 +63,7 @@ export async function inbox(d: AuthDeps, s: SessionData, sod = sodAktif()) {
   return rows
     .filter((r) => str(cell(r, 'ID_TRX')) && str(cell(r, 'STATUS')) === STATUS.SUBMITTED && !milikSendiri(str(cell(r, 'CREATED_BY')), s.email) && !cekWewenang(s.roles, { brand: str(cell(r, 'BRAND')), dept: str(cell(r, 'DEPARTEMENT')) }))
     .map((r) => itemOf(r, s, sod))
+    .reverse() // terbaru dulu
     .slice(0, 200);
 }
 
