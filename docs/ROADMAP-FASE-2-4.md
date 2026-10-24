@@ -20,14 +20,14 @@
 
 ### 2.0 Gerbang sebelum mulai (WAJIB)
 
-Fase 2 menyentuh kontrol uang. Sebelum satu baris kode Fase 2 ditulis, minta konfirmasi **eksplisit final** dari owner (bukan delegasi "ikut rekomendasi"):
+Fase 2 menyentuh kontrol uang. Sebelum satu baris kode Fase 2 ditulis, minta konfirmasi **eksplisit final** dari owner (bukan delegasi "ikut rekomendasi"). **Status 2026-10-24: O4, O5a, O5b dijawab eksplisit oleh pemilik → gerbang terbuka.** I6 mengikuti perilaku lama (blokir); kas list masih terbuka (baru dibutuhkan di F2-E).
 
 | # | Keputusan | Rekomendasi saat ini | Catatan |
 |---|---|---|---|
-| O4 | e-approve Level 4/5 menggantikan TTD basah | e-approve; jalur scan dimatikan setelah masa transisi | Risiko legal/compliance sudah pernah didiskusikan (sistem lama Fase 2 sengaja ditunda). Pertimbangkan masukan auditor eksternal. Lihat R-17 |
-| O5a | Approver L2 ≠ pembuat dokumen | Sudah aktif di Fase 1 (flag `SOD_APPROVER_NOT_CREATOR`) | Konfirmasi tetap dicatat |
-| O5b | Pembayar ≠ verifikator pajak ≠ pengunggah TTD | Peringatan + penanda audit, **bukan blokir** | Pilihan alternatif: blokir keras. Perlu dijawab |
-| I6 | Pengaju ≠ verifikator pajak | Blokir keras (perilaku lama) | Dipindah dari Fase 1 ke Fase 2 |
+| O4 | e-approve Level 4/5 menggantikan TTD basah | **Keputusan pemilik 2026-10-24 (final)**: **e-approve, cut-off langsung, TANPA masa transisi** — jalur unggah scan TTD basah tidak dibangun di portal baru | Menutup R-17. Konsekuensi: syarat "Link TTD terisi" di `bolehDibayar` (I4) diganti "approval L4 (+ L5 bila CFO wajib) tercatat atas nama penandatangan"; enum status `Wet Signed` tetap (kompat sheet), label tampil "Disetujui Fin. Mgr/CFO" |
+| O5a | Approver L2 ≠ pembuat dokumen | **Keputusan pemilik 2026-10-24 (final)**: **ya** (sudah aktif di Fase 1, flag `SOD_APPROVER_NOT_CREATOR`) | Selesai |
+| O5b | Pembayar ≠ verifikator pajak ≠ approver L4/L5 | **Keputusan pemilik 2026-10-24 (final)**: **peringatan + penanda audit, bukan blokir** (sesuai rekomendasi) | "Pengunggah TTD" tidak ada lagi (O4 tanpa scan); peringatan berlaku untuk pembayar = verifikator pajak / approver L4/L5 |
+| I6 | Pengaju ≠ verifikator pajak | Blokir keras (perilaku lama, bukan perubahan) | Dipindah dari Fase 1 ke Fase 2; bila pemilik ingin lain, putuskan sebelum F2-B |
 | — | Aturan PO (#16 retensi dihapus, #17 I11 dihapus + Full Payment isi otomatis) | **Final** — dikonfirmasi pemilik 2026-10-24 (README M3) | Selesai; tinggal uji ulang U6 dengan aturan baru |
 | — | Kas list / rekening sumber bayar | Placeholder | Perlu keputusan sumber data final |
 
@@ -39,7 +39,7 @@ Sisa dari Fase 1 yang harus tutup dulu: PR `patch2-wa-uat` merge, verifikasi Pro
 |---|---|---|
 | `getFinanceQueues` | `GET /api/finance/queues?stage=` | L3+ |
 | `verifyTax` | `POST /api/finance/:id/verify-tax` | L3 (≠ pengaju) |
-| `submitWetSignature` | `POST /api/finance/:id/wet-signature` (kompat) → e-approve L4/L5 | L3 → L4/L5 |
+| `submitWetSignature` | **Tidak diport** (O4: tanpa jalur scan). Diganti `POST /api/finance/:id/approve` e-approve L4/L5 | L4/L5 |
 | `postJournalBulk` | `POST /api/finance/journal` | L3 |
 | `executePayment`, `executePaymentBulk`, `bolehDibayar` | `POST /api/finance/:id/pay`, `POST /api/finance/pay-bulk` | L3 |
 | `getPaymentHistory`, `getTotalPaidFromLog` | `GET /api/pengajuan/:id/payments` | sesuai akses dokumen |
@@ -63,8 +63,8 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 - Exit: I1, I2, I3, I6 hijau; race dua Finance verifikasi dokumen sama → satu berhasil, satu 409.
 
 **F2-C — Persetujuan L4/L5 / TTD (M–L, bergantung O4)**
-- Jalur transisi (kompat): cetak voucher → unggah scan → catat siapa TTD. Jalur target: **e-approve** Fin. Mgr (L4) dan CFO (L5, wajib bila `REQUIRE_CFO`), login + step-up password + jejak identitas yang benar (menutup R-17: lama tercatat atas nama pengunggah).
-- Aturan masa transisi (kapan jalur scan dimatikan) harus tertulis dan diputuskan owner.
+- **O4 (final 2026-10-24): e-approve saja, tanpa jalur transisi scan.** Fin. Mgr (L4) dan CFO (L5, wajib bila `REQUIRE_CFO`) login sendiri + step-up password + identitas dari sesi (menutup R-17: lama tercatat atas nama pengunggah).
+- `bolehDibayar` (I4) tidak lagi mensyaratkan link TTD; diganti approval L4 (+ L5 bila CFO wajib) yang tercatat atas nama penandatangan. Dokumen yang sudah Wet Signed di sistem lama sebelum cutover tetap sah (catatan cutover F4-D).
 - `loginApprover` lama menolak level selain 2; di sistem baru login terbuka semua level (sudah, D5).
 - Exit: approval L4/L5 tercatat atas nama penandatangan sebenarnya; gate CFO enforced server-side; test urutan L4 → L5.
 
@@ -225,8 +225,8 @@ F3-A (vendor) tidak bergantung pada Fase 2 kecuali pilihan dummy; boleh dimajuka
 
 ## Keputusan terbuka yang perlu jawaban owner
 
-1. O4 — e-approve L4/L5 menggantikan TTD basah, dan kapan jalur scan dimatikan.
-2. O5b — peringatan saja atau blokir keras untuk pembayar = verifikator/pengunggah.
+1. ~~O4~~ — final 2026-10-24: e-approve L4/L5, cut-off tanpa transisi.
+2. ~~O5b~~ — final 2026-10-24: peringatan + penanda audit (bukan blokir).
 3. ~~Konfirmasi final aturan PO #16/#17~~ — sudah final (pemilik, 2026-10-24).
 4. Sumber data kas list (rekening sumber bayar).
 5. Opsional: Google SSO Admin (O9), PDF server-side, dark mode.

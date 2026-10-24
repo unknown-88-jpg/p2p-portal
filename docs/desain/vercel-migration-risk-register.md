@@ -204,6 +204,7 @@ Dua kelompok:
 
 - **Reproduksi:** di `submitWetSignature`, `recordApproval(..., LEVEL.FINANCE_MGR, "APPROVED", "TTD oleh <nama>", url)` dan (bila CFO wajib) `LEVEL.CFO`. `recordApproval` **tanpa `identityOverride`** mengambil identitas dari `getUserProfile()` = **orang yang sedang login (Finance Staff L3)**. Hasil di `Trx_Approval`: kolom `APPROVER_NAME/EMAIL` = staff yang mengunggah; nama penandatangan hanya ada di kolom `NOTES` sebagai teks bebas yang diketik uploader. Gate `bolehDibayar` hanya mengecek **keberadaan** record L4/L5. Artinya satu Finance Staff yang mencentang "CFO sudah menandatangani" + mengunggah file apa pun (mis. foto kosong) bisa menghasilkan record L5 APPROVED dan membuka pembayaran ≥ Rp 5 jt. Kontrol ini bersandar pada kejujuran uploader — itu **kontrol atestasi**, bukan kontrol teknis.
 - **Akar masalah:** TTD basah tidak bisa diverifikasi sistem; identitas approver L4/L5 tidak pernah login.
+- **Keputusan O4 (final 2026-10-24):** e-approve saja, **tanpa periode transisi jalur scan** — bagian "periode transisi" di bawah tidak berlaku.
 - **Perbaikan (Fase 2, butuh O4):** e-approve oleh Fin Mgr/CFO sendiri — login, step-up, identitas dari sesi, record atas nama mereka; periode transisi jalur scan tetap ada tapi **identitas pencatat tetap dicatat benar** (“diinput oleh X atas TTD Y”) dan dibatasi (mis. wajib dua orang berbeda: pengunggah ≠ verifikator pajak).
 - **Pencegahan:** test "L4/L5 hanya bisa dicatat oleh akun dengan level itu"; laporan audit bulanan dokumen ≥ Rp 5 jt dengan metode WET vs E-SIGN. **Tidak diubah tanpa persetujuan eksplisit lo.**
 
@@ -262,7 +263,7 @@ Dua kelompok:
 | Sebelum… | Wajib ada |
 |---|---|
 | Fase 1 | Hasil S1, S2, S6 (selesai; sisa pertanyaan pemetaan LID), S7 (selesai untuk desain); jawaban O1–O3, O7–O8 (**terpenuhi 2026-10-07**); daftar kunci lock lengkap per route; race test kerangka |
-| Fase 2 | **O4** (e-approve L4/L5) dan **O5** (SoD) — dijawab 2026-10-07 lewat delegasi (ikut rekomendasi: e-approve menggantikan TTD basah; approver L2 ≠ pembuat dokumen; pembayar/verifikator/pengunggah minimal peringatan); **konfirmasi eksplisit final dari user sebelum Fase 2**; idempotency dan batch bayar teruji |
+| Fase 2 | ✅ **Dikonfirmasi eksplisit 2026-10-24:** O4 e-approve tanpa transisi, O5a ya, O5b peringatan. Riwayat: **O4** (e-approve L4/L5) dan **O5** (SoD) — dijawab 2026-10-07 lewat delegasi (ikut rekomendasi: e-approve menggantikan TTD basah; approver L2 ≠ pembuat dokumen; pembayar/verifikator/pengunggah minimal peringatan); **konfirmasi eksplisit final dari user sebelum Fase 2**; idempotency dan batch bayar teruji |
 | Fase 3 | Rancangan arsip & kebijakan retensi (O10); proteksi range Sheet terpasang |
 | Fase 4 (go-live) | Upgrade **Pro**; gladi cutover; pen-test ringan; rotasi kredensial; backup terjadwal berjalan; alarm aktif |
 

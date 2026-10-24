@@ -10,7 +10,7 @@ Status per 2026-10-24: **Fase 1 / M8 (UAT & penutupan) berjalan.** Rincian terki
 |---|---|---|
 | **0** Spike | Sheets/Drive/Upstash/Vercel layak dipakai | ✅ Selesai |
 | **1** Auth, Ajukan, Approval | M0 fondasi · M1 lapisan data · M2 auth · M3 master/PO/pajak · M4a–c pengajuan (server, lampiran, UI) · M5 persetujuan Manager · M6 WhatsApp · M7 detail/voucher/dashboard · M8 hardening & UAT | M0–M7 ✅ · **M8 🟡 berjalan** |
-| **2** Finance | Verifikasi pajak, TTD basah CFO/Fin. Mgr, jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | ⬜ Belum mulai. **Butuh konfirmasi eksplisit O4/O5 sebelum mulai** |
+| **2** Finance | Verifikasi pajak, e-approve Fin. Mgr/CFO (O4: menggantikan TTD basah, tanpa transisi), jurnal COA, siap dibayar, pembayaran/lunas, digest WA Finance | ⬜ Belum mulai. Gerbang O4/O5 terbuka 2026-10-24 |
 | **3** Pendukung | Vendor, Master, Export (Odoo), Laporan, Admin, arsip | ⬜ Belum mulai |
 | **4** Go-live | Vercel Pro, `PROD_SHEET_IDS`, Upstash terpisah, cutover dari Apps Script | ⬜ Belum mulai |
 
@@ -23,7 +23,7 @@ Alur status dokumen (stepper di UI): Draft → Menunggu Manager → Menunggu Ver
 2. Uji ulang U6 dengan aturan P.O baru yang sudah **final** (retensi dihapus, I11 dihapus; lihat M3): plafon = grand total P.O penuh, Full Payment/Pelunasan tetap bisa diajukan walau SJ belum lengkap. Hasil U6 lama berlaku untuk kode sebelum 2026-10-24.
 3. U21 Android, U23 (unggah PDF besar dari ponsel), cek baris audit di sheet (U3/U18).
 4. Pembersihan data dummy (nomor Dummy 002 dikembalikan, baris peran tambahan, dokumen uji, reset password) dan cek akun Manager bernomor lama.
-5. Konfirmasi eksplisit O4/O5 (`docs/desain/phase1-status.md` & `m8-uat-hasil.md` sudah diperbarui 2026-10-24).
+5. ~~Konfirmasi eksplisit O4/O5~~ — selesai 2026-10-24 (lihat `docs/ROADMAP-FASE-2-4.md` §2.0).
 
 ### Aturan kerja bersama
 - **Data dummy saja** selama trial. Jangan menempel `.env*`, kunci, token, atau secret di chat/PR/screenshot.
