@@ -3,7 +3,8 @@
 Migrasi Google Apps Script → Next.js 16 di Vercel. DB = Google Sheets, file = Drive (Shared Drive), koordinasi = Upstash Redis, WA = gateway Lixus. Auth = nomor HP + password.
 **Status sekarang: trial di Vercel Hobby, DATA DUMMY SAJA.** Pro + data produksi baru di Fase 4.
 
-Baca dulu sebelum mengubah apa pun: `README.md` (peta tahapan, keputusan), `docs/STATUS-DAN-ROADMAP.md` (status & temuan terbuka), `docs/ROADMAP-FASE-2-4.md` (rencana ke depan). Perilaku sistem lama (Apps Script) adalah acuan; dokumen desain lengkap ada di project claude.ai "P2P Finance Portal".
+Baca dulu sebelum mengubah apa pun: `README.md` (peta tahapan, keputusan), `docs/STATUS-DAN-ROADMAP.md` (status & temuan terbuka), `docs/ROADMAP-FASE-2-4.md` (rencana ke depan).
+Dokumen desain ada di repo ini (sumber utama, update lewat PR): `docs/desain/` (design doc dengan invarian I1–I17, rencana Fase 1, risk register, ADR, hasil spike, konteks sistem lama — lihat `docs/desain/README.md` untuk peta). Source Apps Script lama sebagai acuan perilaku ada di `docs/legacy-apps-script/` (BACA SAJA, memuat cacat laten — jangan disalin mentah; lihat README di folder itu). Sebelum mengerjakan Fase 2 baca `API_Finance.gs`, `Calc.gs` (`bolehDibayar`), risk register R-17/R-18/R-19/R-03/R-04; sebelum Fase 3 baca `CRUD_Vendor.gs`, `Export_Odoo.gs`, `Repair.gs`, R-21.
 
 ## Perintah
 - `npm run check` = typecheck + lint + test (WAJIB hijau sebelum commit)
