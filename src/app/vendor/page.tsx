@@ -16,7 +16,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
   return (
     <>
       <AppNav nama={s.nama} {...await propsNav(s)} aktif="vendor" />
-      <main className="wrap pt"><HalamanVendor bisaDaftar={bisaDaftar} bisaSahkan={bisaSahkan} {...((await searchParams).tab === 'pengesahan' ? { tabAwal: 'pengesahan' as const } : {})} /></main>
+      <main className="wrap-wide pt"><HalamanVendor bisaDaftar={bisaDaftar} bisaSahkan={bisaSahkan} {...((await searchParams).tab === 'pengesahan' ? { tabAwal: 'pengesahan' as const } : {})} /></main>
     </>
   );
 }

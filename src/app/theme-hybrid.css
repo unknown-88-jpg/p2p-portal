@@ -224,12 +224,12 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); }
 .sb-label { display: block; padding: 6px 10px 4px; font-size: 12px; font-weight: 500; color: var(--muted); }
 
 /* ---- filter status = segmented tabs ---- */
-.toolbar .chips { background: var(--parchment); padding: 3px; border-radius: var(--r-md); gap: 2px; }
-.toolbar .chip { border: 0; box-shadow: none; background: transparent; min-height: 30px; padding: 4px 12px; border-radius: var(--r-sm); color: var(--ink-80); }
-.toolbar .chip:hover { background: rgba(255, 255, 255, 0.6); }
-.toolbar .chips .chip[aria-checked="true"], .toolbar .chips .chip[class*="fl-"][aria-checked="true"] { background: var(--canvas); color: var(--ink); border: 0; padding: 4px 12px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
-.toolbar .chips .chip[class*="fl-"][aria-checked="true"]::before { background: var(--fl); }
-.toolbar .chips .chip[class*="fl-"][aria-checked="true"] .cn, .toolbar .chip .cn { background: rgba(0, 0, 0, 0.06); color: var(--ink-80); }
+.chips.segmen { background: var(--parchment); padding: 3px; border-radius: var(--r-md); gap: 2px; }
+.segmen .chip { border: 0; box-shadow: none; background: transparent; min-height: 30px; padding: 4px 12px; border-radius: var(--r-sm); color: var(--ink-80); }
+.segmen .chip:hover { background: rgba(255, 255, 255, 0.6); }
+.chips.segmen .chip[aria-checked="true"], .chips.segmen .chip[class*="fl-"][aria-checked="true"] { background: var(--canvas); color: var(--ink); border: 0; padding: 4px 12px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
+.chips.segmen .chip[class*="fl-"][aria-checked="true"]::before { background: var(--fl); }
+.chips.segmen .chip[class*="fl-"][aria-checked="true"] .cn, .segmen .chip .cn { background: rgba(0, 0, 0, 0.06); color: var(--ink-80); }
 
 /* ---- daftar pengajuan: kartu di HP, baris tabel di layar lebar ---- */
 .daftar-head { display: none; }
@@ -288,9 +288,68 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); }
 .aksi-in { max-width: 1180px; }
 
 
+
+/* =============================================================================
+   Penyelarasan semua halaman ke tata letak canvas: jarak judul, padding kontainer, segmented tabs, kepala tabel.
+   ============================================================================= */
+/* judul halaman: jarak atas sama dengan halaman antrean (.inbox-top) */
+.pt > .toolbar:first-child, .pt > .toast-wadah:first-child + .toolbar { margin-top: 0; margin-bottom: 18px; }
+/* kontainer: tepi kiri sejajar beranda (.dash) */
+.wrap, .wrap-wide, .wrap-xl { padding-left: 24px; padding-right: 24px; }
+@media (max-width: 760px) { .wrap, .wrap-wide, .wrap-xl { padding-left: 16px; padding-right: 16px; } }
+
+/* segmented tabs dipakai juga untuk bagian halaman (Admin, Laporan, Vendor) */
+.chips.segmen { width: fit-content; max-width: 100%; }
+.segmen .chip.perlu:not([aria-checked="true"]) { background: transparent; color: var(--danger); }
+.chips.segmen .chip.perlu .cn { background: var(--danger); color: #fff; }
+.f:has(> .chips.segmen) { margin-bottom: 16px; }
+.toolbar > .f:has(> .chips.segmen) { min-width: 0; max-width: 100%; margin-bottom: 0; }
+@media (max-width: 640px) {
+  /* satu baris yang bisa digeser, bukan membungkus jadi dua baris */
+  .chips.segmen { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .chips.segmen::-webkit-scrollbar { display: none; }
+  .chips.segmen .chip { flex: none; white-space: nowrap; }
+}
+
+/* tabel data: kepala kolom sama dengan daftar pengajuan */
+.tabel th { background: var(--pearl); border-bottom: 1px solid var(--hairline); padding: 10px; }
+.tabel th:first-child { border-top-left-radius: var(--r-sm); }
+.tabel th:last-child { border-top-right-radius: var(--r-sm); }
+/* HP: tabel lebar digeser ke samping (bukan kolom dipencet sampai teks patah per kata) */
+@media (max-width: 640px) { .tabel-gulir > .tabel { min-width: 640px; } }
+
+
+/* ---- skala tipografi kartu (acuan: daftar pengajuan) — judul halaman 30, judul kartu 16, isi 14, angka utama 18–26; bobot maks. 600 ---- */
+.ib-kartu { gap: 2px; padding: 12px 14px; }
+.inbox-row.aktif .ib-kartu { padding: 11px 13px; }
+@media (max-width: 899px) { .inbox:not(.hp-detail) .inbox-row.aktif .ib-kartu { padding: 12px 14px; } }
+.ib-v { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; }
+.ib-n { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; margin-top: 2px; }
+.ib-jt { font-size: 12px; }
+.ds-nama { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+.ds-h { font-weight: 600; letter-spacing: 0.04em; color: var(--muted); }
+.ip-angka { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+.dlg-ringkas strong { font-size: 22px; font-weight: 600; }
+.fin-tab { padding: 10px 14px; }
+.fin-tab.aktif { padding: 9px 13px; }
+.fin-tab-l { font-size: 13px; }
+.fin-tab-n { font-size: 20px; letter-spacing: -0.02em; }
+.metrik-n { font-size: 24px; }
+.metrik-n.metrik-uang { font-size: 18px; }
+.lap-ringkas dd { font-size: 16px; }
+/* panel detail & aksi: radius/padding sama dengan kartu lain (bukan 24px sendiri) */
+.inbox-detail, .inbox-aksi { border-radius: var(--r-lg); padding: 20px; }
+.inbox-aksi { box-shadow: var(--shadow-xs); }
+@media (max-width: 899px) { .inbox-detail, .inbox-aksi { padding: 16px; } }
+.ds-grid dd { font-size: 14px; font-weight: 500; letter-spacing: 0; }
+.ip-syarat li { font-size: 14px; }
+.ip-aksi .btn { min-height: 44px; }
+/* tombol aksi per baris tabel: satu baris di layar lebar */
+@media (min-width: 641px) { .aksi-sel { flex-wrap: nowrap; } .aksi-sel .btn { white-space: nowrap; } }
+
 /* ---- Aturan proyek: target sentuh >= 44px di HP (tema ini memperkecil kontrol untuk desktop; WCAG 2.2 web min. 24px terpenuhi) ---- */
 @media (max-width: 640px) {
-  .btn, .btn-sm, .btn-pearl, .chip, .chip.kecil, .toolbar .chip, .stepper li button, button.primary, .btn-wa, .cari input, .cari-admin, .cari-trigger { min-height: 44px; }
+  .btn, .btn-sm, .btn-pearl, .chip, .chip.kecil, .segmen .chip, .stepper li button, button.primary, .btn-wa, .cari input, .cari-admin, .cari-trigger { min-height: 44px; }
   input:not([type="checkbox"]):not([type="radio"]), select { min-height: 44px; }
   .sb-nav a, .sidebar .sb-cta, .sb-foot button.link { min-height: 44px; }
   .tb-menu, .lonceng-btn, .btn-icon { width: 44px; height: 44px; }

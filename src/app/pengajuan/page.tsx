@@ -17,7 +17,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   return (
     <>
       <AppNav nama={s.nama} {...await propsNav(s)} aktif="pengajuan" />
-      <main className="wrap pt">
+      <main className="wrap-wide pt">
         <div className="toolbar"><h1 className="page-h">Pengajuan saya</h1><a className="btn btn-primary btn-sm" href="/pengajuan/baru">Buat pengajuan</a></div>
         <DaftarPengajuan data={data} {...(awal ? { kelompokAwal: awal } : {})} />
       </main>

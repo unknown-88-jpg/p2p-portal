@@ -63,7 +63,7 @@ export function HalamanLaporan({ bisaAudit, hariIni, awalBulan }: { bisaAudit: b
   return (
     <>
       <div className="toolbar"><h1 className="page-h">Laporan</h1></div>
-      <Chips label="Laporan" labelTersembunyi kecil nilai={tab} onPilih={(t) => { setTab(t); setGalat(null); }} pilihan={tabs} />
+      <Chips label="Laporan" labelTersembunyi kecil segmen nilai={tab} onPilih={(t) => { setTab(t); setGalat(null); }} pilihan={tabs} />
       {galat && <Pesan jenis="err">{galat}</Pesan>}
 
       {tab === 'aging' && (
@@ -100,7 +100,7 @@ export function HalamanLaporan({ bisaAudit, hariIni, awalBulan }: { bisaAudit: b
         <section className="kartu">
           <h2 className="kartu-t">Rekap per periode</h2>
           <div className="lap-filter">{rentang}<button type="button" className="btn btn-primary btn-sm" disabled={sibuk} onClick={() => void muat('rekap')}>{sibuk ? 'Memuat…' : 'Tampilkan'}</button></div>
-          <Chips label="Kelompokkan per" kecil nilai={dimensi} onPilih={setDimensi} pilihan={DIMENSI} />
+          <Chips label="Kelompokkan per" kecil segmen nilai={dimensi} onPilih={setDimensi} pilihan={DIMENSI} />
           <p className="muted cap">Dokumen yang sudah diajukan (bukan draft/ditolak), difilter tanggal invoice (kosong → tanggal submit) — sama dengan export Odoo.</p>
           {rekap && (
             <>
