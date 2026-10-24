@@ -139,20 +139,22 @@ describe('buildSignatureBlocks — paritas', () => {
     const k = bangunKotakTTD(users, new Map(), 'BRAND A', 'DEPT X', true, f);
     expect(k.map((x) => x.level)).toEqual([1, 2, 3, 4, 5]);
     expect(k.map((x) => x.role)).toEqual(['Dibuat Oleh,', 'Diperiksa Oleh,', 'Diverifikasi Oleh,', 'Disetujui Oleh,', 'Disetujui Oleh,']);
-    expect(k.map((x) => x.method)).toEqual(['E-SIGN', 'E-SIGN', 'E-SIGN', 'WET', 'WET']);
-    expect(k[0]!.label).toBe('( Menunggu )'); expect(k[3]!.label).toBe('( TTD Basah )');
+    expect(k.map((x) => x.method)).toEqual(['E-SIGN', 'E-SIGN', 'E-SIGN', 'E-SIGN', 'E-SIGN']); // O4: tanpa TTD basah
+    expect(k[0]!.label).toBe('( Menunggu )'); expect(k[3]!.label).toBe('( Menunggu )');
   });
-  it('approval nyata menimpa nama/jabatan dan menandai tertanda; WET = "TTD Basah — Terverifikasi"; yang terakhir menang', () => {
+  it('approval nyata menimpa nama/jabatan dan menandai tertanda; catatan lama Method WET = "TTD Basah — Terverifikasi", e-approve = E-Signed; yang terakhir menang', () => {
     const peta = petaPersetujuan([
       { level: 2, action: 'APPROVED', nama: 'Pengganti', jabatan: 'Plt', timestamp: 1 },
       { level: 2, action: 'APPROVED', nama: 'Fajar', jabatan: 'Mgr', timestamp: 2 },
       { level: 3, action: 'REJECTED', nama: 'Dani', jabatan: 'Fin', timestamp: 3 },
-      { level: 4, action: 'approved', nama: 'Eko', jabatan: 'FinMgr', timestamp: 4 },
+      { level: 4, action: 'approved', nama: 'Eko', jabatan: 'FinMgr', timestamp: 4, method: 'WET' },
+      { level: 5, action: 'APPROVED', nama: 'Gita', jabatan: 'CFO', timestamp: 5, method: 'E-SIGN' },
     ]);
     const k = bangunKotakTTD(users, peta, 'BRAND A', 'DEPT X', false, f);
     expect(k[1]).toMatchObject({ nama: 'Fajar', isSigned: true, label: 'E-Signed', signedAt: 'T2' });
     expect(k[2]!.isSigned).toBe(false);
-    expect(k[3]).toMatchObject({ isSigned: true, label: 'TTD Basah — Terverifikasi' });
+    expect(k[3]).toMatchObject({ isSigned: true, label: 'TTD Basah — Terverifikasi', method: 'WET' });
+    expect(bangunKotakTTD(users, peta, 'BRAND A', 'DEPT X', true, f)[4]).toMatchObject({ isSigned: true, label: 'E-Signed', method: 'E-SIGN' });
   });
   it('voucher end-to-end: kotak TTD dari Master_User_TTD + riwayat bayar + ambang CFO', async () => {
     const id = await buat(6_000_000);

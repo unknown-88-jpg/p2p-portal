@@ -62,7 +62,7 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 - "Loloskan" dan "Kembalikan ke PIC" (alasan wajib), keduanya idempotent + etag.
 - Exit: I1, I2, I3, I6 hijau; race dua Finance verifikasi dokumen sama → satu berhasil, satu 409.
 
-**F2-C — Persetujuan L4/L5 / TTD (M–L, bergantung O4)**
+**F2-C — Persetujuan L4/L5 / TTD (M–L, bergantung O4)** — ✅ selesai 2026-10-24 (README §F2-C)
 - **O4 (final 2026-10-24): e-approve saja, tanpa jalur transisi scan.** Fin. Mgr (L4) dan CFO (L5, wajib bila `REQUIRE_CFO`) login sendiri + step-up password + identitas dari sesi (menutup R-17: lama tercatat atas nama pengunggah).
 - `bolehDibayar` (I4) tidak lagi mensyaratkan link TTD; diganti approval L4 (+ L5 bila CFO wajib) yang tercatat atas nama penandatangan. Dokumen yang sudah Wet Signed di sistem lama sebelum cutover tetap sah (catatan cutover F4-D).
 - `loginApprover` lama menolak level selain 2; di sistem baru login terbuka semua level (sudah, D5).

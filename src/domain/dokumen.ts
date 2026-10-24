@@ -7,11 +7,11 @@ import { STATUS } from './status';
 import { labelStatus } from './status-label';
 
 export const LEVEL_LABEL: Readonly<Record<number, string>> = { 1: 'Dibuat Oleh,', 2: 'Diperiksa Oleh,', 3: 'Diverifikasi Oleh,', 4: 'Disetujui Oleh,', 5: 'Disetujui Oleh,' };
-/** Level 4/5 = TTD basah (Fase 2 menggantikannya dengan e-approve). */
-export const SIGN_METHOD: Readonly<Record<number, 'E-SIGN' | 'WET'>> = { 1: 'E-SIGN', 2: 'E-SIGN', 3: 'E-SIGN', 4: 'WET', 5: 'WET' };
+/** O4 (final 2026-10-24): semua level E-SIGN; Level 4/5 lewat e-approve di portal (F2-C). Catatan lama ber-Method "WET" tetap ditampilkan sebagai TTD basah. */
+export const SIGN_METHOD: Readonly<Record<number, 'E-SIGN' | 'WET'>> = { 1: 'E-SIGN', 2: 'E-SIGN', 3: 'E-SIGN', 4: 'E-SIGN', 5: 'E-SIGN' };
 
 export interface BarisUserTTD { brand: string; dept: string; level: unknown; jabatan: string; nama: string; aktif: unknown }
-export interface Persetujuan { level: number; nama: string; jabatan: string; timestamp: unknown }
+export interface Persetujuan { level: number; nama: string; jabatan: string; timestamp: unknown; method?: string }
 export interface KotakTTD { level: number; role: string; nama: string; jabatan: string; method: 'E-SIGN' | 'WET'; isSigned: boolean; signedAt: string; label: string }
 
 const up = (v: unknown): string => str(v).toUpperCase();
@@ -38,7 +38,8 @@ export function bangunKotakTTD(users: readonly BarisUserTTD[], approved: Readonl
   signers.sort((a, c) => a.level - c.level);
   return signers.map((s) => {
     const rec = approved.get(s.level);
-    const wet = SIGN_METHOD[s.level] === 'WET';
+    // Metode dari CATATAN nyata (data lama bisa "WET"); kotak yang belum ditandatangani mengikuti SIGN_METHOD (kini semua E-SIGN).
+    const wet = rec ? up(rec.method) === 'WET' : SIGN_METHOD[s.level] === 'WET';
     return {
       level: s.level, role: LEVEL_LABEL[s.level] ?? 'Mengetahui,', nama: rec ? rec.nama : s.nama, jabatan: rec ? rec.jabatan : s.jabatan,
       method: wet ? 'WET' : 'E-SIGN', isSigned: !!rec, signedAt: rec ? fmtTgl(rec.timestamp) : '',
@@ -48,13 +49,13 @@ export function bangunKotakTTD(users: readonly BarisUserTTD[], approved: Readonl
 }
 
 /** Peta persetujuan per level dari baris Trx_Approval: hanya APPROVED, yang terakhir menang (getApprovalMap lama). */
-export function petaPersetujuan(rows: readonly { level: unknown; action: unknown; nama: unknown; jabatan: unknown; timestamp: unknown }[]): Map<number, Persetujuan> {
+export function petaPersetujuan(rows: readonly { level: unknown; action: unknown; nama: unknown; jabatan: unknown; timestamp: unknown; method?: unknown }[]): Map<number, Persetujuan> {
   const m = new Map<number, Persetujuan>();
   for (const r of rows) {
     if (up(r.action) !== 'APPROVED') continue;
     const level = typeof r.level === 'number' ? Math.trunc(r.level) : parseInt(String(r.level ?? ''), 10);
     if (!Number.isFinite(level)) continue;
-    m.set(level, { level, nama: str(r.nama), jabatan: str(r.jabatan), timestamp: r.timestamp });
+    m.set(level, { level, nama: str(r.nama), jabatan: str(r.jabatan), timestamp: r.timestamp, method: str(r.method) });
   }
   return m;
 }

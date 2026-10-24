@@ -1,11 +1,12 @@
-import { bisaLihatFinance, isKunciTahap, ringkasTahap, tahapDariStatus, type KunciTahap, type RingkasTahap } from '@/domain/finance';
+import { can } from '@/domain/capabilities';
+import { bisaLihatFinance, isKunciTahap, ringkasTahap, statusPersetujuan, tahapDariStatus, type KunciTahap, type RingkasTahap } from '@/domain/finance';
 import { milikSendiri } from '@/domain/approval';
 import { umurHari } from '@/domain/dokumen';
 import { clean, num, str, upper } from '@/domain/legacy-parse';
 import { AppError } from '@/lib/errors';
 import { fromSheetSerial, serialToYmd, wibDate } from '@/lib/time';
 import type { CellValue, RawRow } from '@/ports/store';
-import { TRX_PENGAJUAN, colIndex } from '@/repo/schema';
+import { TRX_APPROVAL, TRX_PENGAJUAN, colIndex } from '@/repo/schema';
 import { etagOf } from './approval';
 import type { AuthDeps, SessionData } from './auth';
 import { bacaTampilanDetail } from './view-cache';
@@ -24,8 +25,12 @@ export interface ItemFinance {
   etag: string; invoiceAmount: number; diskon: number; biayaLainnya: number; punyaNPWP: boolean; jenisPembayaran: string;
   /** Dokumen ini diajukan oleh pengguna yang sedang login (I6: tidak boleh memverifikasi pajaknya sendiri; penjaga di F2-B). */
   ajuanSendiri: boolean;
+  /** Tahap persetujuan (F2-C): siapa yang sudah menyetujui di siklus verifikasi sekarang (nama saja). */
+  persetujuan?: { finMgr: string | null; cfo: string | null; finMgrSaya: boolean };
 }
-export interface AntreanFinance { tahap: RingkasTahap[]; items: ItemFinance[]; basi: boolean }
+/** Peran Finance pengguna (untuk tombol yang ditampilkan; penjaga sebenarnya di server). */
+export interface PeranFinance { staff: boolean; finMgr: boolean; cfo: boolean }
+export interface AntreanFinance { tahap: RingkasTahap[]; items: ItemFinance[]; basi: boolean; peran: PeranFinance }
 
 export function assertFinance(s: SessionData): void {
   if (!bisaLihatFinance(s.roles)) throw new AppError('FORBIDDEN', 'Halaman ini khusus Finance (Finance Staff, Fin. Mgr, CFO).');
@@ -65,5 +70,19 @@ export async function antreanFinance(d: AuthDeps, s: SessionData, tahap?: string
   const now = d.clock.now(), hariIni = wibDate(now);
   const semua = rows.map((r) => itemOf(r, s, now, hariIni)).filter((x): x is ItemFinance => x !== null)
     .sort((a, b) => (b.umurHari ?? -1) - (a.umurHari ?? -1));
-  return { tahap: ringkasTahap(semua, s.roles), items: (tahap ? semua.filter((i) => i.tahap === tahap) : semua).slice(0, 500), basi };
+  const tunggu = semua.filter((i) => i.tahap === 'persetujuan');
+  if (tunggu.length) {
+    const A = (x: RawRow, k: string): CellValue => x[colIndex(TRX_APPROVAL, k)] ?? null;
+    const per = new Map<string, RawRow[]>();
+    for (const x of await bacaTampilanDetail(d, TRX_APPROVAL).then((h) => h.rows)) {
+      const id = str(A(x, 'ID_Trx')).toUpperCase();
+      if (id) per.set(id, [...(per.get(id) ?? []), x]);
+    }
+    for (const i of tunggu) {
+      const st = statusPersetujuan((per.get(i.id.toUpperCase()) ?? []).map((x) => ({ level: A(x, 'Level'), action: A(x, 'Action'), nama: A(x, 'Approver_Name'), email: A(x, 'Approver_Email'), timestamp: A(x, 'Timestamp') })));
+      i.persetujuan = { finMgr: st.finMgr?.nama ?? null, cfo: st.cfo?.nama ?? null, finMgrSaya: !!st.finMgr && milikSendiri(st.finMgr.email, s.email) };
+    }
+  }
+  const peran = { staff: can(s.roles, 'tax.verify'), finMgr: can(s.roles, 'sign.eapprove.finmgr'), cfo: can(s.roles, 'sign.eapprove.cfo') };
+  return { tahap: ringkasTahap(semua, s.roles), items: (tahap ? semua.filter((i) => i.tahap === tahap) : semua).slice(0, 500), basi, peran };
 }

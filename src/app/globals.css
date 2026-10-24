@@ -768,6 +768,7 @@ dialog .chips.tombol-baris .chip { text-align: left; border-radius: var(--r-md);
 .fin-urut select { min-height: 44px; padding: 0 10px; border: 1px solid var(--hairline); border-radius: 12px; background: var(--canvas); font: inherit; font-size: 14px; color: inherit; }
 .fin-badges { display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .badge-saya { display: inline-flex; align-items: center; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: #fff2cf; color: #7a5600; }
+.badge-tunggu { display: inline-flex; align-items: center; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: #e4effb; color: #00509e; }
 .ib-jt.lewat { color: #b3261e; font-weight: 600; }
 .fin-st { margin-bottom: 12px; }
 .fin-menyusul { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--hairline); }

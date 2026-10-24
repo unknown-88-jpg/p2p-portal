@@ -7,6 +7,7 @@ import { Pesan, Skeleton, StatusPill } from './kit';
 import { IkonKlip } from './icons';
 import { LampiranPopup } from './LampiranPopup';
 import { FormVerifikasiPajak } from './FormVerifikasiPajak';
+import { FormPersetujuanFinance, type Peran } from './FormPersetujuanFinance';
 
 interface Item {
   id: string; tahap: KunciTahap; status: string; tanggal: string; brand: string; departement: string; tipe: string; pic: string;
@@ -14,8 +15,9 @@ interface Item {
   statusPPN: string; dpp: number; ppnAmount: number; jenisPPh: string; pphAmount: number; nominal: number; totalPaid: number; sisa: number;
   perluCFO: boolean; punyaLampiran: boolean; umurHari: number | null; ajuanSendiri: boolean;
   etag: string; invoiceAmount: number; diskon: number; biayaLainnya: number; punyaNPWP: boolean; jenisPembayaran: string;
+  persetujuan?: { finMgr: string | null; cfo: string | null; finMgrSaya: boolean };
 }
-interface Data { tahap: RingkasTahap[]; items: Item[]; basi: boolean }
+interface Data { tahap: RingkasTahap[]; items: Item[]; basi: boolean; peran: Peran }
 type Urut = 'umur' | 'jatuh-tempo' | 'nominal';
 
 const Info = ({ l, v }: { l: string; v: string }) => (v ? <div><dt>{l}</dt><dd>{v}</dd></div> : null);
@@ -64,6 +66,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
   if (!data) return <>{kepala}<Skeleton baris={4} /></>;
 
   const ring = data.tahap.find((t) => t.kunci === tahap)!;
+  const selesai = (p: { jenis: 'ok' | 'warn'; teks: string }, ulang: boolean) => { setInfo(p); setSel(null); setDetailHP(false); if (ulang) void muat(); };
   const cur = tampil.find((i) => i.id === sel) ?? (!detailHP ? tampil[0] ?? null : null);
 
   return (
@@ -104,7 +107,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
                   <li key={i.id} className={`inbox-row${cur?.id === i.id ? ' aktif' : ''}`}>
                     <button type="button" className="ib-kartu" aria-current={cur?.id === i.id ? 'true' : undefined} onClick={() => { setSel(i.id); setDetailHP(true); }}>
                       <span className="ib-top"><span className="ib-id num"><span>{i.id}</span> · <span>{umurTeks(i.umurHari) || i.tanggal}</span></span>
-                        <span className="fin-badges">{i.ajuanSendiri && <span className="badge-saya">Ajuan Anda</span>}{i.perluCFO && <span className="badge-cfo">CFO</span>}</span></span>
+                        <span className="fin-badges">{i.persetujuan?.finMgr && !i.persetujuan.cfo && i.perluCFO && <span className="badge-tunggu">Menunggu CFO</span>}{i.ajuanSendiri && <span className="badge-saya">Ajuan Anda</span>}{i.perluCFO && <span className="badge-cfo">CFO</span>}</span></span>
                       <span className="ib-v">{i.vendorNama || '—'}</span>
                       <span className="ib-n num">{rupiah(angka(i))}</span>
                       <span className={`ib-jt${i.jatuhTempoLewat ? ' lewat' : ''}`}>{i.dueDate ? `${i.jatuhTempoLewat ? 'Lewat jatuh tempo' : 'Jatuh tempo'} ${i.dueDate}` : ' '}</span>
@@ -154,7 +157,9 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
                 </dl>}
                 {cur.perluCFO && <p className="cap"><span className="badge-cfo">Butuh persetujuan CFO</span></p>}
                 {cur.tahap === 'pajak' && ring.bisaAksi
-                  ? <FormVerifikasiPajak key={`${cur.id}|${cur.etag}`} dok={cur} onSelesai={(p, ulang) => { setInfo(p); setSel(null); setDetailHP(false); if (ulang) void muat(); }} />
+                  ? <FormVerifikasiPajak key={`${cur.id}|${cur.etag}`} dok={cur} onSelesai={selesai} />
+                  : cur.tahap === 'persetujuan' && (data.peran.finMgr || data.peran.cfo || data.peran.staff)
+                  ? <FormPersetujuanFinance key={`${cur.id}|${cur.etag}`} dok={cur} peran={data.peran} onSelesai={selesai} />
                   : <p className="muted cap fin-menyusul">{ring.bisaAksi ? <>Aksi &ldquo;{AKSI_MENYUSUL[cur.tahap]}&rdquo; tersedia di pembaruan berikutnya.</> : <>Tahap ini dikerjakan {ring.aktor}. Anda hanya melihat.</>}</p>}
               </aside>
             </>

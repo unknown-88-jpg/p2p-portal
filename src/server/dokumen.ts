@@ -88,7 +88,7 @@ export async function voucher(d: AuthDeps, s: SessionData, idTrx: string) {
   const r = await muatBoleh(d, s, idTrx);
   const rk = ringkasan(r, 'penuh');
   const approvals = await tarikApprovals(d, idTrx);
-  const peta = petaPersetujuan(approvals.map((x) => ({ level: A(x, 'Level'), action: A(x, 'Action'), nama: A(x, 'Approver_Name'), jabatan: A(x, 'Jabatan'), timestamp: A(x, 'Timestamp') })));
+  const peta = petaPersetujuan(approvals.map((x) => ({ level: A(x, 'Level'), action: A(x, 'Action'), nama: A(x, 'Approver_Name'), jabatan: A(x, 'Jabatan'), timestamp: A(x, 'Timestamp'), method: A(x, 'Method') })));
   const users: BarisUserTTD[] = (await bacaTampilan(d, MASTER_USER_TTD)).map((x) => ({
     brand: str(U(x, 'Brand')), dept: str(U(x, 'Departement')), level: U(x, 'Level'), jabatan: str(U(x, 'Jabatan')), nama: str(U(x, 'Nama')), aktif: U(x, 'Aktif'),
   }));

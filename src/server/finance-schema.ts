@@ -18,3 +18,6 @@ export const verifikasiPajakSchema = z.object({
 }).strict();
 
 export const kembalikanFinanceSchema = z.object({ etag, alasan: txt(ALASAN_MAX).pipe(z.string().min(3, 'Alasan minimal 3 huruf.')) }).strict();
+
+/** F2-C: e-approve. Identitas & level dari sesi; `sebagai` hanya memilih peran yang diklaim (dicek terhadap capability). */
+export const setujuiFinanceSchema = z.object({ etag, sebagai: z.enum(['finmgr', 'cfo']), notes: txt(CATATAN_MAX).optional() }).strict();
