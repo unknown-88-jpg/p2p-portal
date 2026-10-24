@@ -26,7 +26,7 @@ export function LangkahTinjau({ form, company, namaPengaju, manager, vendor, pre
       {poLagi.status === 'memuat' && <Pesan jenis="info" role="status">Memeriksa ulang data P.O…</Pesan>}
       {poLagi.status === 'galat' && <Pesan jenis="warn">Data P.O belum bisa diperbarui ({poLagi.galat}). Server akan memeriksanya lagi saat Anda mengajukan.</Pesan>}
       {peringatan.plafon && <Pesan jenis="err">{peringatan.plafon}</Pesan>}
-      {peringatan.barang && <Pesan jenis="err">{peringatan.barang}</Pesan>}
+      {peringatan.barang && <Pesan jenis="info">{peringatan.barang}</Pesan>}
 
       <div className="kartu hero-nominal">
         <div className="cap muted">Nominal akhir</div>

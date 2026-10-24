@@ -4,7 +4,7 @@ import { RuleError } from '@/domain/errors';
 import { num, str, upper } from '@/domain/legacy-parse';
 import { bangunEntitas, cariVendor, type Vendor } from '@/domain/master';
 import {
-  cariInvoiceDuplikat, cekBarangDiterima, cekHakPengaju, hitungDraft, ID_PREFIX, invoiceLockName, pesanInvoiceDuplikat,
+  cariInvoiceDuplikat, cekHakPengaju, hitungDraft, ID_PREFIX, invoiceLockName, pesanInvoiceDuplikat,
   validatePengajuan, type BarisRingkas, type PengajuanInput,
 } from '@/domain/pengajuan';
 import { gatePoSubmit, type PoLookup } from '@/domain/po';
@@ -156,7 +156,7 @@ export async function updateDraft(d: UowDeps, s: SessionData, idTrx: string, inp
   });
 }
 
-// ---------------------------------------------------------------- submit (aksi uang: I1 I2 I8 I9 I10 I11 I12)
+// ---------------------------------------------------------------- submit (aksi uang: I1 I2 I8 I9 I10 I12; I11 dihapus 2026-10-24)
 export async function submitPengajuan(d: UowDeps, s: SessionData, idTrx: string, idemKey: string | undefined, sod: boolean = sodAktif()) {
   assertEmail(s);
   // Pra-baca (tanpa lock) HANYA untuk menentukan nama lock; semua keputusan diambil ulang dari baca segar DI DALAM lock.
@@ -228,8 +228,6 @@ export async function submitPengajuan(d: UowDeps, s: SessionData, idTrx: string,
         if (lk.status !== 'found') throw new AppError('INTERNAL', 'Status PO tidak konsisten.');
         if (upper(lk.po.kodeVendor) !== upper(vendor.kode)) throw new AppError('RULE_VIOLATION', `Vendor pada P.O ini adalah "${lk.po.kodeVendor}", bukan "${vendor.kode}".`);
         qtyPO = lk.po.qtyPO; qtySJ = lk.qtySJ; plafon = dec.plafon; sisa = dec.sisaBoleh;
-        const brg = cekBarangDiterima(tipe, input.jenisPembayaran, qtyPO, qtySJ);
-        if (brg) throw new AppError('RULE_VIOLATION', brg);
       }
 
       const oldFinal = num(cell(r, 'FINAL_AMOUNT'));

@@ -311,7 +311,7 @@ export function PengajuanWizard({ roles, email, nama, awal }: WizardProps) {
   const bisaKe = (i: number): boolean => i <= idx || LANGKAH.slice(0, i).every((l) => l === 'tinjau' || Object.keys(validasiLangkah(l, form, ctx)).length === 0);
   const sibuk = busy !== null || memproses || !!unggah;
   const teksLanjut = langkah === 'tinjau' ? 'Ajukan ke Manager' : langkah === 'tagihan' ? (staged ? 'Simpan & lanjut' : 'Lanjut') : 'Lanjut';
-  const terkunciAjukan = langkah === 'tinjau' && (!!peringatan.plafon || !!peringatan.barang || poLagi.status === 'memuat');
+  const terkunciAjukan = langkah === 'tinjau' && (!!peringatan.plafon || poLagi.status === 'memuat');
   const judul = awal ? `Ubah ${awal.id}` : 'Pengajuan baru';
 
   return (

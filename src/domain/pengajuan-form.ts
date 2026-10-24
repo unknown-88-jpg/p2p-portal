@@ -1,6 +1,6 @@
 import { LEVEL } from './config';
 import type { Org } from './master';
-import { cekBarangDiterima, hitungDraft, isValidYmd, JENIS_PEMBAYARAN, STATUS_PPN_OPSI, TIPE, type Tipe } from './pengajuan';
+import { hitungDraft, isValidYmd, JENIS_PEMBAYARAN, STATUS_PPN_OPSI, TIPE, type Tipe } from './pengajuan';
 import { hasAuthority, type Role } from './roles';
 
 // Logika form wizard (M4c). MURNI & dapat dites tanpa browser. Server tetap satu-satunya penentu: semua yang ada di sini hanya
@@ -65,6 +65,14 @@ export const angka = (raw: string): number => { const r = parseRupiah(raw); retu
 /** 1234567 -> "1.234.567" (deterministik, tanpa bergantung ICU peramban). */
 export const formatRibuan = (n: number): string => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 export const rupiah = (n: number): string => `${n < 0 ? '-' : ''}Rp ${formatRibuan(Math.abs(n))}`;
+
+/** Ganti jenis pembayaran. Full Payment mengisi nilai invoice = sisa tagihan P.O; DP/Pelunasan mengosongkan nilai yang tadi terisi otomatis (nilai ketikan user tidak disentuh). */
+export function gantiJenisPembayaran(f: Pick<FormPengajuan, 'jenisPembayaran' | 'invoiceAmount'>, jenis: string, sisaTagihanPO: number | null): Partial<FormPengajuan> {
+  const otomatis = sisaTagihanPO !== null && sisaTagihanPO > 0 ? formatRibuan(sisaTagihanPO) : '';
+  if (jenis === 'Full Payment' && otomatis) return { jenisPembayaran: jenis, invoiceAmount: otomatis };
+  if (f.jenisPembayaran === 'Full Payment' && otomatis && f.invoiceAmount === otomatis) return { jenisPembayaran: jenis, invoiceAmount: '' };
+  return { jenisPembayaran: jenis };
+}
 
 /** Nomor rekening disamarkan sebagian (design 7.4.C): hanya 4 digit terakhir. */
 export function samarkanRekening(no: string): string {
@@ -166,9 +174,11 @@ function hitungAman(f: FormPengajuan, npwp: string): PreviewHitung | null {
 }
 export const previewHitung = (f: FormPengajuan, npwpVendor: string): PreviewHitung | null => (angka(f.invoiceAmount) > 0 ? hitungAman(f, npwpVendor) : null);
 
-/** I11 (peringatan dini di layar tinjau; server tetap menolak saat submit). */
+/** Info (tidak memblokir) di layar tinjau: Trade non-DP yang barangnya belum diterima penuh. Aturan tolak I11 dihapus 2026-10-24. */
 export const peringatanBarang = (f: FormPengajuan, qtyPO: number, qtySJ: number): string | null =>
-  f.tipe === 'Trade' ? cekBarangDiterima('Trade', f.jenisPembayaran, qtyPO, qtySJ) : null;
+  f.tipe === 'Trade' && f.jenisPembayaran !== 'DP' && qtyPO > 0 && qtySJ < qtyPO
+    ? `Barang belum diterima penuh (Surat Jalan ${qtySJ} dari ${qtyPO}). Pengajuan "${f.jenisPembayaran}" tetap bisa diajukan.`
+    : null;
 
 // ------------------------------------------------------------------ ke/dari server
 /** Body POST create/update. Urutan kunci TETAP (dipakai sebagai sidik jari idempotensi). Tidak ada angka turunan: server menghitung semuanya. */

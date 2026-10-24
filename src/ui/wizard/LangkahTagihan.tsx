@@ -1,5 +1,5 @@
 'use client';
-import { rupiah, tambahHari, type FormPengajuan, type Galat, type PreviewHitung } from '@/domain/pengajuan-form';
+import { gantiJenisPembayaran, rupiah, tambahHari, type FormPengajuan, type Galat, type PreviewHitung } from '@/domain/pengajuan-form';
 import { Chips, Field, Pesan, UangInput } from '../kit';
 import { UnggahLampiranUI, type Staged } from './UnggahLampiranUI';
 import type { DataPo } from './tipe';
@@ -17,7 +17,7 @@ export function LangkahTagihan({ form, ubah, galat, tandai, preview, po, onCekIn
         {(p) => <input {...p} value={form.noInvoice} maxLength={60} autoComplete="off" onChange={(e) => ubah({ noInvoice: e.target.value })} onBlur={() => { tandai('noInvoice'); onCekInvoice(); }} />}
       </Field>
 
-      <Chips label="Jenis pembayaran" nilai={form.jenisPembayaran as 'Full Payment' | 'DP' | 'Pelunasan' | ''} galat={galat.jenisPembayaran} onPilih={(jenisPembayaran) => ubah({ jenisPembayaran })}
+      <Chips label="Jenis pembayaran" nilai={form.jenisPembayaran as 'Full Payment' | 'DP' | 'Pelunasan' | ''} galat={galat.jenisPembayaran} onPilih={(jenis) => ubah(gantiJenisPembayaran(form, jenis, po ? po.sisaBolehTagih : null))}
         pilihan={[{ nilai: 'Full Payment', teks: 'Full Payment' }, { nilai: 'DP', teks: 'DP (uang muka)' }, { nilai: 'Pelunasan', teks: 'Pelunasan' }]} />
 
       <div className="grid2">
@@ -36,7 +36,7 @@ export function LangkahTagihan({ form, ubah, galat, tandai, preview, po, onCekIn
         </div>
       )}
 
-      <Field label="Nilai invoice" id="invoiceAmount" galat={galat.invoiceAmount} petunjuk={po ? `Sisa plafon P.O saat ini ${rupiah(po.sisaBolehTagih)}.` : undefined}>
+      <Field label="Nilai invoice" id="invoiceAmount" galat={galat.invoiceAmount} petunjuk={po ? `Sisa plafon P.O saat ini ${rupiah(po.sisaBolehTagih)}.${form.jenisPembayaran === 'Full Payment' ? ' Full Payment otomatis diisi sisa tagihan P.O; ubah bila invoice berbeda.' : ''}` : undefined}>
         {(p) => <UangInput fp={p} nilai={form.invoiceAmount} onUbah={(v) => ubah({ invoiceAmount: v })} onBlur={() => tandai('invoiceAmount')} />}
       </Field>
       <div className="grid2">
