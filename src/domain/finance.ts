@@ -80,6 +80,16 @@ export function statusPersetujuan(rows: readonly BarisApproval[]): StatusPersetu
   return { finMgr: ambil(4), cfo: ambil(5), verifikator: l3 ? { nama: String(l3.nama ?? '').trim(), email: String(l3.email ?? '').trim() } : null };
 }
 
+/** Penanda siklus verifikasi sekarang (waktu verifikasi pajak L3 terakhir), '' bila belum ada. Dipakai jatah WA manual per siklus. */
+export function siklusVerifikasi(rows: readonly BarisApproval[]): string {
+  const t = rows.filter((r) => ok(r) && lvl(r.level) === 3).map((r) => ts(r.timestamp)).filter(Number.isFinite);
+  return t.length ? String(Math.max(...t)) : '';
+}
+
+/** Persetujuan berikutnya yang ditunggu (urutan Fin. Mgr -> CFO); null = sudah lengkap. Penerima WA manual tahap persetujuan. */
+export const targetPersetujuan = (perluCFO: boolean, st: StatusPersetujuan): Sebagai | null =>
+  !st.finMgr ? 'finmgr' : perluCFO && !st.cfo ? 'cfo' : null;
+
 const samaEmail = (a: string, b: string): boolean => a.trim().toLowerCase() !== '' && a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /**

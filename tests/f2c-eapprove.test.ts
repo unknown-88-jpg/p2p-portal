@@ -137,6 +137,6 @@ describe('F2-C setujuiFinance', () => {
     await setujui(eko, 'NTR-00002', 'finmgr');
     const q = await antreanFinance(w.deps, gita, 'persetujuan');
     expect(q.peran).toEqual({ staff: false, finMgr: false, cfo: true });
-    expect(q.items.find((i) => i.id === 'NTR-00002')!.persetujuan).toEqual({ finMgr: 'Eko', cfo: null, finMgrSaya: false });
+    expect(q.items.find((i) => i.id === 'NTR-00002')!.persetujuan).toEqual({ finMgr: 'Eko', cfo: null, finMgrSaya: false, wa: { target: 'cfo', terkirim: false } });
   });
 });

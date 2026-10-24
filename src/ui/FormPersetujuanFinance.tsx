@@ -6,10 +6,11 @@ import { pilihKunci, rupiah, type KunciIdem } from '@/domain/pengajuan-form';
 import { api, errMessage, hasilDipulihkan, isApiError, PESAN_DIPULIHKAN } from './api';
 import { Dialog, Pesan } from './kit';
 import { IkonMata, IkonMataCoret, IkonSelesai } from './icons';
+import { KirimWaFinance } from './KirimWaFinance';
 
 export interface DokSetuju {
   id: string; vendorNama: string; etag: string; nominal: number; perluCFO: boolean; ajuanSendiri: boolean;
-  persetujuan?: { finMgr: string | null; cfo: string | null; finMgrSaya: boolean } | undefined;
+  persetujuan?: { finMgr: string | null; cfo: string | null; finMgrSaya: boolean; wa?: { target: 'finmgr' | 'cfo'; terkirim: boolean } | null } | undefined;
 }
 export interface Peran { staff: boolean; finMgr: boolean; cfo: boolean }
 type Sebagai = 'finmgr' | 'cfo';
@@ -102,6 +103,7 @@ export function FormPersetujuanFinance({ dok, peran, onSelesai }: { dok: DokSetu
         <p className="muted cap">{p.finMgrSaya && peran.cfo ? 'Anda sudah menyetujui sebagai Fin. Mgr; persetujuan CFO harus oleh orang lain.' : peran.cfo && dok.perluCFO && !p.finMgr ? 'Persetujuan CFO dibuka setelah Fin. Mgr menyetujui.' : 'Tidak ada persetujuan yang menunggu Anda untuk dokumen ini.'}</p>
       )}
       {galat && !dlg && <Pesan jenis="err">{galat}</Pesan>}
+      {dok.persetujuan?.wa && <KirimWaFinance key={`${dok.id}|${dok.persetujuan.wa.target}`} id={dok.id} wa={dok.persetujuan.wa} />}
       <div className="ip-aksi">
         {giliran && <button type="button" className="btn btn-primary" disabled={sibuk} onClick={() => { setGalat(null); setDlg('setuju'); }}>Setujui sebagai {peranLabel}</button>}
         {bisaKembalikan && <button type="button" className="btn btn-secondary" disabled={sibuk} onClick={() => { setGalat(null); setDlg('kembalikan'); }}>Kembalikan ke PIC</button>}

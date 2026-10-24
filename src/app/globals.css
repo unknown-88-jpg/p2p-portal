@@ -970,3 +970,5 @@ dialog .chips.tombol-baris + .f { margin-top: 16px; }
 .fin-tab.perlu:not(.aktif) { border-color: #f3b6b0; background: var(--danger-bg); }
 .chip:has(> .cn) { display: inline-flex; align-items: center; gap: 8px; }
 @media (max-width: 640px) { .lonceng-panel { position: fixed; left: 16px; right: 16px; width: auto; top: calc(var(--banner-h) + var(--top-h) + 6px); } }
+.wa-fin { display: grid; gap: 6px; margin: 4px 0 12px; }
+.wa-fin .cap { font-size: 12px; }

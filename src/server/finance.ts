@@ -10,6 +10,7 @@ import type { CellValue, RawRow } from '@/ports/store';
 import { TRX_APPROVAL, TRX_PENGAJUAN, colIndex } from '@/repo/schema';
 import { etagOf } from './approval';
 import type { AuthDeps, SessionData } from './auth';
+import { statusWaFinance } from './wa-manual-finance';
 import { bacaTampilanDetail } from './view-cache';
 
 const T = (k: string): number => colIndex(TRX_PENGAJUAN, k);
@@ -27,7 +28,7 @@ export interface ItemFinance {
   /** Dokumen ini diajukan oleh pengguna yang sedang login (I6: tidak boleh memverifikasi pajaknya sendiri; penjaga di F2-B). */
   ajuanSendiri: boolean;
   /** Tahap persetujuan (F2-C): siapa yang sudah menyetujui di siklus verifikasi sekarang (nama saja). */
-  persetujuan?: { finMgr: string | null; cfo: string | null; finMgrSaya: boolean };
+  persetujuan?: { finMgr: string | null; cfo: string | null; finMgrSaya: boolean; /** tombol Kirim WA: tujuan berikutnya & jatah manual sudah terpakai */ wa: { target: 'finmgr' | 'cfo'; terkirim: boolean } | null };
   /** Tahap bayar (F2-E): alasan gerbang I4 bila belum boleh dibayar (tampilan), dan peran rangkap pengguna ini (peringatan O5b). */
   blokirBayar?: string | null; tugasRangkap?: string[];
 }
@@ -83,8 +84,12 @@ export async function antreanFinance(d: AuthDeps, s: SessionData, tahap?: string
       if (id) per.set(id, [...(per.get(id) ?? []), x]);
     }
     for (const i of tunggu) {
-      const st = statusPersetujuan((per.get(i.id.toUpperCase()) ?? []).map((x) => ({ level: A(x, 'Level'), action: A(x, 'Action'), nama: A(x, 'Approver_Name'), email: A(x, 'Approver_Email'), timestamp: A(x, 'Timestamp') })));
-      if (i.tahap === 'persetujuan') { i.persetujuan = { finMgr: st.finMgr?.nama ?? null, cfo: st.cfo?.nama ?? null, finMgrSaya: !!st.finMgr && milikSendiri(st.finMgr.email, s.email) }; continue; }
+      const ba = (per.get(i.id.toUpperCase()) ?? []).map((x) => ({ level: A(x, 'Level'), action: A(x, 'Action'), nama: A(x, 'Approver_Name'), email: A(x, 'Approver_Email'), timestamp: A(x, 'Timestamp') }));
+      const st = statusPersetujuan(ba);
+      if (i.tahap === 'persetujuan') {
+        i.persetujuan = { finMgr: st.finMgr?.nama ?? null, cfo: st.cfo?.nama ?? null, finMgrSaya: !!st.finMgr && milikSendiri(st.finMgr.email, s.email), wa: await statusWaFinance(d.redis, i.id, i.perluCFO, ba) };
+        continue;
+      }
       const r = baris.get(i.id.toUpperCase());
       const apr = per.get(i.id.toUpperCase()) ?? [];
       i.blokirBayar = r ? cekBolehDibayar({ status: i.status, perluCFO: i.perluCFO, subCoa: str(cell(r, 'SUB_COA')), budget: str(cell(r, 'BUDGET')), st,
