@@ -321,24 +321,29 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); }
 
 /* ---- skala tipografi kartu (acuan: daftar pengajuan) — judul halaman 30, judul kartu 16, isi 14, angka utama 18–26; bobot maks. 600 ---- */
 /* kartu antrean (Persetujuan / Finance) = kartu daftar pengajuan L1 (.dok): vendor, chip ID, garis, Jatuh tempo | Nominal */
-.ib-kartu { display: block; padding: 12px 14px; }
-.inbox-row.aktif .ib-kartu { padding: 11px 13px; }
-@media (max-width: 899px) { .inbox:not(.hp-detail) .inbox-row.aktif .ib-kartu { padding: 12px 14px; } }
-.ib-h { display: flex; flex-direction: column; gap: 6px; padding-bottom: 10px; border-bottom: 1px solid var(--divider); }
-.ib-v { font-size: 15px; line-height: 1.25; font-weight: 600; letter-spacing: -0.01em; }
+.ib-kartu { display: block; padding: 10px 12px; }
+.inbox-row.aktif .ib-kartu { padding: 9px 11px; }
+@media (max-width: 899px) { .inbox:not(.hp-detail) .inbox-row.aktif .ib-kartu { padding: 10px 12px; } }
+.ib-daftar { gap: 8px; }
+.ib-h { display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--divider); }
+.ib-v { font-size: 14px; line-height: 1.25; font-weight: 600; letter-spacing: -0.01em; }
+.ib-meta .dok-id { font-size: 11px; padding: 1px 6px; }
+/* 2 kolom (layar menengah): baris detail setinggi isinya, sisa tinggi daftar ke baris aksi — tanpa celah kosong di antara panel */
+.inbox { grid-template-rows: auto 1fr; }
+@container (min-width: 1020px) { .inbox { grid-template-rows: auto; } }
 .inbox-row:has(.pilih-cb) .ib-v { padding-right: 34px; }
-.ib-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; min-height: 22px; }
+.ib-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-height: 20px; }
 .ib-umur { font-size: 12px; color: var(--muted); }
 .ib-meta .fin-badges { margin-left: auto; }
-.ib-meta .badge-cfo { font-size: 12px; padding: 2px 8px; }
-.ib-b { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 10px; }
+.ib-meta .badge-cfo, .ib-meta .badge-saya, .ib-meta .badge-tunggu { font-size: 11px; padding: 1px 7px; }
+.ib-b { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 8px; }
 .ib-k { display: grid; gap: 1px; min-width: 0; }
 .ib-k.kanan { text-align: right; }
-.ib-dt { font-size: 12px; color: var(--muted); }
-.ib-dd { font-size: 14px; font-weight: 500; color: var(--ink); }
+.ib-dt { font-size: 11px; color: var(--muted); }
+.ib-dd { font-size: 13px; font-weight: 500; color: var(--ink); }
 .ib-dd.lewat, .ib-dt:has(+ .ib-dd.lewat) { color: var(--danger); font-weight: 600; }
-.ib-n { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
-.pilih-tap { top: -1px; bottom: auto; right: 2px; margin: 0; } /* checkbox di pojok kanan atas, sejajar nama vendor (nominal di kanan bawah) */
+.ib-n { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
+.pilih-tap { top: -2px; bottom: auto; right: 2px; margin: 0; } /* checkbox di pojok kanan atas, sejajar nama vendor (nominal di kanan bawah) */
 /* Finance — daftar penuh (Verifikasi pajak): baris tabel seperti daftar Pengajuan saya di layar lebar, kartu di HP */
 .fin-tabel .daftar-head { display: none; }
 @media (min-width: 1100px) {
@@ -357,6 +362,8 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); }
   .fin-tabel .ib-k:first-child .ib-dd { grid-column: 4; }
   .fin-tabel .fin-badges { grid-column: 5; margin-left: 0; justify-content: flex-start; }
   .fin-tabel .ib-n { grid-column: 6; text-align: right; }
+  .fin-tabel .ib-dd { font-size: 14px; }
+  .fin-tabel .ib-meta .dok-id { font-size: 12px; padding: 2px 9px; }
   .fin-tabel .ib-dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 }
 /* vendor: chip kode sama dengan chip ID pengajuan */
