@@ -40,7 +40,9 @@ export function FormPersetujuanFinance({ dok, peran, onSelesai }: { dok: DokSetu
   const p = dok.persetujuan ?? { finMgr: null, cfo: null, finMgrSaya: false };
   const giliran = giliranSaya(dok, peran);
   const bisaKembalikan = peran.staff || peran.finMgr || peran.cfo;
-  const tutup = () => { if (!sibuk) { setDlg(null); setGalat(null); setPw(''); setLihatPw(false); } };
+  // Event 'close' <dialog> juga terpicu saat ditutup lewat KODE (mis. pindah dari langkah 1 ke dialog password);
+  // hanya dialog yang masih AKTIF yang boleh mereset state, kalau tidak dialog password langsung ikut tertutup.
+  const tutup = (k: Dlg) => () => { if (!sibuk && dlg === k) { setDlg(null); setGalat(null); setPw(''); setLihatPw(false); } };
 
   const gagal = (e: unknown, ulangMsg: string): void => {
     const x = isApiError(e) ? e : null;
@@ -105,7 +107,7 @@ export function FormPersetujuanFinance({ dok, peran, onSelesai }: { dok: DokSetu
         {bisaKembalikan && <button type="button" className="btn btn-secondary" disabled={sibuk} onClick={() => { setGalat(null); setDlg('kembalikan'); }}>Kembalikan ke PIC</button>}
       </div>
 
-      <Dialog buka={dlg === 'setuju'} onTutup={tutup} judul={`Setujui sebagai ${peranLabel}?`} langkah="Langkah 1 dari 2">
+      <Dialog buka={dlg === 'setuju'} onTutup={tutup('setuju')} judul={`Setujui sebagai ${peranLabel}?`} langkah="Langkah 1 dari 2">
         <form onSubmit={(e) => { e.preventDefault(); void setujui(); }}>
           {ringkas}
           <p className="muted">Persetujuan elektronik ini menggantikan tanda tangan basah dan tercatat atas nama Anda.{giliran === 'finmgr' && dok.perluCFO ? ' Setelah ini dokumen menunggu persetujuan CFO.' : ' Setelah ini dokumen lanjut ke Jurnal COA.'}</p>
@@ -113,12 +115,12 @@ export function FormPersetujuanFinance({ dok, peran, onSelesai }: { dok: DokSetu
             <textarea id={`fs-cat-${dok.id}`} maxLength={CATATAN_MAX} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
           {galat && <Pesan jenis="err">{galat}</Pesan>}
           <div className="dlg-aksi">
-            <button type="button" className="btn btn-secondary" onClick={tutup} disabled={sibuk}>Batal</button>
+            <button type="button" className="btn btn-secondary" onClick={() => { setDlg(null); setGalat(null); }} disabled={sibuk}>Batal</button>
             <button type="submit" className="btn btn-primary" disabled={sibuk || !catatanValid(notes)}>{sibuk ? 'Memproses…' : 'Lanjut'}</button>
           </div>
         </form>
       </Dialog>
-      <Dialog buka={dlg === 'stepup'} onTutup={tutup} judul="Konfirmasi password" langkah="Langkah 2 dari 2">
+      <Dialog buka={dlg === 'stepup'} onTutup={tutup('stepup')} judul="Konfirmasi password" langkah="Langkah 2 dari 2">
         <form onSubmit={(e) => { e.preventDefault(); void konfirmasiPw(); }}>
           {ringkas}
           <div className="f">
@@ -136,7 +138,7 @@ export function FormPersetujuanFinance({ dok, peran, onSelesai }: { dok: DokSetu
           </div>
         </form>
       </Dialog>
-      <Dialog buka={dlg === 'kembalikan'} onTutup={tutup} judul="Kembalikan ke PIC">
+      <Dialog buka={dlg === 'kembalikan'} onTutup={tutup('kembalikan')} judul="Kembalikan ke PIC">
         <form onSubmit={(e) => { e.preventDefault(); void kembalikan(); }}>
           {ringkas}
           <p className="muted">Dokumen kembali ke status perlu revisi dan harus diverifikasi pajak ulang setelah diajukan lagi. Alasan akan dibaca PIC.</p>
@@ -147,7 +149,7 @@ export function FormPersetujuanFinance({ dok, peran, onSelesai }: { dok: DokSetu
             <textarea id={`fs-alasan-${dok.id}`} maxLength={ALASAN_MAX} value={alasan} onChange={(e) => setAlasan(e.target.value)} /></div>
           {galat && <Pesan jenis="err">{galat}</Pesan>}
           <div className="dlg-aksi">
-            <button type="button" className="btn btn-secondary" onClick={tutup} disabled={sibuk}>Batal</button>
+            <button type="button" className="btn btn-secondary" onClick={() => { setDlg(null); setGalat(null); }} disabled={sibuk}>Batal</button>
             <button type="submit" className="btn btn-danger" disabled={sibuk || !alasanValid(alasan)}>{sibuk ? 'Memproses…' : 'Kembalikan'}</button>
           </div>
         </form>
