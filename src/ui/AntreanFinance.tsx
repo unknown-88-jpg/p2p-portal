@@ -81,7 +81,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
       {data.basi && <Pesan jenis="warn">Data mungkin belum terbaru (Google Sheets sedang lambat). Angka di bawah dari salinan beberapa menit lalu. <button type="button" className="link" onClick={() => void muat()}>Muat ulang</button></Pesan>}
       <div className="fin-tahap" role="tablist" aria-label="Tahap Finance">
         {data.tahap.map((t) => (
-          <button key={t.kunci} type="button" role="tab" aria-selected={t.kunci === tahap} className={`fin-tab${t.kunci === tahap ? ' aktif' : ''}`} onClick={() => pilihTahap(t.kunci)}>
+          <button key={t.kunci} type="button" role="tab" aria-selected={t.kunci === tahap} className={`fin-tab${t.kunci === tahap ? ' aktif' : ''}${t.bisaAksi && t.jumlah > 0 ? ' perlu' : ''}`} onClick={() => pilihTahap(t.kunci)}>
             <span className="fin-tab-l">{t.label}</span>
             <span className="fin-tab-n num">{t.jumlah}</span>
             <span className="fin-tab-s num">{t.jumlah ? rupiah(t.total) : 'Kosong'}</span>

@@ -14,8 +14,8 @@ const pill = (st: string): string => (st === 'Approved' ? 'hijau-muda' : st === 
 const labelSt = (st: string): string => (st === 'Approved' ? 'Disahkan' : st === 'Rejected' ? 'Ditolak' : 'Menunggu pengesahan');
 
 /** F3-A: daftar vendor baru (PIC/Manager/Finance/Admin) + antrean pengesahan (Finance Staff; maker-checker). */
-export function HalamanVendor({ bisaDaftar, bisaSahkan }: { bisaDaftar: boolean; bisaSahkan: boolean }) {
-  const [tab, setTab] = useState<Tab>(bisaDaftar ? 'daftar' : 'pengesahan');
+export function HalamanVendor({ bisaDaftar, bisaSahkan, tabAwal }: { bisaDaftar: boolean; bisaSahkan: boolean; tabAwal?: Tab }) {
+  const [tab, setTab] = useState<Tab>(tabAwal === 'pengesahan' && bisaSahkan ? 'pengesahan' : bisaDaftar ? 'daftar' : 'pengesahan');
   const [toast, setToast] = useState<IsiToast | null>(null);
   const [saya, setSaya] = useState<Saya[] | null>(null);
   const [antre, setAntre] = useState<Antre[] | null>(null);
@@ -74,7 +74,7 @@ export function HalamanVendor({ bisaDaftar, bisaSahkan }: { bisaDaftar: boolean;
 
   const tabs = useMemo(() => [
     ...(bisaDaftar ? [{ nilai: 'daftar' as const, teks: 'Daftarkan vendor' }] : []),
-    ...(bisaSahkan ? [{ nilai: 'pengesahan' as const, teks: 'Menunggu pengesahan', jumlah: antre?.length ?? 0 }] : []),
+    ...(bisaSahkan ? [{ nilai: 'pengesahan' as const, teks: 'Menunggu pengesahan', jumlah: antre?.length ?? 0, perlu: !!antre?.some((v) => !v.milikSaya) }] : []),
   ], [bisaDaftar, bisaSahkan, antre]);
   const ubah = (k: keyof typeof kosong) => (v: string) => setF((x) => ({ ...x, [k]: v }));
 

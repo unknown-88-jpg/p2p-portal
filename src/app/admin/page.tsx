@@ -7,13 +7,13 @@ export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Admin' };
 
 /** F3-C: System Admin (Level 9). */
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ tab?: string | string[] }> }) {
   const s = await wajibSesi('admin.manage');
   return (
     <>
       <AppNav nama={s.nama} {...await propsNav(s)} aktif="admin" />
       <main className="wrap-xl pt">
-        <HalamanAdmin emailSaya={s.email} />
+        <HalamanAdmin emailSaya={s.email} {...(typeof (await searchParams).tab === 'string' ? { tabAwal: (await searchParams).tab as string } : {})} />
       </main>
     </>
   );

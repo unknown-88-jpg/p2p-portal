@@ -2,6 +2,7 @@ import { LogoutButton } from './LogoutButton';
 import { PaletPencarian } from './PaletPencarian';
 import { IkonBeranda, IkonDokumen, IkonGerigi, IkonGrafik, IkonSetuju, IkonTambah, IkonToko, IkonUang, IkonUnduh } from './icons';
 import { LatarMenu, TombolMenu } from './SidebarToggle';
+import { Lonceng } from './Lonceng';
 
 export type NavAktif = 'beranda' | 'pengajuan' | 'baru' | 'persetujuan' | 'finance' | 'vendor' | 'export' | 'laporan' | 'admin';
 
@@ -39,6 +40,7 @@ export function AppNav({ nama, bisaAjukan, bisaSetujui = false, bisaFinance = fa
       <header className="topbar">
         <TombolMenu />
         <PaletPencarian />
+        <Lonceng />
         <span className="tb-user"><span className="avatar" aria-hidden="true">{inisial(nama)}</span><span className="tb-nama">{nama}</span></span>
       </header>
     </>

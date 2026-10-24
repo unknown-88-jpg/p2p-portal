@@ -386,7 +386,7 @@ body:has(> #isi > .sidebar) { background: var(--parchment); }
 .cari-trigger:hover { border-color: var(--chip); }
 .cari-trigger .ct-teks { flex: 1; }
 .cari-trigger kbd { font: inherit; font-size: 12px; color: var(--muted); border: 1px solid var(--hairline); border-radius: 6px; padding: 1px 6px; background: var(--pearl); letter-spacing: 0; }
-.tb-user { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.tb-user { margin-left: 0; display: flex; align-items: center; gap: 10px; font-size: 14px; }
 .tb-nama { color: var(--ink-80); white-space: nowrap; }
 .tb-menu { display: grid; place-items: center; width: 44px; height: 44px; margin-left: -10px; background: none; border: 0; border-radius: var(--r-md); color: var(--ink); cursor: pointer; }
 .tb-menu:hover { background: rgba(0, 0, 0, 0.05); }
@@ -944,3 +944,29 @@ dialog .chips.tombol-baris + .f { margin-top: 16px; }
   .vc-uang, .vc-bayar, .vc-box, .vc-cfo, .vc-ttd, .vc-kotak { break-inside: avoid; }
   .vc-f { margin-top: 6px; break-before: avoid; }
 }
+
+/* ---- lonceng "perlu tindakan" (bar atas, semua peran) ---- */
+.lonceng { position: relative; margin-left: auto; }
+.lonceng-btn { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; color: var(--ink-80); cursor: pointer; }
+.lonceng-btn:hover { background: rgba(0, 0, 0, 0.05); }
+.lonceng-btn.ada { color: var(--danger); }
+.lonceng-btn .ikon { width: 22px; height: 22px; }
+.lonceng-n { position: absolute; top: 4px; right: 2px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 11px; font-weight: 700; line-height: 19px; text-align: center; letter-spacing: 0; box-shadow: 0 0 0 2px var(--parchment); }
+.lonceng-panel { position: absolute; right: 0; top: calc(100% + 8px); width: min(360px, calc(100vw - 32px)); background: #fff; border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: 12px; z-index: 60; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12); }
+.lonceng-h { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 6px 8px; }
+.lonceng-panel ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.lonceng-i { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 10px; border-radius: var(--r-md); color: var(--ink); font-size: 15px; letter-spacing: -0.224px; }
+.lonceng-i:hover { background: var(--parchment); text-decoration: none; }
+.lonceng-i .titik { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--primary); }
+.lonceng-i.merah .titik { background: var(--danger); } .lonceng-i.kuning .titik { background: #e0a100; }
+.lonceng-i .t { flex: 1 1 auto; min-width: 0; }
+.lonceng-i .n { flex: none; min-width: 26px; padding: 2px 8px; border-radius: 999px; text-align: center; font-size: 13px; font-weight: 700; background: var(--parchment); color: var(--ink-80); }
+.lonceng-i.merah .n { background: var(--danger-bg); color: var(--danger); } .lonceng-i.kuning .n { background: var(--warn-bg); color: var(--warn); }
+.lonceng-kosong { padding: 10px 6px; color: var(--muted); font-size: 15px; }
+/* Chip antrean yang menunggu tindakan: hitungan berwarna alert. */
+.chip.perlu .cn { background: var(--danger); color: #fff; }
+.chip.perlu:not([aria-checked="true"]) { border-color: #f3b6b0; background: var(--danger-bg); color: var(--danger); }
+.fin-tab.perlu .fin-tab-n { color: var(--danger); }
+.fin-tab.perlu:not(.aktif) { border-color: #f3b6b0; background: var(--danger-bg); }
+.chip:has(> .cn) { display: inline-flex; align-items: center; gap: 8px; }
+@media (max-width: 640px) { .lonceng-panel { position: fixed; left: 16px; right: 16px; width: auto; top: calc(var(--banner-h) + var(--top-h) + 6px); } }

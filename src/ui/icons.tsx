@@ -30,3 +30,4 @@ export const IkonToko = () => <Ikon><path d="M4 9.5 5.5 4h13L20 9.5" /><path d="
 export const IkonUnduh = () => <Ikon><path d="M12 4v11M7 10.5l5 5 5-5" /><path d="M4 19.5h16" /></Ikon>;
 export const IkonGrafik = () => <Ikon><path d="M4 20V4" /><path d="M4 20h16" /><path d="M8 16v-5M12 16V8M16 16v-3" /></Ikon>;
 export const IkonGerigi = () => <Ikon><circle cx="12" cy="12" r="3" /><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" /></Ikon>;
+export const IkonLonceng = () => <Ikon><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" /><path d="M10 20.5a2 2 0 0 0 4 0" /></Ikon>;

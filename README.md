@@ -290,6 +290,12 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 - **Opsional** (PDF voucher server-side, dark mode, SSO admin, `onEdit` → bust cache, pusat notifikasi) belum dikerjakan.
 - Runbook UAT Fase 3 + uji restore: `docs/desain/f3-uat-runbook.md`.
 
+## Lonceng "perlu tindakan" (2026-10-24)
+- Ikon lonceng di bar atas **untuk semua peran** (`src/ui/Lonceng.tsx`, `GET /api/notifikasi`, `src/domain/notifikasi.ts`). Angka merah = jumlah hal yang menunggu pengguna INI; klik → daftar dengan tautan langsung ke antreannya. Dimuat saat halaman dibuka, tiap 60 dtk selama tab terlihat, dan saat tab aktif lagi.
+- Isi per peran: PIC (pengajuan dikembalikan, draft), Manager (antrean persetujuan berwenang, tanpa ajuan sendiri), Finance Staff (verifikasi pajak tanpa ajuan sendiri/I6, jurnal, siap bayar yang lolos gerbang I4, vendor menunggu pengesahan bukan daftaran sendiri), Fin. Mgr (belum ada persetujuan Fin. Mgr), CFO (≥ Rp 5 jt yang sudah disetujui Fin. Mgr lain), Admin (cron gagal/dilewati/tidak jalan > 25 jam).
+- Semua bacaan lewat cache tampilan 15 dtk (tidak menambah beban kuota Sheets); sumber yang gagal dibaca dilewati. Baca saja — penjaga aksi tetap di server.
+- Warna alert: tab/chip antrean yang menunggu tindakan Anda (mis. "Menunggu pengesahan" vendor, tahap Finance yang bisa Anda kerjakan) berlatar merah muda dengan angka merah. `/vendor?tab=pengesahan` dan `/admin?tab=…` membuka tab langsung.
+
 ## Deploy
 - **Trial (sekarang):** repo GitHub privat `unknown-88-jpg/p2p-portal`, branch `main` otomatis ter-deploy ke Vercel (team FAT, Hobby, project `p2p-portal`, URL produksi `https://p2p-portal-flax.vercel.app`). `vercel.json` memaksa region `sin1`. Banner "ENVIRONMENT TRIAL — DATA DUMMY" tampil selama `APP_ENV=trial`.
 - **Environment variable** (nama saja; nilai jangan pernah masuk repo/chat): `APP_ENV`, `APP_BASE_URL` (harus sama dengan URL yang dibuka; dipakai cek origin/CSRF, jadi login di URL preview akan ditolak), `SHEET_ID`, `PROD_SHEET_IDS`, `DRIVE_ROOT_ID`, `GOOGLE_SA_JSON`, `JWT_SECRET`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `CRON_SECRET`, `HEALTH_TOKEN`, `WA_GATEWAY_URL`, `WA_API_KEY`, `WA_WEBHOOK_SECRET`, `WA_TRIAL_ALLOWLIST`. Perubahan variabel butuh redeploy.
