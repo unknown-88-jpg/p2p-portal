@@ -36,7 +36,7 @@ Dokumen desain ada di repo ini (sumber utama, update lewat PR): `docs/desain/` (
 - Commit message diakhiri atribusi Claude sesuai konvensi tool.
 
 ## Operasional
-- Vercel Hobby: cron cuma 1×/hari → digest WA dipicu GitHub Actions (`.github/workflows/digest.yml`, secrets `APP_URL`, `CRON_SECRET`). Region sin1. Log runtime hanya 1 jam.
+- Vercel Hobby: cron cuma 1×/hari → digest WA (Manager + Finance, F2-F) dipicu GitHub Actions (`.github/workflows/digest.yml`, secrets `APP_URL`, `CRON_SECRET`). Region sin1. Log runtime hanya 1 jam.
 - Kuota Sheets 60 baca + 60 tulis/menit/user: cache + single-flight + satu batch per aksi; jangan menambah pola baca per-sel.
 - WA ke Manager lewat digest terjadwal + tombol **Kirim WA** PIC di beranda (F-15, maks. 1x/hari WIB per dokumen, `src/server/wa-manual.ts`; penerima & kode sama dengan digest); dokumen ≥ Rp 5 jt tidak mendapat kode WA dan server menolak approve via WA (wajib web + step-up password).
 

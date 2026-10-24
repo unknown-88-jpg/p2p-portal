@@ -80,7 +80,21 @@ export async function detail(d: AuthDeps, s: SessionData, idTrx: string) {
     ...rk, milikSaya: !!s.email && str(P(r, 'CREATED_BY')).trim().toLowerCase() === s.email.trim().toLowerCase(),
     alur: posisiAlur(rk.status), umurHari: umurHari(msOf(P(r, 'LAST_UPDATE')), d.clock.now()),
     timeline: susunTimeline(lBaris, aBaris, nama),
+    pembayaran: await riwayatDari(d, idTrx, rk.nominal),
   };
+}
+
+/** F2-F (port getPaymentHistory/getTotalPaidFromLog): riwayat cicilan dari Trx_Payment_Log (sumber kebenaran), total & sisa. Akses = I13. */
+export async function riwayatBayar(d: AuthDeps, s: SessionData, idTrx: string) {
+  const r = await muatBoleh(d, s, idTrx);
+  return riwayatDari(d, idTrx, num(P(r, 'FINAL_AMOUNT')));
+}
+async function riwayatDari(d: AuthDeps, idTrx: string, finalAmount: number) {
+  const nama = await namaPeta(d);
+  const items = (await bacaTampilan(d, TRX_PAYMENT_LOG)).filter((x) => str(Y(x, 'ID_Trx')).toUpperCase() === idTrx.toUpperCase())
+    .map((x) => { const oleh = str(Y(x, 'Created_By')); return { tgl: fmtTanggal(Y(x, 'Tgl_Bayar')), nominal: num(Y(x, 'Nominal')), sumber: str(Y(x, 'Sumber_Rekening')), ref: str(Y(x, 'Ref_No')), oleh: nama(oleh) }; });
+  const total = items.reduce((t, x) => t + x.nominal, 0);
+  return { items, total, sisa: Math.max(finalAmount - total, 0) };
 }
 
 /** Data voucher cetak (paritas getPrintData lama): rekening PENUH, kotak TTD, riwayat bayar. */

@@ -82,7 +82,7 @@ Status alur: Manager Approved → Tax Verified → Wet Signed → COA Posted →
 - Peringatan O5b (pembayar = verifikator/pengunggah) + penanda audit.
 - Exit: I4, I5 hijau; race 20 paralel pembayaran sisa kecil tidak ada overpay; uji klik ganda; simulasi 30 bayar-bulk tanpa melewati kuota; rekonsiliasi `TOTAL_PAID` vs log nol selisih.
 
-**F2-F — Return ke PIC, riwayat, digest Finance (S–M)**
+**F2-F — Return ke PIC, riwayat, digest Finance (S–M)** — ✅ selesai 2026-10-24 (README §F2-F)
 - `financeReject` → Revision Needed (alasan wajib) + notifikasi PIC.
 - Tab Pembayaran di detail dokumen (riwayat cicilan, total terbayar, sisa).
 - Digest WA Finance: ringkasan gabungan ("N perlu verifikasi pajak, N perlu jurnal, N siap dibayar") + link dashboard; **tanpa kode SETUJU/TOLAK** (Finance tidak approve via WA).
