@@ -606,6 +606,22 @@ a.metrik-kartu:focus-visible { outline-offset: 3px; border-radius: var(--r-lg); 
 .pill-st { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 7px 12px 7px 10px; letter-spacing: -0.1px; }
 .pill-st .ikon { width: 15px; height: 15px; }
 .msg { display: flex; align-items: flex-start; gap: 10px; border: 1px solid transparent; }
+.toast-wadah { position: fixed; top: calc(var(--banner-h) + var(--top-h) + 12px); right: 16px; z-index: 60; display: grid; gap: 10px; width: min(420px, calc(100vw - 32px)); pointer-events: none; }
+.toast { pointer-events: auto; display: flex; align-items: flex-start; gap: 10px; padding: 14px 12px 14px 16px; border-radius: var(--r-lg); border: 1px solid var(--hairline); background: var(--canvas); color: var(--ink); font-size: 15px; line-height: 1.4; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16); animation: toast-masuk .18s ease-out; }
+.toast .ikon { width: 20px; height: 20px; margin-top: 1px; flex: none; }
+.toast.ok .ikon { color: #17622f; } .toast.ok { border-left: 4px solid #1d8a43; }
+.toast.warn .ikon { color: var(--warn); } .toast.warn { border-left: 4px solid #c98a00; }
+.toast.err .ikon { color: #9f0012; } .toast.err { border-left: 4px solid #c4161c; }
+.toast-isi { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.toast-isi .hasil-bulk { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
+.toast-x { flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin: -6px -2px 0 0; border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; }
+.toast-x:hover { background: var(--parchment); }
+.toast-x:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.toast-x .ikon { width: 18px; height: 18px; margin: 0; }
+@keyframes toast-masuk { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+@media (max-width: 640px) { .toast-wadah { top: auto; bottom: 16px; right: 16px; left: 16px; width: auto; } }
+@media print { .toast-wadah { display: none; } }
 .msg .ikon { width: 20px; height: 20px; margin-top: 1px; }
 .msg-isi { flex: 1; min-width: 0; }
 .msg.err { background: #fff0ef; border-color: #f1c4c8; color: #9f0012; }
@@ -778,7 +794,7 @@ dialog .chips.tombol-baris .chip { text-align: left; border-radius: var(--r-md);
 .vp .ip-aksi { display: grid; gap: 8px; margin-top: 12px; }
 .vp .ip-rincian { margin: 4px 0 12px; }
 @media (max-width: 900px) { .fin-tahap { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 640px) { .fin-alat { flex-direction: column; } .fin-urut select { width: 100%; } }
+@media (max-width: 640px) { .fin-alat { flex-direction: column; align-items: stretch; } .fin-urut select { width: 100%; } }
 .ip-angka { font-size: 30px; line-height: 1.1; font-weight: 700; letter-spacing: -0.4px; margin-top: 4px; }
 .ip-sub { font-size: 13px; color: var(--muted); margin-top: 6px; }
 .ip-rincian { margin: 14px 0 0; padding: 12px 14px; background: var(--parchment); border-radius: var(--r-md); }

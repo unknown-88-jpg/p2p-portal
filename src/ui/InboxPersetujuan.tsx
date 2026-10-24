@@ -4,7 +4,7 @@ import { bisaBulk, alasanValid, catatanValid, itemBerikutnya, perluMuatUlang, pe
 import { CATATAN_MAX, ALASAN_MAX, TEMPLATE_ALASAN } from '@/domain/approval';
 import { rupiah, pilihKunci, type KunciIdem } from '@/domain/pengajuan-form';
 import { api, errMessage, isApiError, type ApiError } from './api';
-import { Dialog, Pesan, Skeleton } from './kit';
+import { Dialog, Pesan, Skeleton, Toast, type IsiToast } from './kit';
 import { IkonKlip, IkonKunci, IkonMata, IkonMataCoret, IkonSelesai } from './icons';
 import { LampiranPopup } from './LampiranPopup';
 
@@ -53,6 +53,11 @@ export function InboxPersetujuan({ idAwal }: { idAwal?: string | undefined }) {
   useEffect(() => { void muat(); }, [muat]);
 
   const ids = useMemo(() => (items ?? []).map((i) => i.id), [items]);
+  // Ringkasan setuju massal sebagai pop-up; objek dibuat ulang hanya bila hasilnya berubah (supaya hitung mundur tutup otomatis tidak terulang tiap render).
+  const toastBulk = useMemo<IsiToast | null>(() => (hasilBulk && !sibuk && hasilBulk.length > 0 ? {
+    jenis: hasilBulk.every((h) => h.ok) ? 'ok' : 'warn',
+    teks: <><strong>{hasilBulk.filter((h) => h.ok).length} dari {hasilBulk.length} disetujui.</strong>{hasilBulk.some((h) => !h.ok) && <ul className="hasil-bulk">{hasilBulk.filter((h) => !h.ok).map((h) => <li key={h.id}>{h.id}: {h.pesan}</li>)}</ul>}</>,
+  } : null), [hasilBulk, sibuk]);
   const cur = useMemo(() => items?.find((i) => i.id === sel) ?? null, [items, sel]);
   // Desktop: otomatis pilih item pertama bila belum ada pilihan valid. (HP: tetap di daftar sampai diketuk.)
   const tampilCur = cur ?? (items && items.length && !detailHP ? items[0]! : null);
@@ -158,14 +163,7 @@ export function InboxPersetujuan({ idAwal }: { idAwal?: string | undefined }) {
   return (
     <>
       <Kepala meta={kosong ? null : <><span className="muted">{items.length} dokumen menunggu</span><span className="inbox-total num">Total {rupiah(totalNominal)}</span></>} />
-      {info && <Pesan jenis={info.jenis}>{info.teks}</Pesan>}
-      {hasilBulk && !sibuk && hasilBulk.length > 0 && (
-        <Pesan jenis={hasilBulk.every((h) => h.ok) ? 'ok' : 'warn'}>
-          <strong>{hasilBulk.filter((h) => h.ok).length} dari {hasilBulk.length} disetujui.</strong>
-          <ul className="hasil-bulk">{hasilBulk.filter((h) => !h.ok).map((h) => <li key={h.id}>{h.id}: {h.pesan}</li>)}</ul>
-          <button type="button" className="link" onClick={() => setHasilBulk(null)}>Tutup</button>
-        </Pesan>
-      )}
+      <div className="toast-wadah"><Toast isi={info} onTutup={() => setInfo(null)} /><Toast isi={toastBulk} onTutup={() => setHasilBulk(null)} /></div>
       {progres && <Pesan jenis="ok" role="status">{progres}</Pesan>}
       {kosong ? (
         <div className="kosong" role="status"><h2>Tidak ada yang menunggu persetujuan</h2><p className="muted">Pengajuan baru dari tim Anda akan muncul di sini.</p></div>
