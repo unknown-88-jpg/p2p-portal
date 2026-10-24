@@ -5,7 +5,7 @@ import { POLICY_MESSAGE, PASSWORD_MAX, checkPassword } from '@/domain/password-p
 import { burnVerify, hashPassword, verifyPassword } from '@/infra/password';
 import { LinkTokens, SETPASS_TTL_MS } from '@/infra/link-tokens';
 import { SessionStore, type SessionData } from '@/infra/session';
-import { LOGIN_RULE, Throttle } from '@/infra/throttle';
+import { LOGIN_RULE, Throttle, type ThrottleRule } from '@/infra/throttle';
 import { AppError } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import type { DrivePort } from '@/ports/drive';
@@ -30,6 +30,7 @@ export const GENERIC_LOGIN_FAIL = "Nomor HP atau password salah. Belum punya pas
 
 // ---------- skema input (zod) ----------
 export const loginSchema = z.object({ phone: z.string().min(1).max(32), password: z.string().min(1).max(PASSWORD_MAX) });
+export const cekLinkSchema = z.object({ token: z.string().min(20).max(100) });
 export const setPasswordSchema = z.object({ token: z.string().min(20).max(100), password: z.string().min(1).max(PASSWORD_MAX) });
 export const forgotSchema = z.object({ phone: z.string().min(1).max(32) });
 export const stepUpSchema = z.object({ password: z.string().min(1).max(PASSWORD_MAX) });
@@ -139,6 +140,22 @@ export async function requireStepUp(d: AuthDeps, token: string): Promise<void> {
 }
 
 // ---------- set-password (token sekali pakai) ----------
+/**
+ * F-12: pemeriksaan link set-password SAAT HALAMAN DIBUKA, supaya pengguna tidak mengetik password dulu baru tahu link mati.
+ * Hanya mengintip (`peek`): token TIDAK dihanguskan dan nomor TIDAK dikembalikan (hanya benar/tidak).
+ * Pembatas TERPISAH dari `setpass` (kunci nomor '-' di sana bersifat global: 10 kegagalan dari IP mana pun mengunci pengiriman password
+ * untuk semua orang). Pemeriksaan dihitung per IP (20 link tak valid / 15 mnt) dengan plafon global longgar; token 256-bit, jadi ini
+ * hanya penahan penyalahgunaan, bukan satu-satunya pertahanan.
+ */
+const CEK_LINK_RULE: ThrottleRule = { pair: 20, perPhone: 500, perIp: 20, windowMs: 15 * 60_000 };
+export async function cekLinkSetPassword(d: AuthDeps, input: z.infer<typeof cekLinkSchema>, ip: string): Promise<{ valid: boolean }> {
+  const th = throttleOf(d, 'setpasscek', CEK_LINK_RULE);
+  await th.assertOpen('-', ip);
+  const peek = await d.tokens.peek(input.token);
+  if (!peek) { await th.recordFailure('-', ip); return { valid: false }; }
+  return { valid: true };
+}
+
 export async function setPasswordViaToken(d: AuthDeps, input: z.infer<typeof setPasswordSchema>, ip: string): Promise<void> {
   const th = throttleOf(d, 'setpass', { pair: 10, perPhone: 10, perIp: 30, windowMs: 15 * 60_000 });
   await th.assertOpen('-', ip);

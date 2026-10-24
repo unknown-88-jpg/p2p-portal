@@ -27,7 +27,8 @@ describe('M8 — inventaris route (pagar otomatis: route baru wajib lolos aturan
 
   it('session:"none" hanya untuk auth publik & cron; tiap cron memanggil bearerOk', () => {
     const none = files.filter((f) => /session:\s*'none'/.test(f.src)).map((f) => f.rel).sort();
-    expect(none).toEqual(['auth/forgot/route.ts', 'auth/login/route.ts', 'auth/logout/route.ts', 'auth/set-password/route.ts', 'cron/digest/route.ts', 'cron/lampiran-yatim/route.ts']);
+    // Patch 2 (F-12): 'auth/set-password/cek' ditambahkan SENGAJA: hanya mengintip validitas link (benar/salah), tanpa data akun, dengan pembatas sendiri.
+    expect(none).toEqual(['auth/forgot/route.ts', 'auth/login/route.ts', 'auth/logout/route.ts', 'auth/set-password/cek/route.ts', 'auth/set-password/route.ts', 'cron/digest/route.ts', 'cron/lampiran-yatim/route.ts']);
     for (const f of files.filter((x) => x.rel.startsWith('cron/'))) expect(f.src).toContain('bearerOk(req)');
   });
 

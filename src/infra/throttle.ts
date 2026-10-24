@@ -2,6 +2,11 @@ import type { Clock } from '@/lib/clock';
 import { AppError } from '@/lib/errors';
 import type { RedisPort } from '@/ports/redis';
 
+/** "N detik" bila < 1 menit, selain itu "±N menit" (dibulatkan ke atas, supaya pengguna tidak mencoba terlalu cepat). */
+export function durasiTunggu(sec: number): string {
+  return sec < 60 ? `${Math.max(1, Math.ceil(sec))} detik` : `±${Math.ceil(sec / 60)} menit`;
+}
+
 export interface ThrottleRule { pair: number; perPhone: number; perIp: number; windowMs: number }
 /** design 5.3: 5 gagal / 15 mnt per (nomor, IP). Plus plafon per nomor & per IP agar serangan terdistribusi tetap tertahan. */
 export const LOGIN_RULE: ThrottleRule = { pair: 5, perPhone: 30, perIp: 50, windowMs: 15 * 60_000 };
@@ -26,7 +31,7 @@ export class Throttle {
       if (c >= ls[i]!) {
         const ttl = await this.redis.pttl(ks[i]!);
         const sec = Math.max(1, Math.ceil((ttl > 0 ? ttl : this.rule.windowMs) / 1000));
-        throw new AppError('RATE_LIMITED', 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.', undefined, sec);
+        throw new AppError('RATE_LIMITED', `Terlalu banyak percobaan. Coba lagi dalam ${durasiTunggu(sec)}.`, undefined, sec);
       }
     }
   }

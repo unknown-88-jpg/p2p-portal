@@ -16,15 +16,23 @@ export type Perintah =
   | { jenis: 'TOLAK_TANPA_ALASAN'; kode: string }
   | { jenis: 'TIDAK_DIKENAL' };
 
-/** Persis regex lama: SETUJU|TOLAK|APPROVE|REJECT + 4 digit. 6 digit murni (OTP lama) dikenali agar bisa dijawab "sudah tidak dipakai". */
+/**
+ * Persis regex lama: SETUJU|TOLAK|APPROVE|REJECT + 4 digit. 6 digit murni (OTP lama) dikenali agar bisa dijawab "sudah tidak dipakai".
+ * F-14: penanda format WhatsApp (`*tebal*`, `_miring_`, `~coret~`) di sekitar perintah/kode diabaikan, karena menyalin teks tebal dari
+ * balasan bot ikut membawa tanda bintang ("*SETUJU 2641*"). Penanda di DALAM alasan tidak diubah.
+ */
+const FMT = '[\\s*_~]';
+// (?![0-9A-Z]) menggantikan \\b: `_` termasuk karakter kata, jadi "2641_" (penutup miring) tidak akan lolos dengan \\b. Teks sudah di-uppercase.
+const RE_PERINTAH = new RegExp(`^${FMT}*(SETUJU|TOLAK|APPROVE|REJECT)${FMT}+(\\d{4})(?![0-9A-Z])`);
+const RE_AWAL_TOLAK = new RegExp(`^${FMT}*(TOLAK|REJECT)${FMT}+\\d{4}${FMT}*`, 'i');
 export function parsePerintah(teks: string): Perintah {
   const t = teks.trim();
   if (/^\d{6}$/.test(t)) return { jenis: 'OTP' };
-  const m = t.toUpperCase().match(/^(SETUJU|TOLAK|APPROVE|REJECT)\s+(\d{4})\b/);
+  const m = t.toUpperCase().match(RE_PERINTAH);
   if (!m) return { jenis: 'TIDAK_DIKENAL' };
   const kode = m[2]!;
   if (m[1] === 'SETUJU' || m[1] === 'APPROVE') return { jenis: 'SETUJU', kode };
-  const alasan = t.replace(/^\s*(TOLAK|REJECT)\s+\d{4}\s*/i, '').trim();
+  const alasan = t.replace(RE_AWAL_TOLAK, '').replace(/[\s*_~]+$/, '').trim();
   return alasan.length >= 3 ? { jenis: 'TOLAK', kode, alasan } : { jenis: 'TOLAK_TANPA_ALASAN', kode };
 }
 

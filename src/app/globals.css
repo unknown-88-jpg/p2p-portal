@@ -827,3 +827,24 @@ dialog.lebar { overflow: hidden; }
 dialog .chips.tombol-baris + .f { margin-top: 16px; }
 /* Sidebar desktop berlebar tetap: saat dibuka/ditutup hanya kolom isi yang beranimasi, teks menu tidak terlipat sesaat (sebelumnya menyempit ke ~145px selama animasi). */
 @media (min-width: 1024px) { .sidebar { width: var(--sb-w); } }
+
+/* ---- M8 Patch 2 / F-13: voucher cetak SATU halaman di semua perangkat ----
+   Safari iPhone menata halaman cetak pada lebar sempit sehingga aturan layar (<= 640px: satu kolom, header bertumpuk) ikut aktif
+   dan isi voucher melebihi satu A4 (halaman 2 hanya berisi "Dicetak ... WIB"). Di sini tata letak cetak DIPAKSA sama dengan A4:
+   dua kolom, header sejajar, kotak TTD rapat, dan blok pendek tidak dipotong antar halaman. Ditaruh paling akhir agar menang. */
+@media print {
+  @page { size: A4 portrait; margin: 10mm; }
+  .vc { font-size: 11px; }
+  .vc-h { flex-direction: row; gap: 0; padding-bottom: 6px; margin-bottom: 8px; }
+  .vc-id { text-align: right; }
+  .vc-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .vc-t { margin-bottom: 6px; }
+  .vc-t th, .vc-t td { padding: 2px 4px; }
+  .vc-box { margin: 6px 0; padding: 4px 8px; }
+  .vc-cfo { margin: 6px 0; }
+  .vc-ttd { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; margin-top: 8px; }
+  .vc-kotak { padding: 4px; }
+  .vc-sign { height: 44px; }
+  .vc-uang, .vc-bayar, .vc-box, .vc-cfo, .vc-ttd, .vc-kotak { break-inside: avoid; }
+  .vc-f { margin-top: 6px; break-before: avoid; }
+}
