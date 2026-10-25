@@ -401,6 +401,47 @@ b, strong, .det-h { font-weight: 600; }
 .badge-saya { background: var(--warn-bg); color: var(--warn); border-color: #fde68a; }
 .badge-tunggu { background: var(--primary-soft); color: var(--primary); border-color: #bfdbfe; }
 .toast.warn .ikon { color: var(--warn); }
+/* ---- audit jarak (25-10): skala 4/8/12/16/20/24/32 — judul→konten 20, toolbar/filter→daftar 16, padding kartu 20, antar kartu 16, tombol bawah 24 ---- */
+main.pt > .toolbar:has(> .page-h), .pt > .inbox-top:first-child, .pt > .toast-wadah:first-child + .inbox-top, .dash > .dash-head:first-child { margin-bottom: 20px; }
+main.pt > a.link + .toolbar:has(> .page-h) { margin-top: 12px; }
+main.pt > .toolbar:has(> .page-h) + .toolbar { margin-top: 0; }
+main.pt > .toolbar:has(> .page-h) + .vendor-grid { margin-top: 0; }
+.daftar-wrap, .toolbar + .daftar-wrap { margin-top: 16px; }
+p.fin-ringkas { margin-bottom: 16px; }
+main.pt > a.link + .toolbar:has(> .page-h) { margin-bottom: 8px; } /* detail: badge/alur menempel ke judul */
+main.pt > .toolbar:has(> .page-h) + .f { margin-top: 0; }
+.dash .sec-h { margin-bottom: 16px; }
+.alur-ringkas { margin-bottom: 8px; }
+.metrik { gap: 16px; }
+.det, .wiz-kartu { padding: 20px; }
+.wiz-kepala { margin: -20px -20px 20px; padding: 16px 20px; }
+.cta-row { margin-top: 24px; }
+@media (max-width: 640px) { .det, .wiz-kartu { padding: 16px; } .wiz-kepala { margin: -16px -16px 16px; padding: 14px 16px; } }
+/* ---- ritme di dalam kartu: judul→subjudul 4, judul/judul seksi→isi 12, antar field 16, seksi baru 20 ---- */
+.f { margin-top: 16px; }
+.kartu-t + p.muted, .kartu-t + .muted { margin-top: 4px; }
+.kartu-judul { margin-bottom: 12px; }
+.kartu-h { margin-bottom: 8px; }
+.ds-h { margin-bottom: 12px; }
+p.muted + .f, p.cap + .f, .wiz-kepala + .f { margin-top: 16px; }
+.ip-h, .ip-sub + .ds-h { margin: 20px 0 12px; }
+.ip-rincian { margin-top: 16px; }
+.ip-aksi { margin-top: 20px; }
+.vp { margin-top: 20px; }
+.vp .ip-rincian { margin: 4px 0 16px; }
+.vp .ip-aksi { margin-top: 16px; }
+.bar-list { gap: 16px; margin-top: 16px; }
+.lap-ringkas { gap: 12px; margin: 16px 0; }
+.lap-ringkas + .ds-h, .tabel-gulir + .ds-h { margin-top: 20px; }
+.toolbar-sub { margin: 8px 0 12px; }
+.tabel-gulir + p.muted, .tabel-gulir + .muted { margin-top: 12px; }
+.f + .grid2, .grid2 + .f { margin-top: 16px; }
+.kartu-judul + .rw-wrap, .kartu-t + ul, .kartu-t + .ringkas, p.muted + .tbl-wrap { margin-top: 12px; }
+p.muted + form { margin-top: 16px; }
+.rw-kartu .kartu-judul { margin-bottom: 12px; }
+@media (max-width: 640px) { .grid2 > .f { margin-top: 16px; } }
+span.kartu-h { display: block; }
+.ip-angka + .ip-sub { margin-top: 8px; }
 /* vendor: chip kode sama dengan chip ID pengajuan */
 .vs-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 2px; }
 .vendor-antre .dok-h { margin-bottom: 4px; }
