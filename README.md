@@ -180,6 +180,7 @@ curl -s -b jar.txt -o hasil.pdf localhost:3100/api/pengajuan/NTR-xxxxx/lampiran
 ## M7 — Detail dokumen, voucher, dashboard, Ctrl+K
 - **Detail** `/pengajuan/[id]` (+ `GET /api/pengajuan/[id]/detail`): ringkasan, pajak, stepper alur, umur di tahap, timeline (Audit_Log `STATUS_CHANGE` + Trx_Approval, email → nama). **I13** lewat `canViewDocument`: pemilik, Manager berwenang, Level ≥ 3 (bukan 99). Selain itu **404** (sama dengan ID tak ada). Rekening disamarkan di layar; link Drive mentah & email pembuat tidak dikirim ke klien.
 - **Voucher** `/pengajuan/[id]/voucher`: paritas `Print_Form.html` (A4, kotak TTD hasil port `buildSignatureBlocks`, kotak COA, riwayat bayar, catatan CFO). Rekening **penuh** hanya di voucher. Tombol cetak voucher / invoice / keduanya; invoice gambar lewat proxy lampiran (blob), PDF dibuka di tab baru (CSP `object-src 'none'`).
+- Beda dari sistem lama (keputusan user 2026-10-25): kotak TTD voucher **hanya level alur P2P 1–5**. Admin (L9, brand/dept ALL) mengatur sistem dan tidak lagi muncul sebagai kotak "Mengetahui," (sistem lama memasukkan semua level yang cocok brand/dept).
 - **Dashboard** di `/`: PIC (revisi/draft/menunggu + aktivitas terakhir), Manager (antrean, total nominal, tertua, ringkasan divisi bulan ini).
 - **Ctrl/⌘+K** `GET /api/search?q=` (min 2 huruf, maks 8 hasil, hanya dokumen yang boleh dilihat).
 - Uji: `tests/m7.test.ts` (matriks I13 8 peran, paritas signature block, timeline, pencarian, dashboard).

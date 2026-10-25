@@ -129,6 +129,7 @@ describe('buildSignatureBlocks — paritas', () => {
     { brand: 'BRAND A', dept: 'DEPT X', level: 3, jabatan: 'Fin2', nama: '-', aktif: 'YES' },
     { brand: 'BRAND A', dept: 'DEPT X', level: 1, jabatan: 'PIC', nama: 'Mati', aktif: 'NO' },
     { brand: 'BRAND B', dept: 'DEPT Y', level: 1, jabatan: 'PIC', nama: 'Lain', aktif: 'YES' },
+    { brand: 'ALL', dept: 'ALL', level: 9, jabatan: 'System Admin', nama: 'Admin', aktif: 'YES' },
   ];
   const f = (x: unknown): string => `T${String(x)}`;
   it('tanpa CFO: level 1-4, satu orang pertama per level, CFO dilewati, nama "-"/nonaktif/divisi lain dilewati', () => {
@@ -141,6 +142,11 @@ describe('buildSignatureBlocks — paritas', () => {
     expect(k.map((x) => x.role)).toEqual(['Dibuat Oleh,', 'Diperiksa Oleh,', 'Diverifikasi Oleh,', 'Disetujui Oleh,', 'Disetujui Oleh,']);
     expect(k.map((x) => x.method)).toEqual(['E-SIGN', 'E-SIGN', 'E-SIGN', 'E-SIGN', 'E-SIGN']); // O4: tanpa TTD basah
     expect(k[0]!.label).toBe('( Menunggu )'); expect(k[3]!.label).toBe('( Menunggu )');
+  });
+  it('Admin (L9, ALL/ALL) bukan penandatangan: tidak muncul sebagai kotak "Mengetahui" (keputusan user, beda dari lama)', () => {
+    const k = bangunKotakTTD(users, new Map(), 'BRAND A', 'DEPT X', true, f);
+    expect(k.some((x) => x.level === 9 || x.nama === 'ADMIN')).toBe(false);
+    expect(k.map((x) => x.role)).not.toContain('Mengetahui,');
   });
   it('approval nyata menimpa nama/jabatan dan menandai tertanda; catatan lama Method WET = "TTD Basah — Terverifikasi", e-approve = E-Signed; yang terakhir menang', () => {
     const peta = petaPersetujuan([
