@@ -144,7 +144,8 @@ export function FormVerifikasiPajak({ dok, onSelesai, onKembali }: { dok: DokPaj
         <dl className="rv-info">
           <Info l="Diajukan oleh" v={dok.pic} /><Info l="Brand / Departemen" v={[dok.brand, dok.departement].filter(Boolean).join(' / ')} /><Info l="Tipe" v={dok.tipe} />
           <Info l="Keperluan" v={dok.description} /><Info l="No. Invoice" v={dok.noInvoice} /><Info l="Jatuh tempo" v={dok.dueDate} />
-          <a className="link rv-detail" href={`/pengajuan/${encodeURIComponent(dok.id)}`}>Detail lengkap & riwayat →</a>
+          {/* <dl> hanya boleh berisi dt/dd (atau div pembungkusnya) — tautan dibungkus pasangan dt/dd (axe definition-list) */}
+          <div className="rv-detail-sel"><dt className="sr-only">Lainnya</dt><dd><a className="link rv-detail" href={`/pengajuan/${encodeURIComponent(dok.id)}`}>Detail lengkap & riwayat →</a></dd></div>
         </dl>
 
         <div className="rv-body">

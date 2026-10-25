@@ -162,6 +162,25 @@ describe('buildSignatureBlocks — paritas', () => {
     expect(k[3]).toMatchObject({ isSigned: true, label: 'TTD Basah — Terverifikasi', method: 'WET' });
     expect(bangunKotakTTD(users, peta, 'BRAND A', 'DEPT X', true, f)[4]).toMatchObject({ isSigned: true, label: 'E-Signed', method: 'E-SIGN' });
   });
+  it('C7: hanya siklus sekarang — baris sebelum pengajuan ulang (L1) terakhir diabaikan; L4/L5 hanya setelah L3 terakhir', () => {
+    const r = (level: number, action: string, nama: string, timestamp: unknown) => ({ level, action, nama, jabatan: 'J', timestamp });
+    const lama = [r(1, 'APPROVED', 'Citra', 1), r(2, 'APPROVED', 'Budi', 2), r(3, 'APPROVED', 'Dani', 3), r(4, 'APPROVED', 'Eko', 4), r(3, 'REJECTED', 'Dani', 5)];
+    // diajukan ulang + Manager setuju lagi; pajak belum
+    let p = petaPersetujuan([...lama, r(1, 'APPROVED', 'Citra', 6), r(2, 'APPROVED', 'Fajar', 7)]);
+    expect([...p.keys()].sort()).toEqual([1, 2]);
+    expect(p.get(2)!.nama).toBe('Fajar');
+    // pajak diverifikasi ulang: L4 lama tetap batal sampai Fin. Mgr menyetujui lagi
+    p = petaPersetujuan([...lama, r(1, 'APPROVED', 'Citra', 6), r(2, 'APPROVED', 'Fajar', 7), r(3, 'APPROVED', 'Dani', 8)]);
+    expect(p.has(4)).toBe(false);
+    p = petaPersetujuan([...lama, r(1, 'APPROVED', 'Citra', 6), r(2, 'APPROVED', 'Fajar', 7), r(3, 'APPROVED', 'Dani', 8), r(4, 'APPROVED', 'Eko', 9)]);
+    expect(p.get(4)!.timestamp).toBe(9);
+  });
+  it('C7: waktu L1/L3 tak terbaca = gagal tertutup (level sesudahnya tidak tertanda); data lama tanpa L1 tetap tampil', () => {
+    const r = (level: number, timestamp: unknown) => ({ level, action: 'APPROVED', nama: 'X', jabatan: 'J', timestamp });
+    expect([...petaPersetujuan([r(1, 'rusak'), r(2, 2), r(3, 3)]).keys()]).toEqual([1]);
+    expect([...petaPersetujuan([r(1, 1), r(2, 2), r(3, 'rusak'), r(4, 4)]).keys()]).toEqual([1, 2]);
+    expect([...petaPersetujuan([r(2, 2), r(3, 3), r(4, 4)]).keys()].sort()).toEqual([2, 3, 4]);
+  });
   it('voucher end-to-end: kotak TTD dari Master_User_TTD + riwayat bayar + ambang CFO', async () => {
     const id = await buat(6_000_000);
     w.store.seed(TRX_PAYMENT_LOG, [['LOG-1', id, 46296, 2_000_000, 'BCA', 'REF1', 'dani@x.id', 46296]]);
