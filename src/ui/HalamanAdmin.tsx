@@ -159,7 +159,7 @@ export function HalamanAdmin({ emailSaya, tabAwal }: { emailSaya: string; tabAwa
           </div>
           {galatMuat && <Pesan jenis="err">{galatMuat} <button type="button" className="link" onClick={() => void muatUser()}>Coba lagi</button></Pesan>}
           {!users ? (galatMuat ? null : <Skeleton baris={5} />) : (
-            <div className="tabel-gulir"><table className="tabel">
+            <div className="tabel-gulir" tabIndex={0} role="region" aria-label="Tabel, bisa digeser ke samping"><table className="tabel">
               <thead><tr><th>Nama</th><th>Nomor HP</th><th>Brand / Dept</th><th>Level</th><th>Status</th><th><span className="sr-only">Aksi</span></th></tr></thead>
               <tbody>{tampil.map((u) => (
                 <tr key={u.row}>
@@ -236,7 +236,7 @@ export function HalamanAdmin({ emailSaya, tabAwal }: { emailSaya: string; tabAwa
               {prat.total === 0 ? <Pesan jenis="ok">Tidak ada yang perlu diperbaiki.</Pesan> : (
                 <>
                   <p className="muted cap">{prat.total} baris akan diubah{prat.dibatasi ? ` (eksekusi ini 100 pertama)` : ''}.</p>
-                  <div className="tabel-gulir"><table className="tabel">
+                  <div className="tabel-gulir" tabIndex={0} role="region" aria-label="Tabel, bisa digeser ke samping"><table className="tabel">
                     <thead><tr><th>Dokumen</th><th>Sebelum</th><th>Sesudah</th></tr></thead>
                     <tbody>{prat.ubah.map((u) => <tr key={u.id}><td className="kode">{u.id}</td><td className="kode cap">{Object.entries(u.sebelum).map(([k, v]) => `${k}=${v}`).join(' · ')}</td><td className="kode cap">{Object.entries(u.cells).map(([k, v]) => `${k}=${v}`).join(' · ')}</td></tr>)}</tbody>
                   </table></div>
@@ -256,7 +256,7 @@ export function HalamanAdmin({ emailSaya, tabAwal }: { emailSaya: string; tabAwa
           {!arsip ? <Skeleton baris={3} /> : arsip.kandidat.length === 0 ? <Pesan jenis="ok">Tidak ada dokumen yang lunas sebelum {arsip.batas}. Trx_Pengajuan berisi {arsip.jumlahBaris} baris.</Pesan> : (
             <>
               <p className="muted cap">{arsip.kandidat.length} dokumen lunas sebelum {arsip.batas} (dari {arsip.jumlahBaris} baris).</p>
-              <div className="tabel-gulir"><table className="tabel">
+              <div className="tabel-gulir" tabIndex={0} role="region" aria-label="Tabel, bisa digeser ke samping"><table className="tabel">
                 <thead><tr><th>Dokumen</th><th>Vendor</th><th>Lunas</th><th className="num">Nominal</th></tr></thead>
                 <tbody>{arsip.kandidat.map((k) => <tr key={k.id}><td className="kode">{k.id}</td><td>{k.vendor}</td><td className="kode">{k.lunas}</td><td className="num">Rp {k.nominal.toLocaleString('id-ID')}</td></tr>)}</tbody>
               </table></div>

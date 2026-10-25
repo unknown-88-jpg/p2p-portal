@@ -88,12 +88,12 @@ export function HalamanLaporan({ bisaAudit, hariIni, awalBulan }: { bisaAudit: b
                 {aging.perBucket.filter((b) => b.jumlah > 0).map((b) => <div key={b.bucket}><dt>{b.bucket} · {b.jumlah} dok</dt><dd className="num">{rp(b.sisa)}</dd></div>)}
               </dl>
               <h3 className="ds-h">Outstanding per vendor</h3>
-              <div className="tabel-gulir"><table className="tabel">
+              <div className="tabel-gulir" tabIndex={0} role="region" aria-label="Tabel, bisa digeser ke samping"><table className="tabel">
                 <thead><tr><th>Vendor</th><th className="num">Dokumen</th><th className="num">Lewat terlama</th><th className="num">Sisa</th></tr></thead>
                 <tbody>{aging.perVendor.map((v) => <tr key={v.vendor}><td>{v.vendor}</td><td className="num">{v.jumlah}</td><td className="num">{v.terlama !== null && v.terlama > 0 ? `${v.terlama} hari` : '—'}</td><td className="num">{rp(v.sisa)}</td></tr>)}</tbody>
               </table></div>
               <h3 className="ds-h">Rincian dokumen</h3>
-              <div className="tabel-gulir"><table className="tabel">
+              <div className="tabel-gulir" tabIndex={0} role="region" aria-label="Tabel, bisa digeser ke samping"><table className="tabel">
                 <thead><tr><th>ID</th><th>Vendor</th><th>Jatuh tempo</th><th>Kelompok</th><th className="num">Sisa</th></tr></thead>
                 <tbody>{aging.baris.map((b) => <tr key={b.id}><td className="kode"><a href={`/pengajuan/${encodeURIComponent(b.id)}`}>{b.id}</a></td><td>{b.vendor}<div className="muted cap">{b.brand} / {b.dept} · {b.status}</div></td><td className="kode">{b.dueDate || '—'}</td><td>{b.bucket}{b.hariLewat !== null && b.hariLewat > 0 ? ` (${b.hariLewat} hr)` : ''}</td><td className="num">{rp(b.sisa)}</td></tr>)}</tbody>
               </table></div>
@@ -112,7 +112,7 @@ export function HalamanLaporan({ bisaAudit, hariIni, awalBulan }: { bisaAudit: b
             <>
               <Basi basi={rekap.basi} />
               <div className="toolbar-sub"><span /><button type="button" className="btn btn-secondary btn-sm" onClick={() => unduhTeks(`rekap-${dimRekap}-${dari}-${sampai}.csv`, csv([DIMENSI.find((x) => x.nilai === dimRekap)!.teks, 'Dokumen', 'Nominal', 'Dibayar', 'Sisa'], [...rekap.baris.map((b) => [b.kunci, b.jumlah, b.total, b.dibayar, b.sisa]), ['Total', rekap.total.jumlah, rekap.total.total, rekap.total.dibayar, rekap.total.sisa]]))}>Unduh CSV</button></div>
-              <div className="tabel-gulir"><table className="tabel">
+              <div className="tabel-gulir" tabIndex={0} role="region" aria-label="Tabel, bisa digeser ke samping"><table className="tabel">
                 <thead><tr><th>{DIMENSI.find((x) => x.nilai === dimRekap)!.teks}</th><th className="num">Dokumen</th><th className="num">Nominal</th><th className="num">Dibayar</th><th className="num">Sisa</th></tr></thead>
                 <tbody>{rekap.baris.map((b) => <tr key={b.kunci}><td>{b.kunci}</td><td className="num">{b.jumlah}</td><td className="num">{rp(b.total)}</td><td className="num">{rp(b.dibayar)}</td><td className="num">{rp(b.sisa)}</td></tr>)}</tbody>
                 <tfoot><tr><td>Total</td><td className="num">{rekap.total.jumlah}</td><td className="num">{rp(rekap.total.total)}</td><td className="num">{rp(rekap.total.dibayar)}</td><td className="num">{rp(rekap.total.sisa)}</td></tr></tfoot>
@@ -131,7 +131,7 @@ export function HalamanLaporan({ bisaAudit, hariIni, awalBulan }: { bisaAudit: b
               <Basi basi={bayar.basi} />
               <div className="toolbar-sub"><span className="muted cap">{bayar.baris.length} transfer · {rp(bayar.total)}</span>
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => unduhTeks(`pembayaran-${dari}-${sampai}.csv`, csv(['Log ID', 'Tanggal', 'ID Trx', 'Vendor', 'Brand', 'Nominal', 'Rekening sumber', 'Ref', 'Oleh'], bayar.baris.map((b) => [b.logId, b.tgl, b.idTrx, b.vendor, b.brand, b.nominal, b.sumber, b.ref, b.oleh])))}>Unduh CSV</button></div>
-              <div className="tabel-gulir"><table className="tabel">
+              <div className="tabel-gulir" tabIndex={0} role="region" aria-label="Tabel, bisa digeser ke samping"><table className="tabel">
                 <thead><tr><th>Tanggal</th><th>Dokumen</th><th>Rekening sumber</th><th className="num">Nominal</th></tr></thead>
                 <tbody>{bayar.baris.map((b) => <tr key={b.logId}><td className="kode">{b.tgl}</td><td><a href={`/pengajuan/${encodeURIComponent(b.idTrx)}`}>{b.idTrx}</a><div className="muted cap">{b.vendor}{b.ref ? ` · ref ${b.ref}` : ''}</div></td><td>{b.sumber || '—'}</td><td className="num">{rp(b.nominal)}</td></tr>)}</tbody>
               </table></div>
@@ -155,7 +155,7 @@ export function HalamanLaporan({ bisaAudit, hariIni, awalBulan }: { bisaAudit: b
             <>
               <Basi basi={audit.basi} />
               <p className="muted cap">{audit.cocok} baris cocok{audit.cocok > audit.baris.length ? ` — ditampilkan ${audit.baris.length} terbaru; persempit filter` : ''}.</p>
-              <div className="tabel-gulir"><table className="tabel">
+              <div className="tabel-gulir" tabIndex={0} role="region" aria-label="Tabel, bisa digeser ke samping"><table className="tabel">
                 <thead><tr><th>Waktu</th><th>Aksi</th><th>Dokumen</th><th>Aktor</th><th>Perubahan</th></tr></thead>
                 <tbody>{audit.baris.map((b) => <tr key={b.logId}><td className="kode">{b.waktu}</td><td>{b.aksi}<div className="muted cap">{b.field}</div></td><td className="kode">{b.idTrx}</td><td>{b.aktor}</td><td className="cap">{b.lama || b.baru ? <>{b.lama && <span className="muted">{b.lama} → </span>}{b.baru}</> : null}{b.catatan && <div className="muted">{b.catatan}</div>}</td></tr>)}</tbody>
               </table></div>
