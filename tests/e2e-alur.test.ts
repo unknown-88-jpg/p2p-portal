@@ -485,16 +485,14 @@ describe('E2E C — jalur tolak & kembalikan', () => {
   });
 
   /**
-   * TEMUAN (defect, bukan kesalahan tes): voucher/kotak TTD memakai `petaPersetujuan` (src/domain/dokumen.ts:53, dipanggil di
-   * src/server/dokumen.ts:105) = "APPROVED terakhir per level" TANPA memperhatikan siklus. Setelah dikembalikan & diajukan ulang,
-   * kotak Fin. Mgr (L4) tetap "E-Signed" atas nama Eko dari siklus lama, padahal gerbang server (statusPersetujuan, F2-C) menganggapnya
-   * batal dan lonceng meminta Fin. Mgr menyetujui ulang. Voucher cetak bisa memperlihatkan tanda tangan yang sudah tidak berlaku.
-   * `it.fails` = lulus selama defect masih ada; bila diperbaiki, tes ini merah -> ubah jadi `it` biasa.
+   * C7 (temuan audit, diperbaiki 2026-10-25): voucher/kotak TTD hanya memakai persetujuan siklus sekarang (petaPersetujuan),
+   * selaras dengan gerbang server statusPersetujuan. L2/L3 siklus baru tampil, L4 lama (Eko) tidak.
    */
-  it.fails('C7 [DEFECT] voucher saat menunggu Fin. Mgr ulang tidak boleh menampilkan kotak L4 sebagai sudah ditandatangani', async () => {
+  it('C7 voucher saat menunggu Fin. Mgr ulang tidak boleh menampilkan kotak L4 sebagai sudah ditandatangani', async () => {
     const x = D.w.store.rowsOf(TRX_PENGAJUAN).map((r) => String(r[C('ID_TRX')])).find((i) => D.status(i) === 'Tax Verified')!;
     const v = await voucher(D.w.deps, D.A.citra!.s, x);
     expect(v.ttd.find((t) => t.level === 4)!.isSigned).toBe(false);
+    expect(v.ttd.filter((t) => t.level <= 3).every((t) => t.isSigned)).toBe(true);
   });
 });
 

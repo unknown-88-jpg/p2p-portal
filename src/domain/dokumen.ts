@@ -49,13 +49,31 @@ export function bangunKotakTTD(users: readonly BarisUserTTD[], approved: Readonl
   });
 }
 
-/** Peta persetujuan per level dari baris Trx_Approval: hanya APPROVED, yang terakhir menang (getApprovalMap lama). */
+/**
+ * Peta persetujuan per level dari baris Trx_Approval: hanya APPROVED, yang terakhir menang (getApprovalMap lama), TAPI hanya dari
+ * SIKLUS sekarang (beda dari lama, diputuskan pemilik 2026-10-25, temuan C7): baris sebelum pengajuan (L1 APPROVED) terakhir diabaikan,
+ * dan L4/L5 hanya yang dicatat setelah verifikasi pajak (L3 APPROVED) terakhir — sama dengan gerbang server `statusPersetujuan`.
+ * Dokumen yang dikembalikan lalu diajukan ulang tidak menampilkan tanda tangan lama yang sudah batal.
+ * Waktu L1/L3 tak terbaca (sel rusak) = gagal tertutup: level sesudahnya dianggap belum ditandatangani.
+ */
 export function petaPersetujuan(rows: readonly { level: unknown; action: unknown; nama: unknown; jabatan: unknown; timestamp: unknown; method?: unknown }[]): Map<number, Persetujuan> {
+  const lv = (v: unknown): number => (typeof v === 'number' ? Math.trunc(v) : parseInt(String(v ?? ''), 10));
+  const wkt = (v: unknown): number => { const n = typeof v === 'number' ? v : parseFloat(String(v ?? '')); return Number.isFinite(n) ? n : NaN; };
+  const ok = rows.filter((r) => up(r.action) === 'APPROVED' && Number.isFinite(lv(r.level)));
+  /** Waktu baris APPROVED terakhir di level itu: -Infinity bila tidak ada, NaN bila ada yang waktunya tak terbaca. */
+  const terakhir = (level: number): number => {
+    const t = ok.filter((r) => lv(r.level) === level).map((r) => wkt(r.timestamp));
+    return t.length === 0 ? -Infinity : t.some(Number.isNaN) ? NaN : Math.max(...t);
+  };
+  const mulaiSiklus = terakhir(LEVEL.PIC);
+  const mulaiPersetujuan = terakhir(LEVEL.FINANCE_STAFF);
   const m = new Map<number, Persetujuan>();
-  for (const r of rows) {
-    if (up(r.action) !== 'APPROVED') continue;
-    const level = typeof r.level === 'number' ? Math.trunc(r.level) : parseInt(String(r.level ?? ''), 10);
-    if (!Number.isFinite(level)) continue;
+  for (const r of ok) { // urutan baris = urutan append (kronologis); yang terakhir menang
+    const level = lv(r.level);
+    const t = wkt(r.timestamp);
+    const batas = level >= LEVEL.FINANCE_MGR ? Math.max(mulaiSiklus, mulaiPersetujuan) : mulaiSiklus;
+    if (level !== LEVEL.PIC && Number.isNaN(batas)) continue;
+    if (batas > -Infinity && !(t >= batas)) continue;
     m.set(level, { level, nama: str(r.nama), jabatan: str(r.jabatan), timestamp: r.timestamp, method: str(r.method) });
   }
   return m;
