@@ -366,6 +366,41 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); }
   .fin-tabel .ib-meta .dok-id { font-size: 12px; padding: 2px 9px; }
   .fin-tabel .ib-dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 }
+/* ---- audit konsistensi (25-10) ---- */
+/* Tepi kiri konten sama di semua halaman & semua lebar layar (rata kiri di samping sidebar, bukan rata tengah per lebar kontainer) */
+#isi:has(> .sidebar) > :is(.wrap, .wrap-wide, .wrap-xl, .dash) { margin-left: 0; }
+/* Beranda: jarak judul sama dengan halaman lain */
+.dash > .dash-head:first-child { margin-top: 22px; }
+/* Detail pengajuan: skala & warna mengikuti kartu lain (judul 22, angka utama 26, warna tinta; bukan teal sendiri) */
+.det { border-radius: var(--r-lg); padding: 24px; box-shadow: var(--shadow-xs); }
+.det-nama { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+.det-nominal .det-l { color: var(--muted); font-weight: 400; }
+.det-angka { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+.det-grid dd { font-size: 14px; font-weight: 500; letter-spacing: 0; }
+.det-pajak { border-radius: var(--r-md); }
+.det-pj dd { font-weight: 500; }
+.det-perlu { border-radius: var(--r-md); }
+.det + .kartu, .det + .kartu + .kartu { margin-top: 16px; }
+@media screen { #isi:has(> .sidebar) > .vc-wrap { margin-left: 0; } .vc-wrap > .page-h:first-child { margin-top: 22px; } }
+@media screen and (max-width: 760px) { .vc-wrap { padding-left: 20px; padding-right: 20px; } }
+@media (max-width: 640px) { .det { padding: 16px; } .det-nama { font-size: 18px; } .det-angka { font-size: 22px; } .det-nominal { background: var(--pearl); border-radius: var(--r-md); } }
+/* Tabel ringkas (.tbl: Beranda, Pembayaran) = kepala kolom sama dengan tabel lain */
+.tbl th { background: var(--pearl); border-bottom: 1px solid var(--hairline); }
+.tbl th:first-child { border-top-left-radius: var(--r-sm); }
+.tbl th:last-child { border-top-right-radius: var(--r-sm); }
+/* HP: link kecil di kepala kartu ("Lihat semua") tetap 44px area sentuh */
+@media (max-width: 640px) { .kartu-judul > a { display: inline-flex; align-items: center; min-height: 44px; } }
+/* ---- audit font & warna (25-10): bobot maks. 600, isi 14px, warna semantik lewat token tema ---- */
+b, strong, .det-h { font-weight: 600; }
+@media screen { .vc b, .vc strong { font-weight: 700; } } /* voucher = dokumen cetak, tetap tebal */
+.bar-ket, .rw-j, .dash-head .muted, .inbox-top .muted, .inbox-total, a.link, .det ~ .kartu p, main > p.muted { font-size: 14px; }
+.rw-mk.ok, .ip-ik.ok { background: var(--ok-bg); color: var(--ok); }
+.rw-mk.bad, .ip-ik.bad { background: var(--danger-bg); color: var(--danger); }
+.ip-ik.warn { background: var(--warn-bg); color: var(--warn); }
+.badge-saya, .badge-tunggu { font-weight: 500; border-radius: var(--r-sm); border: 1px solid; }
+.badge-saya { background: var(--warn-bg); color: var(--warn); border-color: #fde68a; }
+.badge-tunggu { background: var(--primary-soft); color: var(--primary); border-color: #bfdbfe; }
+.toast.warn .ikon { color: var(--warn); }
 /* vendor: chip kode sama dengan chip ID pengajuan */
 .vs-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 2px; }
 .vendor-antre .dok-h { margin-bottom: 4px; }

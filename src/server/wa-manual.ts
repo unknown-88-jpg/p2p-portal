@@ -46,7 +46,8 @@ export async function kirimWaManual(d: AuthDeps, s: SessionData, idTrx: string, 
     throw new AppError('RATE_LIMITED', 'Pengingat WA untuk dokumen ini sudah dikirim hari ini. Bisa dikirim lagi besok.', undefined, Math.ceil(sisa / 1000));
   }
   try {
-    const grup = [...(await itemPerManager(d, [f.data], sod)).entries()].filter(([, g]) => g.items.length);
+    // Penerima ≠ pengirim (sama dengan jalur WA Finance): walau SoD dimatikan, PIC yang juga Manager tidak mengirim pengingat ke dirinya sendiri.
+    const grup = [...(await itemPerManager(d, [f.data], sod)).entries()].filter(([phone, g]) => g.items.length && phone !== s.phone);
     if (!grup.length) throw new AppError('RULE_VIOLATION', 'Tidak ada Manager dengan nomor WA aktif yang berwenang atas dokumen ini.');
     const base = d.baseUrl.replace(/\/+$/, '');
     let terkirim = 0;

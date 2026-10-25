@@ -104,6 +104,12 @@ describe('F-15 kirim WA manual oleh PIC', () => {
     expect(r.manager).toBe(2);
     expect(to(PH.dual)).toHaveLength(0);
   });
+  it('penerima tidak pernah pengirim sendiri, walau SoD dimatikan (sama dengan jalur WA Finance)', async () => {
+    const id = await submitted(dual);
+    const r = await kirimWaManual(w.deps, dual, id, false);
+    expect(r.manager).toBe(2); // budi & fajar, bukan dual
+    expect(to(PH.dual)).toHaveLength(0);
+  });
   it('semua kirim gagal = 503 dan jatah hari itu DIKEMBALIKAN (bisa coba lagi)', async () => {
     const id = await submitted();
     const asli = w.wa.send.bind(w.wa);
