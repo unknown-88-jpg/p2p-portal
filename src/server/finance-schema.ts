@@ -28,7 +28,8 @@ export const jurnalSchema = z.object({
   items: z.array(z.object({
     id: z.string().regex(/^(TRD|NTR)-\d{5,}$/), etag,
     lvl1: lvl, lvl2: lvl, lvl3: lvl.default('-'), lvl4: lvl.default('-'), lvl5: lvl.default('-'),
-    budget: z.string().trim().max(60), notes: txt(CATATAN_MAX).optional(),
+    budget: z.string().trim().max(60).optional(), // dinonaktifkan 2026-10-25: diterima demi klien lama, diabaikan
+    notes: txt(CATATAN_MAX).optional(),
   }).strict()).min(1, 'Pilih minimal satu dokumen.').max(30, 'Maksimal 30 dokumen sekali jurnal.'),
 }).strict();
 

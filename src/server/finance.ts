@@ -92,7 +92,7 @@ export async function antreanFinance(d: AuthDeps, s: SessionData, tahap?: string
       }
       const r = baris.get(i.id.toUpperCase());
       const apr = per.get(i.id.toUpperCase()) ?? [];
-      i.blokirBayar = r ? cekBolehDibayar({ status: i.status, perluCFO: i.perluCFO, subCoa: str(cell(r, 'SUB_COA')), budget: str(cell(r, 'BUDGET')), st,
+      i.blokirBayar = r ? cekBolehDibayar({ status: i.status, perluCFO: i.perluCFO, subCoa: str(cell(r, 'SUB_COA')), st,
         manager: apr.some((x) => Number(A(x, 'Level')) === LEVEL.MANAGER && upper(A(x, 'Action')) === 'APPROVED') }) : null;
       i.tugasRangkap = tugasRangkapBayar(s.email, st);
     }

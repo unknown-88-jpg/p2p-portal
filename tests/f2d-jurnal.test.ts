@@ -37,13 +37,13 @@ beforeEach(() => {
 });
 
 describe('F2-D domain', () => {
-  it('validasi: L1 & L2 wajib, budget wajib, kombinasi harus ada; akun = level terdalam; "-" = tidak dipilih', () => {
-    const j = (o: Partial<Record<'lvl1' | 'lvl2' | 'lvl3' | 'lvl4' | 'lvl5' | 'budget', string>>) => validasiJurnal(COA, { lvl1: 'BEBAN', lvl2: 'BEBAN OPERASIONAL', lvl3: '-', lvl4: '-', lvl5: '-', budget: 'b', ...o });
-    expect(j({ lvl3: 'ATK', lvl4: 'KERTAS', lvl5: 'KERTAS A4' })).toMatchObject({ ok: true, akun: 'KERTAS A4', budget: 'B' });
+  it('validasi: L1 & L2 wajib, budget TIDAK wajib (dinonaktifkan 2026-10-25), kombinasi harus ada; akun = level terdalam; "-" = tidak dipilih', () => {
+    const j = (o: Partial<Record<'lvl1' | 'lvl2' | 'lvl3' | 'lvl4' | 'lvl5', string>>) => validasiJurnal(COA, { lvl1: 'BEBAN', lvl2: 'BEBAN OPERASIONAL', lvl3: '-', lvl4: '-', lvl5: '-', ...o });
+    expect(j({ lvl3: 'ATK', lvl4: 'KERTAS', lvl5: 'KERTAS A4' })).toMatchObject({ ok: true, akun: 'KERTAS A4' });
     expect(j({ lvl3: 'ATK', lvl4: 'TINTA' })).toMatchObject({ ok: true, akun: 'TINTA' });
     expect(j({})).toMatchObject({ ok: true, akun: 'BEBAN OPERASIONAL' }); // lama: boleh berhenti di level 2
     expect(j({ lvl2: '' })).toMatchObject({ ok: false, alasan: expect.stringMatching(/level 1 & 2/) });
-    expect(j({ budget: '  ' })).toMatchObject({ ok: false, alasan: expect.stringMatching(/budget/) });
+    expect(j({})).toMatchObject({ ok: true }); // tanpa budget tetap sah
     expect(j({ lvl3: 'ATK', lvl4: 'KERTAS', lvl5: 'TINTA' })).toMatchObject({ ok: false, alasan: expect.stringMatching(/tidak ada di Master_COA/) });
     expect(j({ lvl1: 'ASET', lvl2: 'BEBAN OPERASIONAL' }).ok).toBe(false);
   });
@@ -62,7 +62,7 @@ describe('F2-D jurnalCoa', () => {
     expect(r.berhasil.map((b) => [b.id, b.akun])).toEqual([['NTR-00001', 'KERTAS A4'], ['NTR-00002', 'KERTAS A4'], ['NTR-00003', 'BEBAN OPERASIONAL']]);
     expect(r.gagal).toEqual([]);
     const x = row('NTR-00001');
-    expect([x[C('STATUS')], x[C('CATEGORY_COA')], x[C('HEAD_COA')], x[C('SUB_COA')], x[C('BUDGET')], x[C('NOTES_FINANCE')]]).toEqual(['COA Posted', 'BEBAN', 'BEBAN OPERASIONAL', 'KERTAS A4', 'MKT-Q4', '']);
+    expect([x[C('STATUS')], x[C('CATEGORY_COA')], x[C('HEAD_COA')], x[C('SUB_COA')], x[C('BUDGET')], x[C('NOTES_FINANCE')]]).toEqual(['COA Posted', 'BEBAN', 'BEBAN OPERASIONAL', 'KERTAS A4', null, '']); // BUDGET tidak ditulis lagi (budget dari klien lama diabaikan)
     const acts = w.store.rowsOf(AUDIT_LOG).map((a) => `${a[CL('ID_Trx')]}:${a[CL('Action')]}`);
     expect(acts.filter((a) => a.endsWith('COA_POST'))).toHaveLength(3);
     expect(acts.filter((a) => a.endsWith('STATUS_CHANGE'))).toHaveLength(3);

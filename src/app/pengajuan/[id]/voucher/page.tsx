@@ -89,7 +89,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
         {v.coa && (
           <div className="pv-coa">
-            <div className="pv-coa-h"><span className="pv-badge-jurnal">Terjurnal oleh Finance</span><span>Plafon budget: <b className="pv-merah">{isi(v.coa.budget)}</b></span></div>
+            <div className="pv-coa-h"><span className="pv-badge-jurnal">Terjurnal oleh Finance</span></div>
             <div className="pv-coa-akun">Akun: <u>{v.coa.sub}</u></div>
             <div className="pv-sub">Kategori {isi(v.coa.kategori)} · Group {isi(v.coa.head)}</div>
           </div>
