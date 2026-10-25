@@ -6,7 +6,7 @@ import { Chips, Field, Pesan, Skeleton } from './kit';
 import { unduhTeks } from './unduh';
 
 type Tab = 'aging' | 'rekap' | 'bayar' | 'audit';
-type Dimensi = 'brand' | 'dept' | 'coa' | 'budget' | 'vendor';
+type Dimensi = 'brand' | 'dept' | 'coa' | 'vendor';
 interface Aging {
   hariIni: string; basi: boolean; totalSisa: number;
   baris: { id: string; vendor: string; brand: string; dept: string; status: string; dueDate: string; hariLewat: number | null; bucket: string; total: number; dibayar: number; sisa: number }[];
@@ -19,7 +19,7 @@ interface Audit { basi: boolean; cocok: number; baris: { logId: string; waktu: s
 
 const rp = (n: number): string => `Rp ${Math.round(n).toLocaleString('id-ID')}`;
 const csv = (header: string[], rows: (string | number)[][]): string => keCsv([header, ...rows.map((r) => r.map((c) => (typeof c === 'number' ? String(c) : amankanSel(c))))]);
-const DIMENSI: { nilai: Dimensi; teks: string }[] = [{ nilai: 'brand', teks: 'Brand' }, { nilai: 'dept', teks: 'Departemen' }, { nilai: 'coa', teks: 'COA' }, { nilai: 'budget', teks: 'Budget' }, { nilai: 'vendor', teks: 'Vendor' }];
+const DIMENSI: { nilai: Dimensi; teks: string }[] = [{ nilai: 'brand', teks: 'Brand' }, { nilai: 'dept', teks: 'Departemen' }, { nilai: 'coa', teks: 'COA' }, { nilai: 'vendor', teks: 'Vendor' }];
 const qs = (o: Record<string, string>): string => new URLSearchParams(Object.entries(o).filter(([, v]) => v.trim() !== '')).toString();
 const Basi = ({ basi }: { basi: boolean }) => (basi ? <Pesan jenis="warn">Sheets sedang sibuk — data dari salinan beberapa menit lalu.</Pesan> : null);
 

@@ -19,7 +19,6 @@ export function FormJurnal({ target, onSelesai }: { target: readonly DokJurnal[]
   const [coa, setCoa] = useState<BarisCoa[] | null>(null);
   const [galatCoa, setGalatCoa] = useState<string | null>(null);
   const [lv, setLv] = useState<string[]>(['', '', '', '', '']);
-  const [budget, setBudget] = useState('');
   const [notes, setNotes] = useState('');
   const [dlg, setDlg] = useState(false);
   const [sibuk, setSibuk] = useState(false);
@@ -33,7 +32,7 @@ export function FormJurnal({ target, onSelesai }: { target: readonly DokJurnal[]
   const opsi = (n: number): string[] => (coa ? opsiCoa(coa, lv, n) : []);
   const ubah = (n: number, v: string) => setLv((x) => [...x.slice(0, n), v, ...['', '', '', '', ''].slice(n + 1)]);
   // Level tanpa turunan dikirim sebagai "-" (aturan lama).
-  const isian = { lvl1: lv[0]!, lvl2: lv[1]!, lvl3: lv[2] || '-', lvl4: lv[3] || '-', lvl5: lv[4] || '-', budget };
+  const isian = { lvl1: lv[0]!, lvl2: lv[1]!, lvl3: lv[2] || '-', lvl4: lv[3] || '-', lvl5: lv[4] || '-' };
   const cek = coa ? validasiJurnal(coa, isian) : null;
   const terlalu = target.length > JURNAL_MAKS;
 
@@ -75,11 +74,8 @@ export function FormJurnal({ target, onSelesai }: { target: readonly DokJurnal[]
           </Field>
         );
       })}
-      <Field label="Plafon budget" id="jr-budget" petunjuk="Kode/plafon budget (huruf besar). Dipakai sebagai analitik di export Odoo.">
-        {(p) => <input {...p} value={budget} maxLength={60} autoComplete="off" onChange={(e) => setBudget(e.target.value.toUpperCase())} />}
-      </Field>
       <Field label="Catatan Finance" id="jr-cat" opsional>{(p) => <textarea {...p} maxLength={CATATAN_MAX} value={notes} onChange={(e) => setNotes(e.target.value)} />}</Field>
-      {cek && !cek.ok && (lv[0] || budget) && <p className="hint">{cek.alasan}</p>}
+      {cek && !cek.ok && lv[0] && <p className="hint">{cek.alasan}</p>}
       {cek?.ok && <p className="cap">Akun dijurnal: <b>{cek.akun}</b></p>}
       {galat && !dlg && <Pesan jenis="err">{galat}</Pesan>}
       <div className="ip-aksi">
@@ -90,7 +86,7 @@ export function FormJurnal({ target, onSelesai }: { target: readonly DokJurnal[]
       <Dialog buka={dlg} onTutup={() => { if (!sibuk) setDlg(false); }} judul={`Posting jurnal ${target.length} dokumen?`}>
         <form onSubmit={(e) => { e.preventDefault(); void kirim(); }}>
           <div className="dlg-ringkas"><span className="num">{target.map((t) => t.id).slice(0, 6).join(', ')}{target.length > 6 ? ` +${target.length - 6}` : ''}</span><strong>{cek?.ok ? cek.akun : ''}</strong></div>
-          <p className="muted">Budget {budget || '-'}. Dokumen yang valid lanjut ke Siap Dibayar; yang gagal dilaporkan tanpa membatalkan yang lain.</p>
+          <p className="muted">Dokumen yang valid lanjut ke Siap Dibayar; yang gagal dilaporkan tanpa membatalkan yang lain.</p>
           {galat && <Pesan jenis="err">{galat}</Pesan>}
           <div className="dlg-aksi">
             <button type="button" className="btn btn-secondary" onClick={() => setDlg(false)} disabled={sibuk}>Batal</button>

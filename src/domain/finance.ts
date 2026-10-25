@@ -126,23 +126,22 @@ export function penandaTugasRangkap(email: string, pengajuEmail: string, st: Sta
 
 // ------------------------------------------------------------------ F2-D: jurnal COA (port postJournalBulk)
 export const JURNAL_MAKS = 30;
-export interface IsianJurnal { lvl1: string; lvl2: string; lvl3: string; lvl4: string; lvl5: string; budget: string }
+/** Plafon budget dinonaktifkan (keputusan user 2026-10-25): tidak diisi, tidak wajib, tidak jadi syarat bayar. */
+export interface IsianJurnal { lvl1: string; lvl2: string; lvl3: string; lvl4: string; lvl5: string }
 export type BarisCoa = readonly [string, string, string, string, string];
 const isi = (v: string): string => (v ?? '').trim() || '-';
 
 /**
- * Validasi isian jurnal terhadap Master_COA (aturan lama): Level 1 & 2 wajib, budget wajib, kombinasi harus ada di master
+ * Validasi isian jurnal terhadap Master_COA (aturan lama): Level 1 & 2 wajib, kombinasi harus ada di master (budget tidak lagi wajib — dinonaktifkan 2026-10-25)
  * (level yang "-" = tidak dipilih). Akun yang dijurnal (SUB_COA) = level terdalam yang dipilih. Mengembalikan alasan gagal atau hasil.
  */
-export function validasiJurnal(coa: readonly BarisCoa[], j: IsianJurnal): { ok: false; alasan: string } | { ok: true; kategori: string; head: string; akun: string; budget: string } {
+export function validasiJurnal(coa: readonly BarisCoa[], j: IsianJurnal): { ok: false; alasan: string } | { ok: true; kategori: string; head: string; akun: string } {
   const l = [j.lvl1.trim(), j.lvl2.trim(), isi(j.lvl3), isi(j.lvl4), isi(j.lvl5)] as const;
   if (!l[0] || !l[1] || l[1] === '-') return { ok: false, alasan: 'COA level 1 & 2 wajib diisi.' };
-  const budget = j.budget.trim().toUpperCase();
-  if (!budget) return { ok: false, alasan: 'Plafon budget wajib diisi.' };
   const cocok = coa.some((c) => c[0] === l[0] && c[1] === l[1] && (l[2] === '-' || c[2] === l[2]) && (l[3] === '-' || c[3] === l[3]) && (l[4] === '-' || c[4] === l[4]));
   if (!cocok) return { ok: false, alasan: 'Kombinasi akun COA tidak ada di Master_COA.' };
   const akun = [...l].reverse().find((x) => x && x !== '-')!;
-  return { ok: true, kategori: l[0], head: l[1], akun, budget };
+  return { ok: true, kategori: l[0], head: l[1], akun };
 }
 
 /** Pilihan untuk dropdown bertingkat: nilai unik di level `n` (0..4) di bawah pilihan level sebelumnya. Level tanpa turunan = []. */
@@ -160,13 +159,13 @@ export const BAYAR_MAKS = 30;
 export const JENDELA_DUPLIKAT_MS = 10 * 60_000;
 
 export interface GerbangBayar {
-  status: string; perluCFO: boolean; subCoa: string; budget: string;
+  status: string; perluCFO: boolean; subCoa: string;
   /** Ada approval Manager (L2) APPROVED. */ manager: boolean;
   /** Persetujuan siklus verifikasi sekarang (L3/L4/L5). */ st: StatusPersetujuan;
 }
 /**
  * I4 (bolehDibayar): status COA Posted / Partially Paid; approval Manager, verifikasi pajak, Fin. Mgr (+ CFO bila wajib) tercatat;
- * Sub COA & budget terisi. O4: syarat "scan TTD basah diunggah" DIHAPUS (diganti e-approve L4/L5 atas nama penandatangan).
+ * Sub COA terisi (syarat budget dihapus 2026-10-25, beda dari lama). O4: syarat "scan TTD basah diunggah" DIHAPUS (diganti e-approve L4/L5 atas nama penandatangan).
  */
 export function cekBolehDibayar(g: GerbangBayar): string | null {
   if (g.status !== STATUS.COA_POSTED && g.status !== STATUS.PARTIALLY_PAID) return `Status "${g.status || '-'}" belum boleh dibayar. Harus sudah Siap Dibayar.`;
@@ -175,7 +174,6 @@ export function cekBolehDibayar(g: GerbangBayar): string | null {
   if (!g.st.finMgr) return 'Belum ada persetujuan Fin. Mgr.';
   if (g.perluCFO && !g.st.cfo) return 'Nominal ≥ Rp 5.000.000 wajib disetujui CFO.';
   if (!g.subCoa.trim() || g.subCoa.trim() === '-') return 'Jurnal COA belum diposting.';
-  if (!g.budget.trim()) return 'Plafon budget belum diisi.';
   return null;
 }
 

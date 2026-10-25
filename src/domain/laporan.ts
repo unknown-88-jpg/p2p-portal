@@ -50,10 +50,10 @@ export function agingAP(pengajuan: readonly Baris[], pembayaran: readonly Baris[
   return { baris, perBucket, perVendor: [...pv.values()].sort((a, b) => b.sisa - a.sisa || a.vendor.localeCompare(b.vendor)), totalSisa: baris.reduce((s, x) => s + x.sisa, 0) };
 }
 
-export const DIMENSI_REKAP = ['brand', 'dept', 'coa', 'budget', 'vendor'] as const;
+export const DIMENSI_REKAP = ['brand', 'dept', 'coa', 'vendor'] as const; // 'budget' dihapus 2026-10-25
 export type DimensiRekap = (typeof DIMENSI_REKAP)[number];
 const nilaiDimensi = (r: Baris, d: DimensiRekap): string => {
-  const v = d === 'brand' ? str(r.BRAND) : d === 'dept' ? str(r.DEPARTEMENT) : d === 'coa' ? str(r.SUB_COA) : d === 'budget' ? str(r.BUDGET) : str(r.VENDOR_NAME);
+  const v = d === 'brand' ? str(r.BRAND) : d === 'dept' ? str(r.DEPARTEMENT) : d === 'coa' ? str(r.SUB_COA) : str(r.VENDOR_NAME);
   return v && v !== '-' ? v : d === 'coa' ? '(belum dijurnal)' : '(kosong)';
 };
 

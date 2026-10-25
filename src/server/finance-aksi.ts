@@ -175,7 +175,7 @@ export interface HasilJurnal { berhasil: { id: string; akun: string }[]; gagal: 
 
 /**
  * F2-D (port postJournalBulk): jurnal COA untuk 1..30 dokumen Wet Signed. Hanya Finance Staff (L3).
- * Lock semua `trx:` (berurut) -> SATU baca segar Trx_Pengajuan + Master_COA -> validasi per dokumen (status, etag, COA, budget) ->
+ * Lock semua `trx:` (berurut) -> SATU baca segar Trx_Pengajuan + Master_COA -> validasi per dokumen (status, etag, COA) ->
  * yang valid diterapkan dalam SATU batch; yang gagal dilaporkan per dokumen dan tidak menggagalkan sisanya. Semua gagal = 422.
  * ID ganda dalam satu permintaan ditolak (R-04). Idempotency-Key wajib untuk seluruh batch.
  */
@@ -203,9 +203,9 @@ export async function jurnalCoa(d: AuthDeps, s: SessionData, input: z.infer<type
         const v = validasiJurnal(coa, it);
         if (!v.ok) { hasil.gagal.push({ id, alasan: v.alasan }); continue; }
         mutations.push(
-          { kind: 'update', schema: TRX_PENGAJUAN, row: idx[0]! + FIRST_DATA_ROW, cells: { CATEGORY_COA: v.kategori, HEAD_COA: v.head, SUB_COA: v.akun, BUDGET: v.budget, NOTES_FINANCE: it.notes ?? '', STATUS: STATUS.COA_POSTED, LAST_UPDATE: now } },
+          { kind: 'update', schema: TRX_PENGAJUAN, row: idx[0]! + FIRST_DATA_ROW, cells: { CATEGORY_COA: v.kategori, HEAD_COA: v.head, SUB_COA: v.akun, NOTES_FINANCE: it.notes ?? '', STATUS: STATUS.COA_POSTED, LAST_UPDATE: now } },
           statusChange(s, id, dari, STATUS.COA_POSTED, `Jurnal: ${v.akun}`, clock),
-          auditMutation({ actor: s.email, idTrx: id, action: 'COA_POST', field: 'Sub COA', oldValue: '', newValue: v.akun, notes: `Budget: ${v.budget}` }, clock),
+          auditMutation({ actor: s.email, idTrx: id, action: 'COA_POST', field: 'Sub COA', oldValue: '', newValue: v.akun, notes: '' }, clock),
         );
         hasil.berhasil.push({ id, akun: v.akun });
       }
@@ -256,7 +256,7 @@ export async function bayar(d: AuthDeps, s: SessionData, token: string, input: z
         const aprDok = apr.filter((x) => str(A(x, 'ID_Trx')).toUpperCase() === id);
         const st = statusPersetujuan(aprDok.map((x) => ({ level: A(x, 'Level'), action: A(x, 'Action'), nama: A(x, 'Approver_Name'), email: A(x, 'Approver_Email'), timestamp: A(x, 'Timestamp') })));
         const gerbang = cekBolehDibayar({
-          status: dari, perluCFO: wajibCFO(cell(r, 'REQUIRE_CFO'), num(cell(r, 'FINAL_AMOUNT'))), subCoa: str(cell(r, 'SUB_COA')), budget: str(cell(r, 'BUDGET')), st,
+          status: dari, perluCFO: wajibCFO(cell(r, 'REQUIRE_CFO'), num(cell(r, 'FINAL_AMOUNT'))), subCoa: str(cell(r, 'SUB_COA')), st,
           manager: aprDok.some((x) => Number(A(x, 'Level')) === LEVEL.MANAGER && upper(A(x, 'Action')) === 'APPROVED'),
         });
         if (gerbang) { hasil.gagal.push({ id, alasan: `Pembayaran diblokir: ${gerbang}` }); continue; }

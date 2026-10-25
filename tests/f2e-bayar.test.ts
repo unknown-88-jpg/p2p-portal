@@ -46,8 +46,8 @@ beforeEach(() => {
 
 describe('F2-E domain', () => {
   const st = { verifikator: { nama: 'D', email: 'd' }, finMgr: { nama: 'E', email: 'e' }, cfo: null };
-  const g = { status: 'COA Posted', perluCFO: false, subCoa: 'X', budget: 'B', manager: true, st };
-  it('I4 gerbang: status, Manager, verifikasi, Fin. Mgr, CFO bila wajib, Sub COA, budget (tanpa syarat scan TTD, O4)', () => {
+  const g = { status: 'COA Posted', perluCFO: false, subCoa: 'X', manager: true, st };
+  it('I4 gerbang: status, Manager, verifikasi, Fin. Mgr, CFO bila wajib, Sub COA (tanpa syarat scan TTD, O4; budget dinonaktifkan 2026-10-25)', () => {
     expect(cekBolehDibayar(g)).toBeNull();
     expect(cekBolehDibayar({ ...g, status: 'Partially Paid' })).toBeNull();
     expect(cekBolehDibayar({ ...g, status: 'Wet Signed' })).toMatch(/belum boleh dibayar/);
@@ -56,7 +56,6 @@ describe('F2-E domain', () => {
     expect(cekBolehDibayar({ ...g, st: { ...st, finMgr: null } })).toMatch(/Fin. Mgr/);
     expect(cekBolehDibayar({ ...g, perluCFO: true })).toMatch(/CFO/);
     expect(cekBolehDibayar({ ...g, subCoa: '-' })).toMatch(/Jurnal COA/);
-    expect(cekBolehDibayar({ ...g, budget: ' ' })).toMatch(/budget/);
   });
   it('I5: nominal <= sisa + toleransi 1.000; sisa dalam toleransi = lunas; nol/negatif/pecahan ditolak', () => {
     expect(hitungBayar(1_000_000, 0, 1_000_000, 1000)).toEqual({ ok: true, totalBaru: 1_000_000, osBaru: 0, lunas: true });

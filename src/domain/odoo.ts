@@ -67,7 +67,7 @@ export function susunJurnalOdoo(a: {
       const tglInv = tglYmd(r.DATE_INVOICE);
       if (!dalam(tglInv || tglYmd(r.TIMESTAMP))) continue;
 
-      const id = str(r.ID_TRX), vendor = str(r.VENDOR_NAME), ref = str(r.NO_INVOICE), budget = str(r.BUDGET);
+      const id = str(r.ID_TRX), vendor = str(r.VENDOR_NAME), ref = str(r.NO_INVOICE), budget = ''; // kolom analitik tetap ada, kosong (plafon budget dinonaktifkan 2026-10-25)
       const dpp = num(r.DPP), ppn = num(r.PPN_AMOUNT), biaya = num(r.BIAYA_LAIN), diskon = num(r.DISKON), pph = num(r.PPH_AMOUNT), netto = num(r.FINAL_AMOUNT);
       const debitBeban = dpp + biaya - diskon;
 
@@ -85,7 +85,7 @@ export function susunJurnalOdoo(a: {
 
   if (a.jenis === 'pembayaran' || a.jenis === 'keduanya') {
     const meta = new Map<string, { vendor: string; budget: string }>();
-    for (const r of a.pengajuan) meta.set(upper(r.ID_TRX), { vendor: str(r.VENDOR_NAME), budget: str(r.BUDGET) });
+    for (const r of a.pengajuan) meta.set(upper(r.ID_TRX), { vendor: str(r.VENDOR_NAME), budget: '' });
     for (const p of a.pembayaran) {
       const tgl = tglYmd(p.Tgl_Bayar);
       if (!dalam(tgl)) continue;
