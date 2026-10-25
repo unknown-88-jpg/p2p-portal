@@ -17,7 +17,7 @@ export interface KotakTTD { level: number; role: string; nama: string; jabatan: 
 const up = (v: unknown): string => str(v).toUpperCase();
 
 /**
- * Port buildSignatureBlocks: penandatangan dari Master_User_TTD (aktif kecuali NO/TIDAK persis seperti lama; brand/dept cocok atau ALL;
+ * Port buildSignatureBlocks: penandatangan (level 1-5 saja; Admin L9 tidak) dari Master_User_TTD (aktif kecuali NO/TIDAK persis seperti lama; brand/dept cocok atau ALL;
  * nama kosong/"-" dilewati; CFO hanya bila wajib; satu orang pertama per level; urut level), ditempeli persetujuan NYATA (Trx_Approval, status APPROVED;
  * yang terakhir per level menang). Yang tercatat TTD memakai nama/jabatan dari catatan approval, bukan dari master.
  */
@@ -32,6 +32,7 @@ export function bangunKotakTTD(users: readonly BarisUserTTD[], approved: Readonl
     const level = (typeof u.level === 'number' ? Math.trunc(u.level) : parseInt(String(u.level ?? ''), 10)) || 99;
     const nama = up(u.nama);
     if (!nama || nama === '-') continue;
+    if (!(level in LEVEL_LABEL)) continue; // hanya level alur P2P (1-5); Admin (L9) mengatur sistem, bukan penandatangan (keputusan user 2026-10-25, beda dari lama)
     if (level === LEVEL.CFO && !perluCFO) continue;
     if (!signers.some((s) => s.level === level)) signers.push({ level, jabatan: str(u.jabatan) || 'Staff', nama });
   }
