@@ -45,7 +45,7 @@ function ringkasan(r: RawRow, rekening: 'penuh' | 'mask') {
     dpp: num(P(r, 'DPP')), ppnAmount: num(P(r, 'PPN_AMOUNT')), jenisPPh: str(P(r, 'JENIS_PPH')), pphAmount: num(P(r, 'PPH_AMOUNT')), pphRate: num(P(r, 'PPH_RATE')),
     nominal: num(P(r, 'FINAL_AMOUNT')), totalPaid: num(P(r, 'TOTAL_PAID')), osBalance: num(P(r, 'OS_BALANCE')),
     status, perluCFO: upper(P(r, 'REQUIRE_CFO')) === 'YES', punyaLampiran: !!str(P(r, 'FILE_URL')),
-    coa: str(P(r, 'SUB_COA')) ? { kategori: str(P(r, 'CATEGORY_COA')), head: str(P(r, 'HEAD_COA')), sub: str(P(r, 'SUB_COA')) } : null,
+    coa: str(P(r, 'SUB_COA')) ? { kategori: str(P(r, 'CATEGORY_COA')), head: str(P(r, 'HEAD_COA')), sub: str(P(r, 'SUB_COA')), budget: str(P(r, 'BUDGET')) } : null,
     editable: status === STATUS.DRAFT || status === STATUS.REVISION,
   };
 }
