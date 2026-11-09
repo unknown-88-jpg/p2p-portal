@@ -3,8 +3,8 @@ export function AuthPanel() {
   return (
     <aside className="auth-panel" aria-hidden="true">
       <span className="sb-logo">P</span>
-      <h2>Pengajuan pembayaran, rapi dari awal sampai lunas.</h2>
-      <p>Ajukan, setujui, verifikasi pajak, dan pantau status pembayaran dalam satu tempat.</p>
+      <h2>P2P</h2>
+      <p>Procure to Payment</p>
     </aside>
   );
 }
