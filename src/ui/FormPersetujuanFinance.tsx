@@ -9,19 +9,21 @@ import { IkonMata, IkonMataCoret, IkonSelesai } from './icons';
 import { KirimWaFinance } from './KirimWaFinance';
 
 export interface DokSetuju {
-  id: string; vendorNama: string; etag: string; nominal: number; perluCFO: boolean; ajuanSendiri: boolean;
-  persetujuan?: { finMgr: string | null; cfo: string | null; finMgrSaya: boolean; wa?: { target: 'finmgr' | 'cfo'; terkirim: boolean } | null } | undefined;
+  id: string; vendorNama: string; etag: string; nominal: number; perluCFO: boolean; perluCOO: boolean; ajuanSendiri: boolean;
+  persetujuan?: { finMgr: string | null; coo: string | null; cfo: string | null; finMgrSaya: boolean; cooSaya: boolean; wa?: { target: 'finmgr' | 'coo' | 'cfo'; terkirim: boolean } | null } | undefined;
 }
-export interface Peran { staff: boolean; finMgr: boolean; cfo: boolean }
-type Sebagai = 'finmgr' | 'cfo';
+export interface Peran { staff: boolean; finMgr: boolean; coo: boolean; cfo: boolean }
+type Sebagai = 'finmgr' | 'coo' | 'cfo';
+const LABEL_PERAN: Record<Sebagai, string> = { finmgr: 'Fin. Mgr', coo: 'COO', cfo: 'CFO' };
 type Dlg = null | 'setuju' | 'stepup' | 'kembalikan';
 const baru = (): string => crypto.randomUUID();
 
-/** Tombol yang relevan untuk pengguna ini (penjaga sebenarnya di server: urutan Fin. Mgr -> CFO, orang berbeda, CFO hanya bila wajib). */
+/** Tombol yang relevan untuk pengguna ini (penjaga sebenarnya di server: urutan Fin. Mgr -> COO [dokumen GA >= ambang] -> CFO, orang berbeda, CFO/COO hanya bila wajib). */
 export function giliranSaya(dok: DokSetuju, peran: Peran): Sebagai | null {
-  const p = dok.persetujuan ?? { finMgr: null, cfo: null, finMgrSaya: false };
+  const p = dok.persetujuan ?? { finMgr: null, coo: null, cfo: null, finMgrSaya: false, cooSaya: false };
   if (peran.finMgr && !p.finMgr) return 'finmgr';
-  if (peran.cfo && dok.perluCFO && p.finMgr && !p.cfo && !p.finMgrSaya) return 'cfo';
+  if (peran.coo && dok.perluCOO && p.finMgr && !p.coo && !p.finMgrSaya) return 'coo';
+  if (peran.cfo && dok.perluCFO && p.finMgr && (!dok.perluCOO || p.coo) && !p.cfo && !p.finMgrSaya && !p.cooSaya) return 'cfo';
   return null;
 }
 
@@ -30,7 +32,7 @@ export function giliranSaya(dok: DokSetuju, peran: Peran): Sebagai | null {
  * Fin. Mgr / CFO juga bisa mengembalikan ke PIC dari tahap ini.
  */
 /** Tombol Kirim WA tidak ditampilkan bila penerimanya adalah pengguna ini sendiri (gilirannya menyetujui target yang sama). */
-export const tampilKirimWa = (giliran: Sebagai | null, target: 'finmgr' | 'cfo'): boolean => giliran !== target;
+export const tampilKirimWa = (giliran: Sebagai | null, target: 'finmgr' | 'coo' | 'cfo'): boolean => giliran !== target;
 
 export function FormPersetujuanFinance({ dok, peran, onSelesai }: { dok: DokSetuju; peran: Peran; onSelesai: (pesan: { jenis: 'ok' | 'warn'; teks: string }, muatUlang: boolean) => void }) {
   const [dlg, setDlg] = useState<Dlg>(null);
@@ -41,9 +43,9 @@ export function FormPersetujuanFinance({ dok, peran, onSelesai }: { dok: DokSetu
   const [sibuk, setSibuk] = useState(false);
   const [galat, setGalat] = useState<string | null>(null);
   const kunci = useRef<KunciIdem | null>(null);
-  const p = dok.persetujuan ?? { finMgr: null, cfo: null, finMgrSaya: false };
+  const p = dok.persetujuan ?? { finMgr: null, coo: null, cfo: null, finMgrSaya: false, cooSaya: false };
   const giliran = giliranSaya(dok, peran);
-  const bisaKembalikan = peran.staff || peran.finMgr || peran.cfo;
+  const bisaKembalikan = peran.staff || peran.finMgr || peran.coo || peran.cfo;
   // Event 'close' <dialog> juga terpicu saat ditutup lewat KODE (mis. pindah dari langkah 1 ke dialog password);
   // hanya dialog yang masih AKTIF yang boleh mereset state, kalau tidak dialog password langsung ikut tertutup.
   const tutup = (k: Dlg) => () => { if (!sibuk && dlg === k) { setDlg(null); setGalat(null); setPw(''); setLihatPw(false); } };
@@ -62,10 +64,10 @@ export function FormPersetujuanFinance({ dok, peran, onSelesai }: { dok: DokSetu
     const isi = { etag: dok.etag, sebagai: giliran, ...(notes.trim() ? { notes: notes.trim() } : {}) };
     kunci.current = pilihKunci(kunci.current, `S|${JSON.stringify(isi)}`, baru);
     try {
-      const r = await api<{ hasil: { menungguCFO: boolean } }>(`/api/finance/${encodeURIComponent(dok.id)}/setujui`, { body: isi, headers: { 'idempotency-key': kunci.current.key } });
+      const r = await api<{ hasil: { menungguBerikut: 'coo' | 'cfo' | null } }>(`/api/finance/${encodeURIComponent(dok.id)}/setujui`, { body: isi, headers: { 'idempotency-key': kunci.current.key } });
       if (hasilDipulihkan(r.hasil)) { kunci.current = null; setDlg(null); onSelesai({ jenis: 'warn', teks: PESAN_DIPULIHKAN }, true); return; }
       kunci.current = null; setDlg(null); setNotes('');
-      onSelesai({ jenis: 'ok', teks: `${dok.id} disetujui sebagai ${giliran === 'finmgr' ? 'Fin. Mgr' : 'CFO'}. ${r.hasil.menungguCFO ? 'Berikutnya persetujuan CFO.' : 'Berikutnya Jurnal COA.'}` }, true);
+      onSelesai({ jenis: 'ok', teks: `${dok.id} disetujui sebagai ${LABEL_PERAN[giliran]}. ${r.hasil.menungguBerikut ? `Berikutnya persetujuan ${LABEL_PERAN[r.hasil.menungguBerikut]}.` : 'Berikutnya Jurnal COA.'}` }, true);
     } catch (e) { gagal(e, 'Koneksi terputus, hasil belum pasti. Tekan "Setujui" lagi - aman, tidak akan tercatat dua kali.'); }
     finally { setSibuk(false); }
   };
@@ -93,17 +95,18 @@ export function FormPersetujuanFinance({ dok, peran, onSelesai }: { dok: DokSetu
   const Baris = ({ l, nama, tunggu }: { l: string; nama: string | null; tunggu: string }) => (
     <li>{nama ? <span className="ip-ik ok" aria-hidden="true"><IkonSelesai /></span> : <span className="ip-ik warn" aria-hidden="true">…</span>}<span><b>{l}</b> · {nama ? `disetujui ${nama}` : tunggu}</span></li>
   );
-  const peranLabel = giliran === 'finmgr' ? 'Fin. Mgr' : 'CFO';
+  const peranLabel = giliran ? LABEL_PERAN[giliran] : 'CFO';
   return (
     <div className="vp">
-      <h3 className="ds-h">Persetujuan Fin. Mgr / CFO</h3>
+      <h3 className="ds-h">Persetujuan Fin. Mgr{dok.perluCOO ? ' / COO' : ''} / CFO</h3>
       <ul className="ip-syarat">
         <Baris l="Fin. Mgr" nama={p.finMgr} tunggu="menunggu" />
-        {dok.perluCFO && <Baris l="CFO" nama={p.cfo} tunggu={p.finMgr ? 'menunggu' : 'setelah Fin. Mgr'} />}
+        {dok.perluCOO && <Baris l="COO" nama={p.coo} tunggu={p.finMgr ? 'menunggu' : 'setelah Fin. Mgr'} />}
+        {dok.perluCFO && <Baris l="CFO" nama={p.cfo} tunggu={dok.perluCOO && !p.coo ? 'setelah COO' : p.finMgr ? 'menunggu' : 'setelah Fin. Mgr'} />}
       </ul>
       {giliran && dok.ajuanSendiri && <Pesan jenis="warn">Ini ajuan Anda sendiri. Persetujuan tetap bisa diberikan, tetapi diberi penanda di audit.</Pesan>}
-      {!giliran && (peran.finMgr || peran.cfo) && (
-        <p className="muted cap">{p.finMgrSaya && peran.cfo ? 'Anda sudah menyetujui sebagai Fin. Mgr; persetujuan CFO harus oleh orang lain.' : peran.cfo && dok.perluCFO && !p.finMgr ? 'Persetujuan CFO dibuka setelah Fin. Mgr menyetujui.' : 'Tidak ada persetujuan yang menunggu Anda untuk dokumen ini.'}</p>
+      {!giliran && (peran.finMgr || peran.coo || peran.cfo) && (
+        <p className="muted cap">{p.finMgrSaya && (peran.coo || peran.cfo) ? 'Anda sudah menyetujui sebagai Fin. Mgr; persetujuan berikutnya harus oleh orang lain.' : p.cooSaya && peran.cfo ? 'Anda sudah menyetujui sebagai COO; persetujuan CFO harus oleh orang lain.' : peran.coo && dok.perluCOO && !p.finMgr ? 'Persetujuan COO dibuka setelah Fin. Mgr menyetujui.' : peran.cfo && dok.perluCFO && !p.finMgr ? 'Persetujuan CFO dibuka setelah Fin. Mgr menyetujui.' : peran.cfo && dok.perluCOO && !p.coo ? 'Persetujuan CFO dibuka setelah COO menyetujui.' : 'Tidak ada persetujuan yang menunggu Anda untuk dokumen ini.'}</p>
       )}
       {galat && !dlg && <Pesan jenis="err">{galat}</Pesan>}
       {dok.persetujuan?.wa && tampilKirimWa(giliran, dok.persetujuan.wa.target) && <KirimWaFinance key={`${dok.id}|${dok.persetujuan.wa.target}`} id={dok.id} wa={dok.persetujuan.wa} />}
@@ -115,7 +118,7 @@ export function FormPersetujuanFinance({ dok, peran, onSelesai }: { dok: DokSetu
       <Dialog buka={dlg === 'setuju'} onTutup={tutup('setuju')} judul={`Setujui sebagai ${peranLabel}?`} langkah="Langkah 1 dari 2">
         <form onSubmit={(e) => { e.preventDefault(); void setujui(); }}>
           {ringkas}
-          <p className="muted">Persetujuan elektronik ini menggantikan tanda tangan basah dan tercatat atas nama Anda.{giliran === 'finmgr' && dok.perluCFO ? ' Setelah ini dokumen menunggu persetujuan CFO.' : ' Setelah ini dokumen lanjut ke Jurnal COA.'}</p>
+          <p className="muted">Persetujuan elektronik ini menggantikan tanda tangan basah dan tercatat atas nama Anda.{giliran === 'finmgr' && dok.perluCOO ? ' Setelah ini dokumen menunggu persetujuan COO, lalu CFO.' : (giliran === 'finmgr' || giliran === 'coo') && dok.perluCFO ? ' Setelah ini dokumen menunggu persetujuan CFO.' : ' Setelah ini dokumen lanjut ke Jurnal COA.'}</p>
           <div className="f"><label htmlFor={`fs-cat-${dok.id}`}>Catatan <span className="opt">(opsional)</span></label>
             <textarea id={`fs-cat-${dok.id}`} maxLength={CATATAN_MAX} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
           {galat && <Pesan jenis="err">{galat}</Pesan>}

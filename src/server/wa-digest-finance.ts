@@ -21,7 +21,8 @@ export function barisUntuk(q: AntreanFinance, base: string): BarisDigestFinance[
     out.push(b('Siap dibayar', di('bayar').filter((i) => !i.blokirBayar), 'bayar', (i) => i.sisa));
   }
   if (q.peran.finMgr) out.push(b('Persetujuan Fin. Mgr', di('persetujuan').filter((i) => !i.persetujuan?.finMgr), 'persetujuan'));
-  if (q.peran.cfo) out.push(b('Persetujuan CFO', di('persetujuan').filter((i) => i.perluCFO && i.persetujuan?.finMgr && !i.persetujuan.cfo && !i.persetujuan.finMgrSaya), 'persetujuan'));
+  if (q.peran.coo) out.push(b('Persetujuan COO', di('persetujuan').filter((i) => i.perluCOO && i.persetujuan?.finMgr && !i.persetujuan.coo && !i.persetujuan.finMgrSaya), 'persetujuan'));
+  if (q.peran.cfo) out.push(b('Persetujuan CFO', di('persetujuan').filter((i) => i.perluCFO && i.persetujuan?.finMgr && (!i.perluCOO || i.persetujuan.coo) && !i.persetujuan.cfo && !i.persetujuan.finMgrSaya && !i.persetujuan.cooSaya), 'persetujuan'));
   return out;
 }
 

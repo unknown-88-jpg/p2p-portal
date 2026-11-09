@@ -25,7 +25,7 @@ const key = (): string => `idem-f2c-${String(++k).padStart(8, '0')}`;
 const row = (id: string): RawRow => w.store.rowsOf(TRX_PENGAJUAN).find((r) => r[C('ID_TRX')] === id)!;
 const aprs = (id: string): RawRow[] => w.store.rowsOf(TRX_APPROVAL).filter((r) => r[CA('ID_Trx')] === id);
 const tok = async (s: SessionData, stepUp = true): Promise<string> => { const t = await w.deps.sessions.create(s); if (stepUp) await w.deps.sessions.markStepUp(t); return t; };
-const setujui = async (s: SessionData, id: string, sebagai: 'finmgr' | 'cfo', o: { stepUp?: boolean; kk?: string } = {}) =>
+const setujui = async (s: SessionData, id: string, sebagai: 'finmgr' | 'coo' | 'cfo', o: { stepUp?: boolean; kk?: string } = {}) =>
   setujuiFinance(w.deps, s, await tok(s, o.stepUp ?? true), id, setujuiFinanceSchema.parse({ etag: etagOf(row(id)), sebagai }), o.kk ?? key());
 const l3 = (id: string, t: number, email = 'dani@x.id') => [`APR-${id}-3-${t}`, id, 3, 'Diverifikasi Oleh,', 'Dani', email, 'Fin', 'E-SIGN', 'APPROVED', t, '', ''];
 
@@ -50,24 +50,26 @@ describe('F2-C domain', () => {
   });
   it('urutan & aturan: CFO hanya bila wajib, setelah Fin. Mgr, orang berbeda; level persis', () => {
     const R = (...l: number[]) => l.map((level) => ({ brand: 'ALL', dept: 'ALL', level }));
-    const kosong = { finMgr: null, cfo: null, verifikator: null };
-    const fm = { finMgr: { nama: 'Eko', email: 'eko@x.id' }, cfo: null, verifikator: null };
-    expect(cekEApprove('finmgr', R(4), 'a@x.id', true, kosong)).toBeNull();
-    expect(cekEApprove('finmgr', R(3), 'a@x.id', true, kosong)?.kode).toBe('FORBIDDEN');
-    expect(cekEApprove('finmgr', R(4), 'a@x.id', true, fm)?.kode).toBe('CONFLICT');
-    expect(cekEApprove('cfo', R(5), 'g@x.id', true, kosong)?.pesan).toMatch(/Fin. Mgr lebih dulu/);
-    expect(cekEApprove('cfo', R(5), 'g@x.id', false, fm)?.pesan).toMatch(/tidak membutuhkan persetujuan CFO/);
-    expect(cekEApprove('cfo', R(4, 5), 'EKO@x.id', true, fm)?.pesan).toMatch(/orang yang berbeda/);
-    expect(cekEApprove('cfo', R(5), 'g@x.id', true, fm)).toBeNull();
-    expect(cekEApprove('cfo', R(4), 'g@x.id', true, fm)?.kode).toBe('FORBIDDEN');
+    const kosong = { finMgr: null, coo: null, cfo: null, verifikator: null };
+    const fm = { finMgr: { nama: 'Eko', email: 'eko@x.id' }, coo: null, cfo: null, verifikator: null };
+    expect(cekEApprove('finmgr', R(4), 'a@x.id', true, false, kosong)).toBeNull();
+    expect(cekEApprove('finmgr', R(3), 'a@x.id', true, false, kosong)?.kode).toBe('FORBIDDEN');
+    expect(cekEApprove('finmgr', R(4), 'a@x.id', true, false, fm)?.kode).toBe('CONFLICT');
+    expect(cekEApprove('cfo', R(5), 'g@x.id', true, false, kosong)?.pesan).toMatch(/Fin. Mgr lebih dulu/);
+    expect(cekEApprove('cfo', R(5), 'g@x.id', false, false, fm)?.pesan).toMatch(/tidak membutuhkan persetujuan CFO/);
+    expect(cekEApprove('cfo', R(4, 5), 'EKO@x.id', true, false, fm)?.pesan).toMatch(/orang yang berbeda/);
+    expect(cekEApprove('cfo', R(5), 'g@x.id', true, false, fm)).toBeNull();
+    expect(cekEApprove('cfo', R(4), 'g@x.id', true, false, fm)?.kode).toBe('FORBIDDEN');
   });
   it('UI giliranSaya selaras dengan aturan server', () => {
-    const d = (perluCFO: boolean, p?: { finMgr: string | null; cfo: string | null; finMgrSaya: boolean }) => ({ id: 'X', vendorNama: '', etag: '', nominal: 0, perluCFO, ajuanSendiri: false, persetujuan: p });
-    expect(giliranSaya(d(true), { staff: false, finMgr: true, cfo: false })).toBe('finmgr');
-    expect(giliranSaya(d(true), { staff: false, finMgr: false, cfo: true })).toBeNull();
-    expect(giliranSaya(d(true, { finMgr: 'Eko', cfo: null, finMgrSaya: false }), { staff: false, finMgr: false, cfo: true })).toBe('cfo');
-    expect(giliranSaya(d(true, { finMgr: 'RR', cfo: null, finMgrSaya: true }), { staff: false, finMgr: true, cfo: true })).toBeNull();
-    expect(giliranSaya(d(false, { finMgr: 'Eko', cfo: null, finMgrSaya: false }), { staff: false, finMgr: false, cfo: true })).toBeNull();
+    const d = (perluCFO: boolean, p?: { finMgr: string | null; coo?: string | null; cfo: string | null; finMgrSaya: boolean; cooSaya?: boolean }) =>
+      ({ id: 'X', vendorNama: '', etag: '', nominal: 0, perluCFO, perluCOO: false, ajuanSendiri: false, persetujuan: p ? { coo: null, cooSaya: false, ...p } : undefined });
+    const P = (o: Partial<{ staff: boolean; finMgr: boolean; coo: boolean; cfo: boolean }>) => ({ staff: false, finMgr: false, coo: false, cfo: false, ...o });
+    expect(giliranSaya(d(true), P({ finMgr: true }))).toBe('finmgr');
+    expect(giliranSaya(d(true), P({ cfo: true }))).toBeNull();
+    expect(giliranSaya(d(true, { finMgr: 'Eko', cfo: null, finMgrSaya: false }), P({ cfo: true }))).toBe('cfo');
+    expect(giliranSaya(d(true, { finMgr: 'RR', cfo: null, finMgrSaya: true }), P({ finMgr: true, cfo: true }))).toBeNull();
+    expect(giliranSaya(d(false, { finMgr: 'Eko', cfo: null, finMgrSaya: false }), P({ cfo: true }))).toBeNull();
   });
   it('UI: tombol Kirim WA disembunyikan bila penerimanya diri sendiri', () => {
     expect(tampilKirimWa('finmgr', 'finmgr')).toBe(false); // Fin. Mgr yang sedang giliran tidak mengirim WA ke dirinya
@@ -142,7 +144,81 @@ describe('F2-C setujuiFinance', () => {
     expect(await kode(kembalikanFinance(w.deps, eko, 'NTR-00003', { etag: etagOf(row('NTR-00003')), alasan: 'xxx' }, key()))).toBe('FORBIDDEN');
     await setujui(eko, 'NTR-00002', 'finmgr');
     const q = await antreanFinance(w.deps, gita, 'persetujuan');
-    expect(q.peran).toEqual({ staff: false, finMgr: false, cfo: true });
-    expect(q.items.find((i) => i.id === 'NTR-00002')!.persetujuan).toEqual({ finMgr: 'Eko', cfo: null, finMgrSaya: false, wa: { target: 'cfo', terkirim: false } });
+    expect(q.peran).toEqual({ staff: false, finMgr: false, coo: false, cfo: true });
+    expect(q.items.find((i) => i.id === 'NTR-00002')!.persetujuan).toEqual({ finMgr: 'Eko', coo: null, cfo: null, finMgrSaya: false, cooSaya: false, wa: { target: 'cfo', terkirim: false } });
+  });
+});
+
+describe('COO (2026-11-09): dokumen General Affairs >= ambang CFO — Fin. Mgr -> COO -> CFO', () => {
+  const coo = sess('rusli@x.id', 'Rusli', 6);
+  const GA = 'GENERAL AFFAIRS';
+  beforeEach(() => {
+    w.store.seed(TRX_PENGAJUAN, [
+      ...w.store.rowsOf(TRX_PENGAJUAN),
+      trxRow('NTR-00010', { STATUS: 'Tax Verified', DEPARTEMENT: GA, BRAND: 'All Brand (Shared Service)', CREATED_BY: 'naila@x.id', FINAL_AMOUNT: 7_000_000, REQUIRE_CFO: 'YES', LAST_UPDATE: 46000 }),
+      trxRow('NTR-00011', { STATUS: 'Tax Verified', DEPARTEMENT: GA, BRAND: 'HEYLOCAL', CREATED_BY: 'naila@x.id', FINAL_AMOUNT: 1_000_000, REQUIRE_CFO: 'NO', LAST_UPDATE: 46000 }),
+      trxRow('NTR-00012', { STATUS: 'Tax Verified', DEPARTEMENT: GA, BRAND: 'SHUWA', CREATED_BY: 'naila@x.id', FINAL_AMOUNT: 5_000_000, REQUIRE_CFO: '', LAST_UPDATE: 46000 }), // flag kosong/diedit, nominal tepat di ambang
+    ]);
+    w.store.seed(TRX_APPROVAL, [...w.store.rowsOf(TRX_APPROVAL), l3('NTR-00010', 46000), l3('NTR-00011', 46000), l3('NTR-00012', 46000)]);
+  });
+  it('alur penuh: CFO & COO ditahan sampai gilirannya; COO L6 tercatat E-SIGN; urutan approval 3,4,6,5; baru Wet Signed setelah CFO', async () => {
+    expect(await kode(setujui(coo, 'NTR-00010', 'coo'))).toBe('RULE_VIOLATION'); // COO sebelum Fin. Mgr
+    expect(await kode(setujui(gita, 'NTR-00010', 'cfo'))).toBe('RULE_VIOLATION'); // CFO sebelum Fin. Mgr
+    const r1 = await setujui(eko, 'NTR-00010', 'finmgr');
+    expect(r1).toMatchObject({ status: 'Tax Verified', menungguBerikut: 'coo', menungguCFO: false });
+    expect(await kode(setujui(gita, 'NTR-00010', 'cfo'))).toBe('RULE_VIOLATION'); // CFO sebelum COO
+    expect(await kode(setujui(eko, 'NTR-00010', 'coo'))).toBe('FORBIDDEN'); // level persis
+    expect(await kode(setujui(gita, 'NTR-00010', 'coo'))).toBe('FORBIDDEN');
+    const r2 = await setujui(coo, 'NTR-00010', 'coo');
+    expect(r2).toMatchObject({ status: 'Tax Verified', menungguBerikut: 'cfo', menungguCFO: true });
+    expect(row('NTR-00010')[C('STATUS')]).toBe('Tax Verified');
+    expect(await kode(setujui(coo, 'NTR-00010', 'coo'))).toBe('CONFLICT'); // COO dua kali
+    expect(await setujui(gita, 'NTR-00010', 'cfo')).toMatchObject({ status: 'Wet Signed', menungguBerikut: null });
+    expect(aprs('NTR-00010').map((x) => x[CA('Level')])).toEqual([3, 4, 6, 5]);
+    expect(aprs('NTR-00010').find((x) => x[CA('Level')] === 6)).toSatisfy((x: RawRow) => x[CA('Approver_Email')] === 'rusli@x.id' && x[CA('Method')] === 'E-SIGN' && x[CA('Action')] === 'APPROVED');
+  });
+  it('GA di bawah ambang: tanpa COO (Fin. Mgr langsung selesai); COO ditolak', async () => {
+    expect(await kode(setujui(coo, 'NTR-00011', 'coo'))).toBe('RULE_VIOLATION');
+    expect(await setujui(eko, 'NTR-00011', 'finmgr')).toMatchObject({ status: 'Wet Signed', menungguBerikut: null });
+  });
+  it('gagal tertutup: GA tepat Rp 5.000.000 dengan REQUIRE_CFO kosong tetap wajib COO lalu CFO (I1 + COO)', async () => {
+    expect(await setujui(eko, 'NTR-00012', 'finmgr')).toMatchObject({ status: 'Tax Verified', menungguBerikut: 'coo' });
+    expect(await kode(setujui(gita, 'NTR-00012', 'cfo'))).toBe('RULE_VIOLATION');
+    await setujui(coo, 'NTR-00012', 'coo');
+    expect(await kode(setujui(gita, 'NTR-00012', 'cfo'))).toBe('OK');
+  });
+  it('dept selain GA tidak pernah minta COO, berapa pun nominalnya', async () => {
+    await setujui(eko, 'NTR-00002', 'finmgr'); // NTR-00002: 7 jt, bukan GA
+    expect(await kode(setujui(coo, 'NTR-00002', 'coo'))).toBe('RULE_VIOLATION');
+    expect(await kode(setujui(gita, 'NTR-00002', 'cfo'))).toBe('OK');
+  });
+  it('dua tanda tangan = dua orang: COO tidak boleh orang yang sama dengan Fin. Mgr; CFO tidak boleh sama dengan COO', async () => {
+    const rangkap46 = sess('dua@x.id', 'Dua', 4, 6), rangkap65 = sess('tiga@x.id', 'Tiga', 6, 5);
+    await setujui(rangkap46, 'NTR-00010', 'finmgr');
+    expect(await kode(setujui(rangkap46, 'NTR-00010', 'coo'))).toBe('RULE_VIOLATION');
+    await setujui(rangkap65, 'NTR-00010', 'coo');
+    expect(await kode(setujui(rangkap65, 'NTR-00010', 'cfo'))).toBe('RULE_VIOLATION');
+    expect(await kode(setujui(gita, 'NTR-00010', 'cfo'))).toBe('OK');
+  });
+  it('step-up password wajib untuk COO juga', async () => {
+    await setujui(eko, 'NTR-00010', 'finmgr');
+    const e = await setujui(coo, 'NTR-00010', 'coo', { stepUp: false }).catch((x: AppError) => x);
+    expect(e).toMatchObject({ code: 'FORBIDDEN', fields: { stepUp: 'required' } });
+    expect(aprs('NTR-00010').some((x) => x[CA('Level')] === 6)).toBe(false);
+  });
+  it('antrean: peran COO terlihat, perluCOO/persetujuan COO muncul, COO boleh melihat antrean Finance', async () => {
+    await setujui(eko, 'NTR-00010', 'finmgr');
+    const q = await antreanFinance(w.deps, coo);
+    expect(q.peran).toEqual({ staff: false, finMgr: false, coo: true, cfo: false });
+    const i = q.items.find((x) => x.id === 'NTR-00010')!;
+    expect(i).toMatchObject({ perluCOO: true, perluCFO: true });
+    expect(i.persetujuan).toMatchObject({ finMgr: 'Eko', coo: null, cfo: null });
+    expect(q.items.find((x) => x.id === 'NTR-00002')!.perluCOO).toBe(false);
+  });
+  it('Fin. Mgr / COO / CFO bisa mengembalikan dokumen di tahap persetujuan; COO tidak bisa mengembalikan di tahap lain', async () => {
+    await kembalikanFinance(w.deps, coo, 'NTR-00010', { etag: etagOf(row('NTR-00010')), alasan: 'Perlu revisi' }, key());
+    expect(row('NTR-00010')[C('STATUS')]).toBe('Revision Needed');
+    expect(aprs('NTR-00010').find((x) => x[CA('Action')] === 'REJECTED')![CA('Level')]).toBe(6);
+    expect(await kode(kembalikanFinance(w.deps, coo, 'NTR-00003', { etag: etagOf(row('NTR-00003')), alasan: 'x' }, key()))).toBe('FORBIDDEN'); // Manager Approved = tahap Finance Staff
   });
 });

@@ -1,6 +1,6 @@
 // Detail dokumen, voucher, pencarian, dashboard (M7). Semua jalur baca lewat canViewDocument (I13); tak berhak / tak ada = 404 (bukan 403).
 import { canViewDocument } from '@/domain/capabilities';
-import { CONFIG, LEVEL } from '@/domain/config';
+import { CONFIG, LEVEL, butuhCOO } from '@/domain/config';
 import {
   bangunKotakTTD, cocokCari, maskRekening, petaPersetujuan, posisiAlur, susunTimeline, umurHari,
   type ApprovalBaris, type AuditBaris, type BarisCari, type BarisUserTTD,
@@ -106,7 +106,7 @@ export async function voucher(d: AuthDeps, s: SessionData, idTrx: string) {
   const users: BarisUserTTD[] = (await bacaTampilan(d, MASTER_USER_TTD)).map((x) => ({
     brand: str(U(x, 'Brand')), dept: str(U(x, 'Departement')), level: U(x, 'Level'), jabatan: str(U(x, 'Jabatan')), nama: str(U(x, 'Nama')), aktif: U(x, 'Aktif'),
   }));
-  const ttd = bangunKotakTTD(users, peta, rk.brand, rk.departement, rk.perluCFO, (ts) => fmtTanggal(ts));
+  const ttd = bangunKotakTTD(users, peta, rk.brand, rk.departement, rk.perluCFO, butuhCOO(rk.departement, rk.nominal), (ts) => fmtTanggal(ts));
   const pembayaran = (await bacaTampilan(d, TRX_PAYMENT_LOG)).filter((x) => str(Y(x, 'ID_Trx')) === idTrx)
     .map((x) => ({ tgl: fmtTanggal(Y(x, 'Tgl_Bayar')), nominal: num(Y(x, 'Nominal')), sumber: str(Y(x, 'Sumber_Rekening')), ref: str(Y(x, 'Ref_No')) }));
   return { ...rk, ttd, pembayaran, ambangCFO: CONFIG.CFO_THRESHOLD, dicetak: fmtWaktu(toSheetSerial(d.clock.now())) };

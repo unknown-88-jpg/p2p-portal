@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ALASAN_MAX, CATATAN_MAX, TEMPLATE_ALASAN } from '@/domain/approval';
 import { alasanValid, catatanValid, pertahankanKunci, perluMuatUlang } from '@/domain/approval-ui';
+import { butuhCOO } from '@/domain/config';
 import { angka, formatRibuan, parseRupiah, pilihKunci, rupiah, type KunciIdem } from '@/domain/pengajuan-form';
 import { api, errMessage, hasilDipulihkan, isApiError, PESAN_DIPULIHKAN } from './api';
 import { IkonKlip, IkonPerhatian, IkonSelesai } from './icons';
@@ -100,7 +101,7 @@ export function FormVerifikasiPajak({ dok, onSelesai, onKembali }: { dok: DokPaj
       if (hasilDipulihkan(r.hasil)) { kunci.current = null; setDlg(null); onSelesai({ jenis: 'warn', teks: PESAN_DIPULIHKAN }, true); return; }
       kunci.current = null; setDlg(null);
       onSelesai(jenis === 'loloskan'
-        ? { jenis: 'ok', teks: `${dok.id} lolos verifikasi pajak. Nominal akhir ${rupiah(r.hasil.finalAmount ?? 0)}; berikutnya persetujuan Fin. Mgr${r.hasil.perluCFO ? ' + CFO' : ''}.` }
+        ? { jenis: 'ok', teks: `${dok.id} lolos verifikasi pajak. Nominal akhir ${rupiah(r.hasil.finalAmount ?? 0)}; berikutnya persetujuan Fin. Mgr${butuhCOO(dok.departement, r.hasil.finalAmount ?? 0) ? ' + COO' : ''}${r.hasil.perluCFO ? ' + CFO' : ''}.` }
         : { jenis: 'ok', teks: `${dok.id} dikembalikan ke PIC untuk direvisi.` }, true);
     } catch (e) {
       const x = isApiError(e) ? e : null;
@@ -115,6 +116,7 @@ export function FormVerifikasiPajak({ dok, onSelesai, onKembali }: { dok: DokPaj
   const berubah = hitung && hitung.finalAmount !== dok.nominal;
   const diskonBesar = nInv > 0 && nDiskon / nInv >= DISKON_BESAR;
   const perluCFO = !!hitung && hitung.finalAmount >= CFO_MIN;
+  const perluCOO = !!hitung && butuhCOO(dok.departement, hitung.finalAmount);
   const lampiranUrl = `/api/pengajuan/${encodeURIComponent(dok.id)}/lampiran`;
   const ringkas = <div className="dlg-ringkas"><span className="num">{dok.id} · {dok.vendorNama || '—'}</span><strong className="num">{rupiah(akhir)}</strong></div>;
   const Info = ({ l, v }: { l: string; v: string }) => <div><dt>{l}</dt><dd>{v || '—'}</dd></div>;
@@ -189,6 +191,7 @@ export function FormVerifikasiPajak({ dok, onSelesai, onKembali }: { dok: DokPaj
                 <div className="total"><dt>Nominal akhir</dt><dd className="num">{rupiah(akhir)}</dd></div>
               </dl>
             </div>
+            {perluCOO && <p className="cap"><span className="badge-cfo">Butuh persetujuan COO</span> <span className="hint">Dokumen General Affairs mulai Rp 5.000.000.</span></p>}
             {perluCFO && <p className="cap"><span className="badge-cfo">Butuh persetujuan CFO</span></p>}
             {galatHitung && <Pesan jenis="err">{galatHitung}</Pesan>}
             <Field label="Catatan" id={`vp-cat-${dok.id}`} opsional>{(p) => <textarea {...p} rows={6} maxLength={CATATAN_MAX} value={notes} onChange={(e) => setNotes(e.target.value)} />}</Field>
@@ -211,7 +214,7 @@ export function FormVerifikasiPajak({ dok, onSelesai, onKembali }: { dok: DokPaj
       <Dialog buka={dlg === 'loloskan'} onTutup={() => { if (!sibuk) setDlg(null); }} judul="Loloskan verifikasi pajak?">
         <form onSubmit={(e) => { e.preventDefault(); void kirim('loloskan'); }}>
           {ringkas}
-          <p className="muted">{ppn} · {pph === '-' ? 'tanpa PPh' : pph}. Server menghitung ulang angka akhir dengan tarif PPh terbaru. Dokumen lanjut ke persetujuan Fin. Mgr{perluCFO ? ' + CFO' : ''}.</p>
+          <p className="muted">{ppn} · {pph === '-' ? 'tanpa PPh' : pph}. Server menghitung ulang angka akhir dengan tarif PPh terbaru. Dokumen lanjut ke persetujuan Fin. Mgr{perluCOO ? ' + COO' : ''}{perluCFO ? ' + CFO' : ''}.</p>
           {galat && <Pesan jenis="err">{galat}</Pesan>}
           <div className="dlg-aksi">
             <button type="button" className="btn btn-secondary" onClick={() => setDlg(null)} disabled={sibuk}>Batal</button>

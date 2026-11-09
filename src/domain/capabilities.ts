@@ -5,10 +5,11 @@ import { hasAuthority, normEmail, type Role } from './roles';
 export const CAPABILITY_LEVELS = {
   'pengajuan.write': [LEVEL.PIC],
   'approve.manager': [LEVEL.MANAGER],        // + wajib wewenang brand/dept (lihat canApprove)
-  'finance.view': [LEVEL.FINANCE_STAFF, LEVEL.FINANCE_MGR, LEVEL.CFO], // F2-A: lihat antrean Finance (lama: requireLevel(FINANCE_STAFF))
+  'finance.view': [LEVEL.FINANCE_STAFF, LEVEL.FINANCE_MGR, LEVEL.COO, LEVEL.CFO], // F2-A: lihat antrean Finance (lama: requireLevel(FINANCE_STAFF))
   'tax.verify': [LEVEL.FINANCE_STAFF],
   // O4: TTD basah (unggah scan) DIHAPUS tanpa masa transisi -> capability 'sign.upload' tidak ada lagi.
   'sign.eapprove.finmgr': [LEVEL.FINANCE_MGR], // Fase 2 (F2-C)
+  'sign.eapprove.coo': [LEVEL.COO],            // 2026-11-09: dokumen GA >= ambang, antara Fin. Mgr dan CFO
   'sign.eapprove.cfo': [LEVEL.CFO],            // Fase 2 (F2-C)
   'journal.post': [LEVEL.FINANCE_STAFF],
   'payment.execute': [LEVEL.FINANCE_STAFF],

@@ -393,7 +393,7 @@ describe('E2E B — >= Rp 5 jt: step-up Manager, tanpa kode WA, wajib CFO sebelu
     expect(e.message).toMatch(/Pembayaran diblokir/);
     const st = statusPersetujuan(D.aprs(id).map((x) => ({ level: x[CA('Level')], action: x[CA('Action')], nama: x[CA('Approver_Name')], email: x[CA('Approver_Email')], timestamp: x[CA('Timestamp')] })));
     // seandainya status sudah COA Posted (mis. data diubah manual), gerbang tetap menahan karena CFO belum ada
-    expect(cekBolehDibayar({ status: 'COA Posted', perluCFO: true, subCoa: 'KERTAS A4', manager: true, st })).toMatch(/CFO/);
+    expect(cekBolehDibayar({ status: 'COA Posted', perluCFO: true, perluCOO: false, subCoa: 'KERTAS A4', manager: true, st })).toMatch(/CFO/);
     expect(D.bayarLog(id)).toHaveLength(0);
   });
 

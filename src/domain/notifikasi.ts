@@ -6,7 +6,7 @@ export interface ButirNotif { kunci: string; judul: string; jumlah: number; href
 export interface SumberNotif {
   pic?: { revisi: number; draft: number };
   manager?: { antrean: number };
-  finance?: { pajak?: number; persetujuanFinMgr?: number; persetujuanCfo?: number; jurnal?: number; bayar?: number };
+  finance?: { pajak?: number; persetujuanFinMgr?: number; persetujuanCoo?: number; persetujuanCfo?: number; jurnal?: number; bayar?: number };
   vendor?: { menunggu: number };
   admin?: { cronBermasalah: string[] };
 }
@@ -23,6 +23,7 @@ export function susunNotifikasi(s: SumberNotif): { butir: ButirNotif[]; total: n
   if (f) {
     add({ kunci: 'fin-pajak', judul: 'Menunggu verifikasi pajak', jumlah: f.pajak ?? 0, href: '/finance?tahap=pajak', nada: 'merah' });
     add({ kunci: 'fin-finmgr', judul: 'Menunggu persetujuan Fin. Mgr', jumlah: f.persetujuanFinMgr ?? 0, href: '/finance?tahap=persetujuan', nada: 'merah' });
+    add({ kunci: 'fin-coo', judul: 'Menunggu persetujuan COO', jumlah: f.persetujuanCoo ?? 0, href: '/finance?tahap=persetujuan', nada: 'merah' });
     add({ kunci: 'fin-cfo', judul: 'Menunggu persetujuan CFO', jumlah: f.persetujuanCfo ?? 0, href: '/finance?tahap=persetujuan', nada: 'merah' });
     add({ kunci: 'fin-jurnal', judul: 'Menunggu jurnal COA', jumlah: f.jurnal ?? 0, href: '/finance?tahap=jurnal', nada: 'kuning' });
     add({ kunci: 'fin-bayar', judul: 'Siap dibayar', jumlah: f.bayar ?? 0, href: '/finance?tahap=bayar', nada: 'kuning' });

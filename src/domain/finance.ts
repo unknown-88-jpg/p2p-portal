@@ -1,6 +1,6 @@
 // Fase 2 / F2-A: tahap antrean Finance & hak akses per level. Murni, tanpa I/O. Sumber perilaku: getFinanceQueues (API_Finance.gs).
 import { can, type Capability } from './capabilities';
-import { butuhCFO } from './config';
+import { butuhCFO, butuhCOO } from './config';
 import type { Role } from './roles';
 import { STATUS, type Status } from './status';
 
@@ -19,7 +19,7 @@ export interface TahapFinance {
 /** Urutan = urutan alur. Pemetaan status sama dengan getFinanceQueues lama: tax / wet / coa / treasury. */
 export const TAHAP_FINANCE: readonly TahapFinance[] = [
   { kunci: 'pajak', label: 'Verifikasi pajak', status: [STATUS.MANAGER_APPROVED], aktor: 'Finance Staff', cap: ['tax.verify'] },
-  { kunci: 'persetujuan', label: 'Persetujuan Fin. Mgr / CFO', status: [STATUS.TAX_VERIFIED], aktor: 'Fin. Mgr / CFO', cap: ['sign.eapprove.finmgr', 'sign.eapprove.cfo'] },
+  { kunci: 'persetujuan', label: 'Persetujuan Fin. Mgr / COO / CFO', status: [STATUS.TAX_VERIFIED], aktor: 'Fin. Mgr / COO / CFO', cap: ['sign.eapprove.finmgr', 'sign.eapprove.coo', 'sign.eapprove.cfo'] },
   { kunci: 'jurnal', label: 'Jurnal COA', status: [STATUS.WET_SIGNED], aktor: 'Finance Staff', cap: ['journal.post'] },
   { kunci: 'bayar', label: 'Siap dibayar', status: [STATUS.COA_POSTED, STATUS.PARTIALLY_PAID], aktor: 'Finance Staff', cap: ['payment.execute'] },
 ];
@@ -54,10 +54,10 @@ export const PESAN_I6 = 'Anda mengajukan dokumen ini, jadi tidak boleh memverifi
 export const STATUS_BOLEH_KEMBALI_FINANCE: readonly Status[] = [STATUS.MANAGER_APPROVED, STATUS.TAX_VERIFIED, STATUS.WET_SIGNED, STATUS.COA_POSTED];
 
 // ------------------------------------------------------------------ F2-C: e-approve Fin. Mgr (L4) & CFO (L5) — O4: menggantikan TTD basah
-export type Sebagai = 'finmgr' | 'cfo';
+export type Sebagai = 'finmgr' | 'coo' | 'cfo';
 export interface BarisApproval { level: unknown; action: unknown; nama: unknown; email: unknown; timestamp: unknown }
 export interface Penyetuju { nama: string; email: string }
-export interface StatusPersetujuan { finMgr: Penyetuju | null; cfo: Penyetuju | null; verifikator: Penyetuju | null }
+export interface StatusPersetujuan { finMgr: Penyetuju | null; coo: Penyetuju | null; cfo: Penyetuju | null; verifikator: Penyetuju | null }
 
 const lvl = (v: unknown): number => (typeof v === 'number' ? Math.trunc(v) : parseInt(String(v ?? ''), 10));
 const ts = (v: unknown): number => { const n = typeof v === 'number' ? v : parseFloat(String(v ?? '')); return Number.isFinite(n) ? n : -Infinity; };
@@ -77,7 +77,7 @@ export function statusPersetujuan(rows: readonly BarisApproval[]): StatusPersetu
     const r = rows.filter((x) => ok(x) && lvl(x.level) === level && ts(x.timestamp) >= mulai).sort((a, b) => ts(a.timestamp) - ts(b.timestamp)).at(-1);
     return r ? { nama: String(r.nama ?? '').trim(), email: String(r.email ?? '').trim() } : null;
   };
-  return { finMgr: ambil(4), cfo: ambil(5), verifikator: l3 ? { nama: String(l3.nama ?? '').trim(), email: String(l3.email ?? '').trim() } : null };
+  return { finMgr: ambil(4), coo: ambil(6), cfo: ambil(5), verifikator: l3 ? { nama: String(l3.nama ?? '').trim(), email: String(l3.email ?? '').trim() } : null };
 }
 
 /** Penanda siklus verifikasi sekarang (waktu verifikasi pajak L3 terakhir), '' bila belum ada. Dipakai jatah WA manual per siklus. */
@@ -86,9 +86,9 @@ export function siklusVerifikasi(rows: readonly BarisApproval[]): string {
   return t.length ? String(Math.max(...t)) : '';
 }
 
-/** Persetujuan berikutnya yang ditunggu (urutan Fin. Mgr -> CFO); null = sudah lengkap. Penerima WA manual tahap persetujuan. */
-export const targetPersetujuan = (perluCFO: boolean, st: StatusPersetujuan): Sebagai | null =>
-  !st.finMgr ? 'finmgr' : perluCFO && !st.cfo ? 'cfo' : null;
+/** Persetujuan berikutnya yang ditunggu (urutan Fin. Mgr -> COO [dokumen GA >= ambang] -> CFO); null = sudah lengkap. Penerima WA manual tahap persetujuan. */
+export const targetPersetujuan = (perluCFO: boolean, perluCOO: boolean, st: StatusPersetujuan): Sebagai | null =>
+  !st.finMgr ? 'finmgr' : perluCOO && !st.coo ? 'coo' : perluCFO && !st.cfo ? 'cfo' : null;
 
 const samaEmail = (a: string, b: string): boolean => a.trim().toLowerCase() !== '' && a.trim().toLowerCase() === b.trim().toLowerCase();
 
@@ -96,25 +96,39 @@ const samaEmail = (a: string, b: string): boolean => a.trim().toLowerCase() !== 
  * Aturan e-approve (urutan L4 -> L5). Mengembalikan alasan penolakan atau null. CFO hanya bila REQUIRE_CFO (I1), setelah Fin. Mgr,
  * dan oleh orang yang BERBEDA dari Fin. Mgr (dua tanda tangan = dua orang).
  */
-export function cekEApprove(sebagai: Sebagai, roles: readonly Role[], email: string, perluCFO: boolean, st: StatusPersetujuan): { kode: 'FORBIDDEN' | 'CONFLICT' | 'RULE_VIOLATION'; pesan: string } | null {
+export function cekEApprove(sebagai: Sebagai, roles: readonly Role[], email: string, perluCFO: boolean, perluCOO: boolean, st: StatusPersetujuan): { kode: 'FORBIDDEN' | 'CONFLICT' | 'RULE_VIOLATION'; pesan: string } | null {
   if (sebagai === 'finmgr') {
     if (!can(roles, 'sign.eapprove.finmgr')) return { kode: 'FORBIDDEN', pesan: 'Hanya Fin. Mgr yang bisa memberi persetujuan ini.' };
     if (st.finMgr) return { kode: 'CONFLICT', pesan: `Dokumen ini sudah disetujui Fin. Mgr (${st.finMgr.nama}). Muat ulang daftar.` };
     return null;
   }
+  if (sebagai === 'coo') {
+    if (!can(roles, 'sign.eapprove.coo')) return { kode: 'FORBIDDEN', pesan: 'Hanya COO yang bisa memberi persetujuan ini.' };
+    if (!perluCOO) return { kode: 'RULE_VIOLATION', pesan: 'Dokumen ini tidak membutuhkan persetujuan COO (hanya dokumen General Affairs dengan nominal mulai Rp 5.000.000).' };
+    if (!st.finMgr) return { kode: 'RULE_VIOLATION', pesan: 'Menunggu persetujuan Fin. Mgr lebih dulu.' };
+    if (st.coo) return { kode: 'CONFLICT', pesan: `Dokumen ini sudah disetujui COO (${st.coo.nama}). Muat ulang daftar.` };
+    if (samaEmail(st.finMgr.email, email)) return { kode: 'RULE_VIOLATION', pesan: 'Persetujuan COO harus oleh orang yang berbeda dari Fin. Mgr.' };
+    return null;
+  }
   if (!can(roles, 'sign.eapprove.cfo')) return { kode: 'FORBIDDEN', pesan: 'Hanya CFO yang bisa memberi persetujuan ini.' };
   if (!perluCFO) return { kode: 'RULE_VIOLATION', pesan: 'Dokumen ini tidak membutuhkan persetujuan CFO (nominal di bawah Rp 5.000.000).' };
   if (!st.finMgr) return { kode: 'RULE_VIOLATION', pesan: 'Menunggu persetujuan Fin. Mgr lebih dulu.' };
+  if (perluCOO && !st.coo) return { kode: 'RULE_VIOLATION', pesan: 'Dokumen General Affairs ini menunggu persetujuan COO lebih dulu.' };
   if (st.cfo) return { kode: 'CONFLICT', pesan: `Dokumen ini sudah disetujui CFO (${st.cfo.nama}). Muat ulang daftar.` };
   if (samaEmail(st.finMgr.email, email)) return { kode: 'RULE_VIOLATION', pesan: 'Persetujuan CFO harus oleh orang yang berbeda dari Fin. Mgr.' };
+  if (st.coo && samaEmail(st.coo.email, email)) return { kode: 'RULE_VIOLATION', pesan: 'Persetujuan CFO harus oleh orang yang berbeda dari COO.' };
   return null;
 }
 
-/** Setelah persetujuan ini, apakah tahap persetujuan selesai (lanjut ke Jurnal COA / status Wet Signed)? */
-export const persetujuanLengkap = (sebagai: Sebagai, perluCFO: boolean): boolean => sebagai === 'cfo' || !perluCFO;
+/** Setelah persetujuan ini, apakah tahap persetujuan selesai (lanjut ke Jurnal COA / status Wet Signed)? CFO selalu yang terakhir; COO tidak pernah (wajib COO berarti wajib CFO). */
+export const persetujuanLengkap = (sebagai: Sebagai, perluCFO: boolean, perluCOO: boolean): boolean =>
+  sebagai === 'cfo' || (sebagai === 'finmgr' && !perluCFO && !perluCOO);
 
 /** I1 berlapis: wajib CFO bila kolom REQUIRE_CFO = YES ATAU nominal tersimpan >= ambang (baris lama / diedit manual tidak bisa melewati CFO). */
 export const wajibCFO = (requireCfo: unknown, finalAmount: number): boolean => String(requireCfo ?? '').trim().toUpperCase() === 'YES' || butuhCFO(finalAmount);
+
+/** Wajib COO: dept General Affairs (semua brand) dan nominal tersimpan >= ambang CFO. Diturunkan dari data dokumen (tanpa kolom baru), jadi baris lama / diedit manual tidak bisa melewatinya. */
+export const wajibCOO = (dept: unknown, finalAmount: number): boolean => butuhCOO(String(dept ?? ''), finalAmount);
 
 /** Penanda pemisahan tugas (bukan blokir, selaras O5b): penyetuju L4/L5 = pengaju atau verifikator pajak. */
 export function penandaTugasRangkap(email: string, pengajuEmail: string, st: StatusPersetujuan): string {
@@ -161,7 +175,8 @@ export const JENDELA_DUPLIKAT_MS = 10 * 60_000;
 export interface GerbangBayar {
   status: string; perluCFO: boolean; subCoa: string;
   /** Ada approval Manager (L2) APPROVED. */ manager: boolean;
-  /** Persetujuan siklus verifikasi sekarang (L3/L4/L5). */ st: StatusPersetujuan;
+  /** Dokumen GA >= ambang: wajib persetujuan COO. */ perluCOO: boolean;
+  /** Persetujuan siklus verifikasi sekarang (L3/L4/L5/L6). */ st: StatusPersetujuan;
 }
 /**
  * I4 (bolehDibayar): status COA Posted / Partially Paid; approval Manager, verifikasi pajak, Fin. Mgr (+ CFO bila wajib) tercatat;
@@ -172,6 +187,7 @@ export function cekBolehDibayar(g: GerbangBayar): string | null {
   if (!g.manager) return 'Belum ada persetujuan Manager divisi.';
   if (!g.st.verifikator) return 'Belum diverifikasi pajak oleh Finance Staff.';
   if (!g.st.finMgr) return 'Belum ada persetujuan Fin. Mgr.';
+  if (g.perluCOO && !g.st.coo) return 'Dokumen General Affairs ≥ Rp 5.000.000 wajib disetujui COO.';
   if (g.perluCFO && !g.st.cfo) return 'Nominal ≥ Rp 5.000.000 wajib disetujui CFO.';
   if (!g.subCoa.trim() || g.subCoa.trim() === '-') return 'Jurnal COA belum diposting.';
   return null;
@@ -196,6 +212,7 @@ export function tugasRangkapBayar(email: string, st: StatusPersetujuan): string[
   const t: string[] = [];
   if (st.verifikator && samaEmail(st.verifikator.email, email)) t.push('verifikator pajak');
   if (st.finMgr && samaEmail(st.finMgr.email, email)) t.push('Fin. Mgr');
+  if (st.coo && samaEmail(st.coo.email, email)) t.push('COO');
   if (st.cfo && samaEmail(st.cfo.email, email)) t.push('CFO');
   return t;
 }

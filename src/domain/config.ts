@@ -1,6 +1,8 @@
 // Padanan Config.gs (CONFIG). Satu-satunya tempat angka bisnis. Jangan duplikasi.
 export const CONFIG = {
   CFO_THRESHOLD: 5_000_000,
+  /** Keputusan user 2026-11-09: dokumen dept ini (semua brand, termasuk Shared Service) dengan nominal >= ambang CFO wajib persetujuan COO (L6), setelah Fin. Mgr dan sebelum CFO. */
+  COO_DEPT: 'GENERAL AFFAIRS',
   PPN_RATE: 0.11,
   PAYMENT_TOLERANCE: 1000,
   /** D9: approval via WA di/atas nominal ini DIMATIKAN (wajib web + konfirmasi password). */
@@ -23,12 +25,17 @@ export const CONFIG = {
   },
 } as const;
 
-export const LEVEL = { PIC: 1, MANAGER: 2, FINANCE_STAFF: 3, FINANCE_MGR: 4, CFO: 5, ADMIN: 9 } as const;
+export const LEVEL = { PIC: 1, MANAGER: 2, FINANCE_STAFF: 3, FINANCE_MGR: 4, CFO: 5, COO: 6, ADMIN: 9 } as const;
 export type Level = (typeof LEVEL)[keyof typeof LEVEL];
 
 /** I1: nominal >= ambang CFO -> wajib CFO. */
 export function butuhCFO(finalAmount: number): boolean {
   return finalAmount >= CONFIG.CFO_THRESHOLD;
+}
+
+/** Wajib COO: dept GA (semua brand) dan nominal >= ambang yang sama dengan CFO (keputusan user 2026-11-09). */
+export function butuhCOO(dept: string, finalAmount: number): boolean {
+  return dept.trim().toUpperCase() === CONFIG.COO_DEPT && butuhCFO(finalAmount);
 }
 
 /** D9/I14: boleh disetujui lewat balasan WA hanya bila nominal di bawah ambang. Dievaluasi di server dari nominal tersimpan. */

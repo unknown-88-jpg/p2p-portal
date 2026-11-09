@@ -6,9 +6,9 @@ import type { Role } from './roles';
 import { STATUS } from './status';
 import { labelStatus } from './status-label';
 
-export const LEVEL_LABEL: Readonly<Record<number, string>> = { 1: 'Dibuat Oleh,', 2: 'Diperiksa Oleh,', 3: 'Diverifikasi Oleh,', 4: 'Disetujui Oleh,', 5: 'Disetujui Oleh,' };
+export const LEVEL_LABEL: Readonly<Record<number, string>> = { 1: 'Dibuat Oleh,', 2: 'Diperiksa Oleh,', 3: 'Diverifikasi Oleh,', 4: 'Disetujui Oleh,', 5: 'Disetujui Oleh,', 6: 'Disetujui Oleh,' };
 /** O4 (final 2026-10-24): semua level E-SIGN; Level 4/5 lewat e-approve di portal (F2-C). Catatan lama ber-Method "WET" tetap ditampilkan sebagai TTD basah. */
-export const SIGN_METHOD: Readonly<Record<number, 'E-SIGN' | 'WET'>> = { 1: 'E-SIGN', 2: 'E-SIGN', 3: 'E-SIGN', 4: 'E-SIGN', 5: 'E-SIGN' };
+export const SIGN_METHOD: Readonly<Record<number, 'E-SIGN' | 'WET'>> = { 1: 'E-SIGN', 2: 'E-SIGN', 3: 'E-SIGN', 4: 'E-SIGN', 5: 'E-SIGN', 6: 'E-SIGN' };
 
 export interface BarisUserTTD { brand: string; dept: string; level: unknown; jabatan: string; nama: string; aktif: unknown }
 export interface Persetujuan { level: number; nama: string; jabatan: string; timestamp: unknown; method?: string }
@@ -21,7 +21,7 @@ const up = (v: unknown): string => str(v).toUpperCase();
  * nama kosong/"-" dilewati; CFO hanya bila wajib; satu orang pertama per level; urut level), ditempeli persetujuan NYATA (Trx_Approval, status APPROVED;
  * yang terakhir per level menang). Yang tercatat TTD memakai nama/jabatan dari catatan approval, bukan dari master.
  */
-export function bangunKotakTTD(users: readonly BarisUserTTD[], approved: ReadonlyMap<number, Persetujuan>, brand: string, dept: string, perluCFO: boolean, fmtTgl: (ts: unknown) => string): KotakTTD[] {
+export function bangunKotakTTD(users: readonly BarisUserTTD[], approved: ReadonlyMap<number, Persetujuan>, brand: string, dept: string, perluCFO: boolean, perluCOO: boolean, fmtTgl: (ts: unknown) => string): KotakTTD[] {
   const b = up(brand), d = up(dept);
   const signers: { level: number; jabatan: string; nama: string }[] = [];
   for (const u of users) {
@@ -34,9 +34,11 @@ export function bangunKotakTTD(users: readonly BarisUserTTD[], approved: Readonl
     if (!nama || nama === '-') continue;
     if (!(level in LEVEL_LABEL)) continue; // hanya level alur P2P (1-5); Admin (L9) mengatur sistem, bukan penandatangan (keputusan user 2026-10-25, beda dari lama)
     if (level === LEVEL.CFO && !perluCFO) continue;
+    if (level === LEVEL.COO && !perluCOO) continue; // COO hanya untuk dokumen GA >= ambang (2026-11-09)
     if (!signers.some((s) => s.level === level)) signers.push({ level, jabatan: str(u.jabatan) || 'Staff', nama });
   }
-  signers.sort((a, c) => a.level - c.level);
+  const urut = (l: number): number => (l === LEVEL.COO ? LEVEL.FINANCE_MGR + 0.5 : l); // alur: Fin. Mgr -> COO -> CFO
+  signers.sort((a, c) => urut(a.level) - urut(c.level));
   return signers.map((s) => {
     const rec = approved.get(s.level);
     // Metode dari CATATAN nyata (data lama bisa "WET"); kotak yang belum ditandatangani mengikuti SIGN_METHOD (kini semua E-SIGN).
