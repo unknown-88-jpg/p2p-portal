@@ -17,7 +17,7 @@ interface Ubah { row: number; id: string; cells: Record<string, string | number>
 interface Arsip { jumlahBaris: number; batas: string; kandidat: { id: string; vendor: string; nominal: number; lunas: string }[] }
 interface Pratinjau { token: string; jenis: string; total: number; ubah: Ubah[]; lebihBayar: string[]; dibatasi: boolean }
 
-const LEVEL_LABEL: Record<number, string> = { 1: 'L1 PIC', 2: 'L2 Manager', 3: 'L3 Finance Staff', 4: 'L4 Fin. Mgr', 5: 'L5 CFO', 9: 'L9 Admin' };
+const LEVEL_LABEL: Record<number, string> = { 1: 'L1 PIC', 2: 'L2 Manager', 3: 'L3 Finance Staff', 4: 'L4 Fin. Mgr', 5: 'L5 CFO', 6: 'L6 COO', 9: 'L9 Admin' };
 const kosong = { brand: '', dept: '', level: 1, jabatan: '', nama: '', email: '', aktif: true, noHp: '' };
 const nadaLevel = (l: Temuan['level']): string => (l === 'KRITIS' ? 'merah' : l === 'TINGGI' ? 'kuning' : 'biru');
 const waktuWib = (ms: number | null): string => (ms ? new Date(ms).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }) : '—');

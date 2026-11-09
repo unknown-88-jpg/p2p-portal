@@ -45,8 +45,8 @@ beforeEach(() => {
 });
 
 describe('F2-E domain', () => {
-  const st = { verifikator: { nama: 'D', email: 'd' }, finMgr: { nama: 'E', email: 'e' }, cfo: null };
-  const g = { status: 'COA Posted', perluCFO: false, subCoa: 'X', manager: true, st };
+  const st = { verifikator: { nama: 'D', email: 'd' }, finMgr: { nama: 'E', email: 'e' }, coo: null, cfo: null };
+  const g = { status: 'COA Posted', perluCFO: false, perluCOO: false, subCoa: 'X', manager: true, st };
   it('I4 gerbang: status, Manager, verifikasi, Fin. Mgr, CFO bila wajib, Sub COA (tanpa syarat scan TTD, O4; budget dinonaktifkan 2026-10-25)', () => {
     expect(cekBolehDibayar(g)).toBeNull();
     expect(cekBolehDibayar({ ...g, status: 'Partially Paid' })).toBeNull();
@@ -126,6 +126,21 @@ describe('F2-E bayar', () => {
     expect(total).toBeLessThanOrEqual(1_000_000 + 1000);
     expect(res.filter((x) => x === 'OK').length).toBe(logOf('NTR-00001').length);
     expect(row('NTR-00001')[C('TOTAL_PAID')]).toBe(total);
+  });
+  it('COO (2026-11-09): dokumen wajib-COO (GA diajukan >= ambang) diblokir bayar tanpa persetujuan COO walau Fin. Mgr + CFO sudah; dengan COO boleh; yang tidak wajib tidak terpengaruh', async () => {
+    const GA = { DEPARTEMENT: 'GENERAL AFFAIRS', REQUIRE_COO: 'YES' };
+    w.store.seed(TRX_PENGAJUAN, [...w.store.rowsOf(TRX_PENGAJUAN), siap('NTR-00006', 7_000_000, GA), siap('NTR-00007', 7_000_000, GA), siap('NTR-00008', 2_000_000, { DEPARTEMENT: 'GENERAL AFFAIRS', REQUIRE_COO: 'NO' })]);
+    const a = [...w.store.rowsOf(TRX_APPROVAL) as (string | number)[][]];
+    for (const id of ['NTR-00006', 'NTR-00007', 'NTR-00008']) a.push(apr(id, 2, 'budi@x.id', 45990), apr(id, 3, 'dani@x.id', 46000), apr(id, 4, 'eko@x.id', 46001));
+    a.push(apr('NTR-00006', 5, 'gita@x.id', 46003), apr('NTR-00007', 1, 'naila@x.id', 45980), apr('NTR-00007', 6, 'rusli@x.id', 46002), apr('NTR-00007', 5, 'gita@x.id', 46003));
+    a.push(apr('NTR-00006', 1, 'naila@x.id', 45980));
+    w.store.seed(TRX_APPROVAL, a);
+    const q = await antreanFinance(w.deps, fina, 'bayar');
+    expect(q.items.find((i) => i.id === 'NTR-00006')!.blokirBayar).toMatch(/COO/);
+    expect(q.items.find((i) => i.id === 'NTR-00007')!.blokirBayar).toBeNull();
+    const r = await bayarX([{ id: 'NTR-00006', nominal: 7_000_000 }, { id: 'NTR-00007', nominal: 7_000_000 }, { id: 'NTR-00008', nominal: 2_000_000 }, { id: 'NTR-00002', nominal: 7_000_000 }]);
+    expect(r.berhasil.map((b) => b.id).sort()).toEqual(['NTR-00002', 'NTR-00007', 'NTR-00008']);
+    expect(r.gagal.map((g) => [g.id, /COO/.test(g.alasan)])).toEqual([['NTR-00006', true]]);
   });
   it('O5b: pembayar = verifikator pajak -> tetap dibayar, diberi penanda di audit; antrean memberi peringatan & alasan blokir', async () => {
     const q = await antreanFinance(w.deps, dani, 'bayar');

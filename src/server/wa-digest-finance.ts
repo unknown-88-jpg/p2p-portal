@@ -16,12 +16,13 @@ export function barisUntuk(q: AntreanFinance, base: string): BarisDigestFinance[
   const di = (t: string) => q.items.filter((i) => i.tahap === t);
   const out: BarisDigestFinance[] = [];
   if (q.peran.staff) {
-    out.push(b('Verifikasi pajak', di('pajak').filter((i) => !i.ajuanSendiri), 'pajak')); // I6: ajuan sendiri dikerjakan rekan
+    out.push(b('Verifikasi pajak', di('pajak').filter((i) => !i.ajuanSendiri && !(i.perluCOO && !i.persetujuan?.coo)), 'pajak')); // I6: ajuan sendiri dikerjakan rekan; dokumen wajib-COO menunggu COO dulu
     out.push(b('Jurnal COA', di('jurnal'), 'jurnal'));
     out.push(b('Siap dibayar', di('bayar').filter((i) => !i.blokirBayar), 'bayar', (i) => i.sisa));
   }
   if (q.peran.finMgr) out.push(b('Persetujuan Fin. Mgr', di('persetujuan').filter((i) => !i.persetujuan?.finMgr), 'persetujuan'));
-  if (q.peran.cfo) out.push(b('Persetujuan CFO', di('persetujuan').filter((i) => i.perluCFO && i.persetujuan?.finMgr && !i.persetujuan.cfo && !i.persetujuan.finMgrSaya), 'persetujuan'));
+  if (q.peran.coo) out.push(b('Persetujuan COO (dokumen GA)', di('pajak').filter((i) => i.perluCOO && !i.persetujuan?.coo && !i.ajuanSendiri), 'pajak'));
+  if (q.peran.cfo) out.push(b('Persetujuan CFO', di('persetujuan').filter((i) => i.perluCFO && i.persetujuan?.finMgr && !i.persetujuan.cfo && !i.persetujuan.finMgrSaya && !i.persetujuan.cooSaya), 'persetujuan'));
   return out;
 }
 

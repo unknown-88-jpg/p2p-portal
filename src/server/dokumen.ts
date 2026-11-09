@@ -44,7 +44,7 @@ function ringkasan(r: RawRow, rekening: 'penuh' | 'mask') {
     invoiceAmount: num(P(r, 'INV_AMOUNT')), diskon: num(P(r, 'DISKON')), biayaLainnya: num(P(r, 'BIAYA_LAIN')), statusPPN: str(P(r, 'STATUS_PPN')),
     dpp: num(P(r, 'DPP')), ppnAmount: num(P(r, 'PPN_AMOUNT')), jenisPPh: str(P(r, 'JENIS_PPH')), pphAmount: num(P(r, 'PPH_AMOUNT')), pphRate: num(P(r, 'PPH_RATE')),
     nominal: num(P(r, 'FINAL_AMOUNT')), totalPaid: num(P(r, 'TOTAL_PAID')), osBalance: num(P(r, 'OS_BALANCE')),
-    status, perluCFO: upper(P(r, 'REQUIRE_CFO')) === 'YES', punyaLampiran: !!str(P(r, 'FILE_URL')),
+    status, perluCFO: upper(P(r, 'REQUIRE_CFO')) === 'YES', perluCOO: upper(P(r, 'REQUIRE_COO')) === 'YES', punyaLampiran: !!str(P(r, 'FILE_URL')),
     coa: str(P(r, 'SUB_COA')) ? { kategori: str(P(r, 'CATEGORY_COA')), head: str(P(r, 'HEAD_COA')), sub: str(P(r, 'SUB_COA')) } : null,
     editable: status === STATUS.DRAFT || status === STATUS.REVISION,
   };
@@ -106,7 +106,7 @@ export async function voucher(d: AuthDeps, s: SessionData, idTrx: string) {
   const users: BarisUserTTD[] = (await bacaTampilan(d, MASTER_USER_TTD)).map((x) => ({
     brand: str(U(x, 'Brand')), dept: str(U(x, 'Departement')), level: U(x, 'Level'), jabatan: str(U(x, 'Jabatan')), nama: str(U(x, 'Nama')), aktif: U(x, 'Aktif'),
   }));
-  const ttd = bangunKotakTTD(users, peta, rk.brand, rk.departement, rk.perluCFO, (ts) => fmtTanggal(ts));
+  const ttd = bangunKotakTTD(users, peta, rk.brand, rk.departement, rk.perluCFO, rk.perluCOO, (ts) => fmtTanggal(ts));
   const pembayaran = (await bacaTampilan(d, TRX_PAYMENT_LOG)).filter((x) => str(Y(x, 'ID_Trx')) === idTrx)
     .map((x) => ({ tgl: fmtTanggal(Y(x, 'Tgl_Bayar')), nominal: num(Y(x, 'Nominal')), sumber: str(Y(x, 'Sumber_Rekening')), ref: str(Y(x, 'Ref_No')) }));
   return { ...rk, ttd, pembayaran, ambangCFO: CONFIG.CFO_THRESHOLD, dicetak: fmtWaktu(toSheetSerial(d.clock.now())) };

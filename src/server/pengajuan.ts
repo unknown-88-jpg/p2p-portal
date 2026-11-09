@@ -1,5 +1,5 @@
 import { can } from '@/domain/capabilities';
-import { LEVEL } from '@/domain/config';
+import { butuhCOO, LEVEL } from '@/domain/config';
 import { RuleError } from '@/domain/errors';
 import { num, str, upper } from '@/domain/legacy-parse';
 import { bangunEntitas, cariVendor, type Vendor } from '@/domain/master';
@@ -111,7 +111,7 @@ function isiBaris(i: PengajuanInput, v: Vendor, company: string, picNama: string
     NO_INVOICE: str(i.noInvoice), DATE_INVOICE: ymdToSerial(i.dateInvoice), DUE_DATE: ymdToSerial(i.dueDate), VENDOR_CODE: v.kode,
     INV_AMOUNT: num(i.invoiceAmount), DISKON: num(i.diskon), BIAYA_LAIN: num(i.biayaLainnya), STATUS_PPN: str(i.statusPPN) || 'Non PPN',
     DPP: c.dpp, PPN_AMOUNT: c.ppnAmount, JENIS_PPH: '-', PPH_AMOUNT: 0, PPH_RATE: 0, FINAL_AMOUNT: c.finalAmount,
-    JENIS_PEMBAYARAN: i.jenisPembayaran, REQUIRE_CFO: c.perluCFO ? 'YES' : 'NO', OS_BALANCE: c.finalAmount,
+    JENIS_PEMBAYARAN: i.jenisPembayaran, REQUIRE_CFO: c.perluCFO ? 'YES' : 'NO', REQUIRE_COO: butuhCOO(upper(i.departement), c.finalAmount) ? 'YES' : 'NO', OS_BALANCE: c.finalAmount,
     QTY_PO: qty.qtyPO, QTY_SJ: qty.qtySJ,
   };
 }
@@ -235,7 +235,8 @@ export async function submitPengajuan(d: UowDeps, s: SessionData, idTrx: string,
       const mutations: Mutation[] = [
         { kind: 'update', schema: TRX_PENGAJUAN, row: f.row, cells: {
           STATUS: STATUS.SUBMITTED, LAST_UPDATE: now, DPP: calc.dpp, PPN_AMOUNT: calc.ppnAmount, FINAL_AMOUNT: calc.finalAmount,
-          REQUIRE_CFO: calc.perluCFO ? 'YES' : 'NO', OS_BALANCE: calc.finalAmount - num(cell(r, 'TOTAL_PAID')), QTY_PO: qtyPO, QTY_SJ: qtySJ,
+          // Wajib COO dikunci DI SINI (nominal saat pengajuan; keputusan user 2026-11-09) dan tidak dihitung ulang saat verifikasi pajak.
+          REQUIRE_CFO: calc.perluCFO ? 'YES' : 'NO', REQUIRE_COO: butuhCOO(upper(dept), calc.finalAmount) ? 'YES' : 'NO', OS_BALANCE: calc.finalAmount - num(cell(r, 'TOTAL_PAID')), QTY_PO: qtyPO, QTY_SJ: qtySJ,
         } },
         { kind: 'append', schema: TRX_APPROVAL, cells: {
           ID_Approval: `APR-${crypto.randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()}`, ID_Trx: idTrx, Level: LEVEL.PIC, Role_Label: 'Dibuat Oleh,',

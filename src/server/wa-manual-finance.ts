@@ -1,6 +1,6 @@
 import { can } from '@/domain/capabilities';
 import { LEVEL } from '@/domain/config';
-import { siklusVerifikasi, statusPersetujuan, targetPersetujuan, wajibCFO, type BarisApproval, type Sebagai } from '@/domain/finance';
+import { siklusVerifikasi, statusPersetujuan, targetPersetujuan, wajibCFO, type BarisApproval } from '@/domain/finance';
 import { num, str, upper } from '@/domain/legacy-parse';
 import { maskPhone } from '@/domain/phone';
 import { STATUS } from '@/domain/status';
@@ -19,15 +19,15 @@ import { loadAccounts } from './users';
 const P = (r: RawRow, k: string): CellValue => r[colIndex(TRX_PENGAJUAN, k)] ?? null;
 const A = (r: RawRow, k: string): CellValue => r[colIndex(TRX_APPROVAL, k)] ?? null;
 /** Jatah WA manual: SATU kali per dokumen per tujuan (Fin. Mgr / CFO) per siklus verifikasi. Di luar digest terjadwal. */
-const kunciWa = (idTrx: string, target: Sebagai, siklus: string): string => `wa:fin-manual:${idTrx}:${target}:${siklus || '-'}`;
+const kunciWa = (idTrx: string, target: 'finmgr' | 'cfo', siklus: string): string => `wa:fin-manual:${idTrx}:${target}:${siklus || '-'}`;
 const JATAH_TTL_MS = 120 * 86_400_000;
-const LABEL: Record<Sebagai, 'Fin. Mgr' | 'CFO'> = { finmgr: 'Fin. Mgr', cfo: 'CFO' };
+const LABEL = { finmgr: 'Fin. Mgr', cfo: 'CFO' } as const; // COO bertindak sebelum verifikasi pajak (tidak lewat tombol ini; ada di digest WA)
 
 export const barisApproval = (rows: readonly RawRow[], idTrx: string): BarisApproval[] =>
   rows.filter((x) => upper(A(x, 'ID_Trx')) === upper(idTrx)).map((x) => ({ level: A(x, 'Level'), action: A(x, 'Action'), nama: A(x, 'Approver_Name'), email: A(x, 'Approver_Email'), timestamp: A(x, 'Timestamp') }));
 
 /** Status tombol (tampilan): tujuan berikutnya & apakah jatah manualnya sudah terpakai. Penjaga sebenarnya `setNx` di `kirimWaFinance`. */
-export async function statusWaFinance(redis: Pick<RedisPort, 'get'>, idTrx: string, perluCFO: boolean, rows: readonly BarisApproval[]): Promise<{ target: Sebagai; terkirim: boolean } | null> {
+export async function statusWaFinance(redis: Pick<RedisPort, 'get'>, idTrx: string, perluCFO: boolean, rows: readonly BarisApproval[]): Promise<{ target: 'finmgr' | 'cfo'; terkirim: boolean } | null> {
   const target = targetPersetujuan(perluCFO, statusPersetujuan(rows));
   if (!target) return null;
   let terkirim = false;
@@ -35,7 +35,7 @@ export async function statusWaFinance(redis: Pick<RedisPort, 'get'>, idTrx: stri
   return { target, terkirim };
 }
 
-export interface HasilWaFinance { target: Sebagai; penerima: number; terkirim: number }
+export interface HasilWaFinance { target: 'finmgr' | 'cfo'; penerima: number; terkirim: number }
 
 /**
  * Tombol "Kirim WA" di tahap persetujuan Finance: kirim pengingat ke penyetuju BERIKUTNYA — Fin. Mgr; setelah Fin. Mgr menyetujui

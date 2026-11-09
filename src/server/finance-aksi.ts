@@ -4,7 +4,7 @@ import { butuhCFO, CONFIG, LEVEL } from '@/domain/config';
 import { isValidYmd } from '@/domain/pengajuan';
 import { LEVEL_LABEL } from '@/domain/dokumen';
 import { RuleError } from '@/domain/errors';
-import { wajibCFO, cekBolehDibayar, cekEApprove, hitungBayar, JENDELA_DUPLIKAT_MS, penandaTugasRangkap, persetujuanLengkap, PESAN_I6, statusPersetujuan, STATUS_BOLEH_KEMBALI_FINANCE, tugasRangkapBayar, validasiJurnal, type Sebagai } from '@/domain/finance';
+import { wajibCFO, wajibCOO, cekBolehDibayar, cekEApprove, hitungBayar, JENDELA_DUPLIKAT_MS, penandaTugasRangkap, persetujuanLengkap, PESAN_I6, statusPersetujuan, STATUS_BOLEH_KEMBALI_FINANCE, tugasRangkapBayar, validasiJurnal, type Sebagai } from '@/domain/finance';
 import { num, str, upper } from '@/domain/legacy-parse';
 import { rupiah } from '@/domain/pengajuan-form';
 import { checkTransition, STATUS } from '@/domain/status';
@@ -40,6 +40,14 @@ function approvalL3(idTrx: string, s: SessionData, action: 'APPROVED' | 'REJECTE
     },
   };
 }
+const PESAN_MENUNGGU_COO = 'Dokumen General Affairs ini diajukan dengan nominal mulai Rp 5.000.000, jadi menunggu persetujuan COO dulu sebelum diverifikasi pajak.';
+/** Persetujuan siklus sekarang untuk satu dokumen, dibaca SEGAR dari Trx_Approval (dipakai di dalam lock aksi uang). */
+async function persetujuanSegar(store: { readRows(schema: typeof TRX_APPROVAL): Promise<readonly RawRow[]> }, idTrx: string) {
+  const A = (x: RawRow, k: string): CellValue => x[colIndex(TRX_APPROVAL, k)] ?? null;
+  const rows = (await store.readRows(TRX_APPROVAL)).filter((x) => str(A(x, 'ID_Trx')).toUpperCase() === idTrx.toUpperCase())
+    .map((x) => ({ level: A(x, 'Level'), action: A(x, 'Action'), nama: A(x, 'Approver_Name'), email: A(x, 'Approver_Email'), timestamp: A(x, 'Timestamp') }));
+  return statusPersetujuan(rows);
+}
 const statusChange = (s: SessionData, idTrx: string, dari: string, ke: string, notes: string, clock: Clock): Mutation =>
   auditMutation({ actor: s.email, idTrx, action: 'STATUS_CHANGE', field: 'Status', oldValue: dari, newValue: ke, notes }, clock);
 
@@ -61,6 +69,8 @@ export async function verifikasiPajak(d: AuthDeps, s: SessionData, idTrx: string
       const tr = checkTransition(dari, STATUS.TAX_VERIFIED);
       if (tr) throw new AppError('RULE_VIOLATION', tr);
       if (!etagCocok(input.etag, etagOf(r))) throw new AppError('CONFLICT', CONFLICT);
+      // COO (2026-11-09): dokumen GA yang diajukan >= ambang wajib disetujui COO SEBELUM verifikasi pajak. Flag dikunci saat pengajuan; tidak dihitung ulang di sini.
+      if (wajibCOO(cell(r, 'REQUIRE_COO')) && !(await persetujuanSegar(store, idTrx)).coo) throw new AppError('RULE_VIOLATION', PESAN_MENUNGGU_COO);
       if (milikSendiri(str(cell(r, 'CREATED_BY')), s.email)) {
         await appendAudit(store, clock, { actor: s.email, idTrx, action: 'TAX_VERIFY_BLOCKED_SOD', field: 'Level 3', newValue: 'BLOCKED', notes: 'Verifikator = pengaju (I6)' }).catch(() => undefined);
         throw new AppError('RULE_VIOLATION', PESAN_I6);
@@ -98,7 +108,7 @@ export async function verifikasiPajak(d: AuthDeps, s: SessionData, idTrx: string
 export async function kembalikanFinance(d: AuthDeps, s: SessionData, idTrx: string, input: z.infer<typeof kembalikanFinanceSchema>, idemKey: string | undefined) {
   wajibEmail(s);
   const staff = can(s.roles, 'tax.verify');
-  const penyetuju = can(s.roles, 'sign.eapprove.finmgr') ? LEVEL.FINANCE_MGR : can(s.roles, 'sign.eapprove.cfo') ? LEVEL.CFO : null;
+  const penyetuju = can(s.roles, 'sign.eapprove.finmgr') ? LEVEL.FINANCE_MGR : can(s.roles, 'sign.eapprove.coo') ? LEVEL.COO : can(s.roles, 'sign.eapprove.cfo') ? LEVEL.CFO : null;
   if (!staff && !penyetuju) throw new AppError('FORBIDDEN', 'Hanya Finance yang bisa mengembalikan dokumen ke PIC.');
   const alasan = input.alasan.trim();
   return runAction(d, {
@@ -108,8 +118,8 @@ export async function kembalikanFinance(d: AuthDeps, s: SessionData, idTrx: stri
       if (!f) throw new AppError('NOT_FOUND', 'Dokumen tidak ditemukan.');
       const r = f.data, dari = str(cell(r, 'STATUS'));
       if (!(STATUS_BOLEH_KEMBALI_FINANCE as readonly string[]).includes(dari)) throw new AppError('CONFLICT', `Dokumen ini tidak sedang di tahap Finance (status: ${dari || '-'}). Muat ulang daftar.`);
-      // F2-C: Fin. Mgr / CFO hanya boleh mengembalikan di tahap persetujuannya sendiri (Tax Verified).
-      if (!staff && dari !== STATUS.TAX_VERIFIED) throw new AppError('FORBIDDEN', 'Fin. Mgr / CFO hanya bisa mengembalikan dokumen yang menunggu persetujuannya.');
+      // F2-C: Fin. Mgr / CFO hanya boleh mengembalikan di tahap persetujuannya sendiri (Tax Verified); COO di tahapnya (Manager Approved, sebelum verifikasi pajak).
+      if (!staff && dari !== (penyetuju === LEVEL.COO ? STATUS.MANAGER_APPROVED : STATUS.TAX_VERIFIED)) throw new AppError('FORBIDDEN', 'Fin. Mgr / COO / CFO hanya bisa mengembalikan dokumen yang menunggu persetujuannya.');
       const tr = checkTransition(dari, STATUS.REVISION);
       if (tr) throw new AppError('RULE_VIOLATION', tr);
       if (!etagCocok(input.etag, etagOf(r))) throw new AppError('CONFLICT', CONFLICT);
@@ -127,6 +137,8 @@ export async function kembalikanFinance(d: AuthDeps, s: SessionData, idTrx: stri
 }
 
 /**
+ * COO (L6, 2026-11-09): dokumen General Affairs yang DIAJUKAN >= ambang (REQUIRE_COO, dikunci saat pengajuan) disetujui COO langsung setelah Manager,
+ * saat status Manager Approved dan SEBELUM verifikasi pajak. Status tidak berubah (enum lama tetap); LAST_UPDATE berubah (etag ikut berubah).
  * F2-C (O4): e-approve Fin. Mgr (L4) lalu CFO (L5, hanya bila REQUIRE_CFO). Menggantikan unggah scan TTD basah (submitWetSignature TIDAK diport).
  * Identitas penyetuju dari SESI (menutup R-17). Step-up password WAJIB untuk setiap e-approve. Persetujuan dibaca SEGAR dari Trx_Approval
  * untuk siklus verifikasi terakhir. Fin. Mgr tanpa CFO, atau CFO -> Wet Signed (enum lama; label "Menunggu Jurnal COA").
@@ -135,38 +147,39 @@ export async function kembalikanFinance(d: AuthDeps, s: SessionData, idTrx: stri
 export async function setujuiFinance(d: AuthDeps, s: SessionData, token: string, idTrx: string, input: z.infer<typeof setujuiFinanceSchema>, idemKey: string | undefined) {
   wajibEmail(s);
   const sebagai: Sebagai = input.sebagai;
-  const capOk = can(s.roles, sebagai === 'finmgr' ? 'sign.eapprove.finmgr' : 'sign.eapprove.cfo');
-  if (!capOk) throw new AppError('FORBIDDEN', sebagai === 'finmgr' ? 'Hanya Fin. Mgr yang bisa memberi persetujuan ini.' : 'Hanya CFO yang bisa memberi persetujuan ini.');
+  const capOk = can(s.roles, sebagai === 'finmgr' ? 'sign.eapprove.finmgr' : sebagai === 'coo' ? 'sign.eapprove.coo' : 'sign.eapprove.cfo');
+  if (!capOk) throw new AppError('FORBIDDEN', sebagai === 'finmgr' ? 'Hanya Fin. Mgr yang bisa memberi persetujuan ini.' : sebagai === 'coo' ? 'Hanya COO yang bisa memberi persetujuan ini.' : 'Hanya CFO yang bisa memberi persetujuan ini.');
   return runAction(d, {
     name: `finance.setujui.${sebagai}`, actor: s.email || s.phone, money: true, ...idemOf(idemKey), lockKeys: [`trx:${idTrx}`],
     execute: async ({ store, clock }) => {
       const f = await findRowById(d.redis, store, TRX_PENGAJUAN, 'ID_TRX', idTrx);
       if (!f) throw new AppError('NOT_FOUND', 'Dokumen tidak ditemukan.');
       const r = f.data, dari = str(cell(r, 'STATUS'));
-      if (dari !== STATUS.TAX_VERIFIED) throw new AppError('CONFLICT', `Dokumen ini tidak sedang menunggu persetujuan Fin. Mgr / CFO (status: ${dari || '-'}). Muat ulang daftar.`);
+      const statusDiminta = sebagai === 'coo' ? STATUS.MANAGER_APPROVED : STATUS.TAX_VERIFIED;
+      if (dari !== statusDiminta) throw new AppError('CONFLICT', `Dokumen ini tidak sedang menunggu persetujuan ${sebagai === 'coo' ? 'COO' : 'Fin. Mgr / CFO'} (status: ${dari || '-'}). Muat ulang daftar.`);
       if (!etagCocok(input.etag, etagOf(r))) throw new AppError('CONFLICT', CONFLICT);
-      const A = (x: RawRow, k: string): CellValue => x[colIndex(TRX_APPROVAL, k)] ?? null;
-      const rows = (await store.readRows(TRX_APPROVAL)).filter((x) => str(A(x, 'ID_Trx')).toUpperCase() === idTrx.toUpperCase())
-        .map((x) => ({ level: A(x, 'Level'), action: A(x, 'Action'), nama: A(x, 'Approver_Name'), email: A(x, 'Approver_Email'), timestamp: A(x, 'Timestamp') }));
-      const st = statusPersetujuan(rows);
+      const st = await persetujuanSegar(store, idTrx);
       const perluCFO = wajibCFO(cell(r, 'REQUIRE_CFO'), num(cell(r, 'FINAL_AMOUNT')));
-      const tolak = cekEApprove(sebagai, s.roles, s.email, perluCFO, st);
+      const perluCOO = wajibCOO(cell(r, 'REQUIRE_COO'));
+      const tolak = cekEApprove(sebagai, s.roles, s.email, perluCFO, perluCOO, st);
       if (tolak) throw new AppError(tolak.kode, tolak.pesan);
       await requireStepUp(d, token); // setelah aturan: password tidak diminta untuk aksi yang memang akan ditolak
 
-      const lengkap = persetujuanLengkap(sebagai, perluCFO);
-      const level = sebagai === 'finmgr' ? LEVEL.FINANCE_MGR : LEVEL.CFO;
+      const lengkap = sebagai !== 'coo' && persetujuanLengkap(sebagai, perluCFO);
+      const level = sebagai === 'finmgr' ? LEVEL.FINANCE_MGR : sebagai === 'coo' ? LEVEL.COO : LEVEL.CFO;
+      const berikut: 'cfo' | 'pajak' | null = sebagai === 'coo' ? 'pajak' : lengkap ? null : 'cfo';
+      const labelSebagai = sebagai === 'finmgr' ? 'Fin. Mgr' : sebagai === 'coo' ? 'COO' : 'CFO';
       const now = toSheetSerial(clock.now());
       const penanda = penandaTugasRangkap(s.email, str(cell(r, 'CREATED_BY')), st);
       const notes = input.notes ?? '';
       const catatan = [notes, penanda].filter(Boolean).join(' · ');
       const mutations: Mutation[] = [
         { kind: 'update', schema: TRX_PENGAJUAN, row: f.row, cells: { LAST_UPDATE: now, ...(lengkap ? { STATUS: STATUS.WET_SIGNED } : {}) } },
-        approvalL3(idTrx, s, 'APPROVED', [`E-approve ${sebagai === 'finmgr' ? 'Fin. Mgr' : 'CFO'}`, catatan].filter(Boolean).join(' · '), now, level),
+        approvalL3(idTrx, s, 'APPROVED', [`E-approve ${labelSebagai}`, catatan].filter(Boolean).join(' · '), now, level),
         auditMutation({ actor: s.email, idTrx, action: 'APPROVAL', field: `Level ${level} (E-APPROVE)`, newValue: 'APPROVED', notes: catatan }, clock),
       ];
       if (lengkap) mutations.push(statusChange(s, idTrx, dari, STATUS.WET_SIGNED, catatan, clock));
-      return { mutations, result: { id: idTrx, status: (lengkap ? STATUS.WET_SIGNED : STATUS.TAX_VERIFIED) as string, sebagai, menungguCFO: !lengkap, penanda } };
+      return { mutations, result: { id: idTrx, status: (lengkap ? STATUS.WET_SIGNED : statusDiminta) as string, sebagai, menungguCFO: berikut === 'cfo', menungguBerikut: berikut, penanda } };
     },
   });
 }
@@ -256,7 +269,7 @@ export async function bayar(d: AuthDeps, s: SessionData, token: string, input: z
         const aprDok = apr.filter((x) => str(A(x, 'ID_Trx')).toUpperCase() === id);
         const st = statusPersetujuan(aprDok.map((x) => ({ level: A(x, 'Level'), action: A(x, 'Action'), nama: A(x, 'Approver_Name'), email: A(x, 'Approver_Email'), timestamp: A(x, 'Timestamp') })));
         const gerbang = cekBolehDibayar({
-          status: dari, perluCFO: wajibCFO(cell(r, 'REQUIRE_CFO'), num(cell(r, 'FINAL_AMOUNT'))), subCoa: str(cell(r, 'SUB_COA')), st,
+          status: dari, perluCFO: wajibCFO(cell(r, 'REQUIRE_CFO'), num(cell(r, 'FINAL_AMOUNT'))), perluCOO: wajibCOO(cell(r, 'REQUIRE_COO')), subCoa: str(cell(r, 'SUB_COA')), st,
           manager: aprDok.some((x) => Number(A(x, 'Level')) === LEVEL.MANAGER && upper(A(x, 'Action')) === 'APPROVED'),
         });
         if (gerbang) { hasil.gagal.push({ id, alasan: `Pembayaran diblokir: ${gerbang}` }); continue; }

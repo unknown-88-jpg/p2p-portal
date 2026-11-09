@@ -31,9 +31,10 @@ export async function notifikasiSaya(d: AuthDeps, s: SessionData) {
     if (q) {
       const di = (t: string) => q.items.filter((i) => i.tahap === t);
       src.finance = {
-        ...(q.peran.staff ? { pajak: di('pajak').filter((i) => !i.ajuanSendiri).length, jurnal: di('jurnal').length, bayar: di('bayar').filter((i) => !i.blokirBayar).length } : {}),
+        ...(q.peran.staff ? { pajak: di('pajak').filter((i) => !i.ajuanSendiri && !(i.perluCOO && !i.persetujuan?.coo)).length, jurnal: di('jurnal').length, bayar: di('bayar').filter((i) => !i.blokirBayar).length } : {}),
         ...(q.peran.finMgr ? { persetujuanFinMgr: di('persetujuan').filter((i) => !i.persetujuan?.finMgr).length } : {}),
-        ...(q.peran.cfo ? { persetujuanCfo: di('persetujuan').filter((i) => i.perluCFO && i.persetujuan?.finMgr && !i.persetujuan.cfo && !i.persetujuan.finMgrSaya).length } : {}),
+        ...(q.peran.coo ? { persetujuanCoo: di('pajak').filter((i) => i.perluCOO && !i.persetujuan?.coo && !i.ajuanSendiri).length } : {}),
+        ...(q.peran.cfo ? { persetujuanCfo: di('persetujuan').filter((i) => i.perluCFO && i.persetujuan?.finMgr && !i.persetujuan.cfo && !i.persetujuan.finMgrSaya && !i.persetujuan.cooSaya).length } : {}),
       };
     }
   }

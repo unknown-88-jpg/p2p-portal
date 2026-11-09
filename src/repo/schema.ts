@@ -27,6 +27,10 @@ export const TRX_PENGAJUAN: TabSchema = {
     c('CATEGORY_COA'), c('HEAD_COA'), c('SUB_COA'), c('BUDGET'), c('NOTES_FINANCE'), c('REQUIRE_CFO', 'enum'),
     c('LAST_UPDATE', 'datetime'), c('LAST_PAY_DATE', 'datetime'), c('TOTAL_PAID', 'money'), c('OS_BALANCE', 'money'),
     c('PAY_STATUS', 'enum'), c('QTY_PO', 'money'), c('QTY_SJ', 'money'),
+    // Kolom 49 (AW): header "Cashout" ada di sheet trial tetapi TIDAK dipakai kode (keputusan fitur belum ada; lihat docs/desain/konteks-sistem-p2p-portal.md). Dicadangkan agar posisi
+    // REQUIRE_COO tidak menimpanya; header kosong juga diterima (sheet yang belum punya kolom ini).
+    c('CASHOUT_DICADANGKAN', 'text', ['Cashout', '']),
+    c('REQUIRE_COO', 'enum'), // 2026-11-09 (kolom 50 / AX): dikunci saat pengajuan (dept GA & nominal pengajuan >= ambang CFO)
   ],
 };
 

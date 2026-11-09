@@ -1,4 +1,5 @@
 'use client';
+import { butuhCOO } from '@/domain/config';
 import { gantiJenisPembayaran, rupiah, tambahHari, type FormPengajuan, type Galat, type PreviewHitung } from '@/domain/pengajuan-form';
 import { Chips, Field, Pesan, UangInput } from '../kit';
 import { UnggahLampiranUI, type Staged } from './UnggahLampiranUI';
@@ -58,6 +59,7 @@ export function LangkahTagihan({ form, ubah, galat, tandai, preview, po, onCekIn
             <div><dt>PPN 11%</dt><dd className="num">{rupiah(preview.ppnAmount)}</dd></div>
             <div><dt>Nominal akhir</dt><dd className="num">{rupiah(preview.finalAmount)}</dd></div>
           </dl>
+          {butuhCOO(form.departement, preview.finalAmount) && <div className="cfo-baris"><span className="badge-cfo">Butuh TTD COO</span><span className="hint">Dokumen General Affairs mulai Rp 5.000.000 juga memerlukan persetujuan COO.</span></div>}
           {preview.perluCFO && <div className="cfo-baris"><span className="badge-cfo">Butuh TTD CFO</span><span className="hint">Nominal mulai Rp 5.000.000 memerlukan persetujuan CFO.</span></div>}
           <p className="hint">PPh ditentukan Finance saat verifikasi pajak. Angka final dihitung ulang oleh server saat disimpan.</p>
         </div>

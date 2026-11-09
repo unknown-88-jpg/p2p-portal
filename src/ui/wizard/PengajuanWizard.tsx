@@ -1,5 +1,6 @@
 'use client';
 import { catatanTampil } from '@/domain/approval';
+import { butuhCOO } from '@/domain/config';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RuleError } from '@/domain/errors';
 import { validasiUnggahan } from '@/domain/lampiran';
@@ -394,7 +395,7 @@ export function PengajuanWizard({ roles, email, nama, awal }: WizardProps) {
           <div><dt>Vendor</dt><dd>{vendorTerpilih?.nama ?? '-'}</dd></div>
           <div><dt>Invoice</dt><dd>{form.noInvoice}</dd></div>
           <div><dt>Nominal</dt><dd className="num">{rupiah(nominal)}</dd></div>
-          <div><dt>Penyetuju</dt><dd>{pic?.manager || '—'}{preview?.perluCFO ? ' + CFO' : ''}</dd></div>
+          <div><dt>Penyetuju</dt><dd>{pic?.manager || '—'}{preview && butuhCOO(form.departement, preview.finalAmount) ? ' + COO' : ''}{preview?.perluCFO ? ' + CFO' : ''}</dd></div>
         </dl>
         {galatAjukan && <Pesan jenis="err">{galatAjukan}</Pesan>}
         <div className="dlg-aksi">

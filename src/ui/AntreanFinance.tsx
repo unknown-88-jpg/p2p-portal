@@ -15,9 +15,9 @@ interface Item {
   id: string; tahap: KunciTahap; status: string; tanggal: string; brand: string; departement: string; tipe: string; pic: string;
   vendorNama: string; noInvoice: string; poNumber: string; description: string; dueDate: string; jatuhTempoLewat: boolean;
   statusPPN: string; dpp: number; ppnAmount: number; jenisPPh: string; pphAmount: number; nominal: number; totalPaid: number; sisa: number;
-  perluCFO: boolean; punyaLampiran: boolean; umurHari: number | null; ajuanSendiri: boolean;
+  perluCFO: boolean; perluCOO: boolean; punyaLampiran: boolean; umurHari: number | null; ajuanSendiri: boolean;
   etag: string; invoiceAmount: number; diskon: number; biayaLainnya: number; punyaNPWP: boolean; jenisPembayaran: string;
-  persetujuan?: { finMgr: string | null; cfo: string | null; finMgrSaya: boolean };
+  persetujuan?: { finMgr: string | null; coo: string | null; cfo: string | null; finMgrSaya: boolean; cooSaya: boolean; wa?: { target: 'finmgr' | 'cfo'; terkirim: boolean } | null };
   blokirBayar?: string | null; tugasRangkap?: string[];
 }
 interface Data { tahap: RingkasTahap[]; items: Item[]; basi: boolean; peran: Peran }
@@ -75,7 +75,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
   const selesai = (p: { jenis: 'ok' | 'warn'; teks: string }, ulang: boolean) => { setInfo(p); setSel(null); setDetailHP(false); setPilih(new Set()); if (ulang) void muat(); };
   const bisaPilih = (tahap === 'jurnal' || tahap === 'bayar') && ring.bisaAksi;
   // Tahap pajak (bisa aksi): daftar kartu -> klik membuka ruang kerja verifikasi penuh (desain 2), bukan panel samping.
-  const ruangPajak = tahap === 'pajak' && ring.bisaAksi;
+  const ruangPajak = tahap === 'pajak' && data.peran.staff && ring.bisaAksi; // COO (bukan staff) memakai panel samping untuk e-approve
   const dokRuang = ruangPajak ? tampil.find((i) => i.id === sel) ?? null : null;
   const cur = ruangPajak ? null : tampil.find((i) => i.id === sel) ?? (!detailHP ? tampil[0] ?? null : null);
 
@@ -113,7 +113,9 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
       ) : (
         <>
         {dokRuang ? (
-          <FormVerifikasiPajak key={`${dokRuang.id}|${dokRuang.etag}`} dok={dokRuang} onSelesai={selesai} onKembali={() => { setSel(null); setDetailHP(false); }} />
+          dokRuang.perluCOO && !dokRuang.persetujuan?.coo
+            ? <div className="vp"><h3 className="ds-h">{dokRuang.id} · {dokRuang.vendorNama || '—'}</h3><Pesan jenis="warn">Dokumen General Affairs ini diajukan dengan nominal mulai Rp 5.000.000, jadi menunggu persetujuan COO dulu. Verifikasi pajak dibuka setelah COO menyetujui.</Pesan><div className="ip-aksi"><button type="button" className="btn btn-secondary" onClick={() => { setSel(null); setDetailHP(false); }}>Kembali ke daftar</button></div></div>
+            : <FormVerifikasiPajak key={`${dokRuang.id}|${dokRuang.etag}`} dok={dokRuang} onSelesai={selesai} onKembali={() => { setSel(null); setDetailHP(false); }} />
         ) : (
         <div className="inbox-wrap"><div className={`inbox${detailHP ? ' hp-detail' : ''}${ruangPajak ? ' hanya-daftar' : ''}`}>
           <section className="inbox-list" aria-label={ring.label}>
@@ -128,7 +130,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
                       <span className="ib-h">
                         <span className="ib-v">{i.vendorNama || '—'}</span>
                         <span className="ib-meta"><span className="dok-id num">{i.id}</span><span className="ib-umur">{umurTeks(i.umurHari) || i.tanggal}</span>
-                          <span className="fin-badges">{i.persetujuan?.finMgr && !i.persetujuan.cfo && i.perluCFO && <span className="badge-tunggu">Menunggu CFO</span>}{i.blokirBayar && <span className="badge-saya">Belum boleh dibayar</span>}{i.ajuanSendiri && <span className="badge-saya">Ajuan Anda</span>}{i.perluCFO && <span className="badge-cfo">CFO</span>}</span></span>
+                          <span className="fin-badges">{i.tahap === 'pajak' && i.perluCOO && !i.persetujuan?.coo && <span className="badge-tunggu">Menunggu COO</span>}{i.persetujuan?.finMgr && !i.persetujuan.cfo && i.perluCFO && <span className="badge-tunggu">Menunggu CFO</span>}{i.blokirBayar && <span className="badge-saya">Belum boleh dibayar</span>}{i.ajuanSendiri && <span className="badge-saya">Ajuan Anda</span>}{i.perluCOO && <span className="badge-cfo">COO</span>}{i.perluCFO && <span className="badge-cfo">CFO</span>}</span></span>
                       </span>
                       <span className="ib-b">
                         <span className="ib-k"><span className="ib-dt">{i.jatuhTempoLewat ? 'Lewat jatuh tempo' : 'Jatuh tempo'}</span><span className={`ib-dd num${i.jatuhTempoLewat ? ' lewat' : ''}`}>{i.dueDate || '—'}</span></span>
@@ -191,12 +193,15 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
                   {cur.totalPaid > 0 && <div><dt>Sudah dibayar</dt><dd className="num">{rupiah(cur.totalPaid)}</dd></div>}
                   <div className="ip-total"><dt>Nominal akhir</dt><dd className="num">{rupiah(cur.nominal)}</dd></div>
                 </dl>}
+                {cur.perluCOO && <p className="cap"><span className="badge-cfo">Butuh persetujuan COO</span> <span className="hint">Dokumen General Affairs yang diajukan mulai Rp 5.000.000.</span></p>}
                 {cur.perluCFO && <p className="cap"><span className="badge-cfo">Butuh persetujuan CFO</span></p>}
                 </>}
                 {cur.tahap === 'jurnal' && ring.bisaAksi
                   ? <FormJurnal key="jurnal" target={terpilih.length ? terpilih : [cur]} onSelesai={selesai} />
                   : cur.tahap === 'bayar' && ring.bisaAksi
                   ? <FormBayar key="bayar" target={terpilih.length ? terpilih : [cur]} onSelesai={selesai} />
+                  : cur.tahap === 'pajak' && data.peran.coo && cur.perluCOO && !cur.persetujuan?.coo
+                  ? <FormPersetujuanFinance key={`${cur.id}|${cur.etag}`} dok={cur} peran={data.peran} onSelesai={selesai} />
                   : cur.tahap === 'persetujuan' && (data.peran.finMgr || data.peran.cfo || data.peran.staff)
                   ? <FormPersetujuanFinance key={`${cur.id}|${cur.etag}`} dok={cur} peran={data.peran} onSelesai={selesai} />
                   : <p className="muted cap fin-menyusul">{ring.bisaAksi ? <>Aksi &ldquo;{AKSI_MENYUSUL[cur.tahap]}&rdquo; tersedia di pembaruan berikutnya.</> : <>Tahap ini dikerjakan {ring.aktor}. Anda hanya melihat.</>}</p>}

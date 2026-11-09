@@ -206,7 +206,7 @@ export function validasiMaster(m: { setting: readonly (readonly unknown[])[]; co
 }
 
 // ---------- Edit user (Master_User_TTD) ----------
-export const LEVEL_SAH = [LEVEL.PIC, LEVEL.MANAGER, LEVEL.FINANCE_STAFF, LEVEL.FINANCE_MGR, LEVEL.CFO, LEVEL.ADMIN] as const;
+export const LEVEL_SAH = [LEVEL.PIC, LEVEL.MANAGER, LEVEL.FINANCE_STAFF, LEVEL.FINANCE_MGR, LEVEL.COO, LEVEL.CFO, LEVEL.ADMIN] as const;
 export interface IsianUser { brand: string; dept: string; level: number; jabatan: string; nama: string; email: string; aktif: boolean; noHp: string }
 export type HasilValidasiUser = { ok: true; v: IsianUser & { phone: string } } | { ok: false; galat: Record<string, string> };
 
@@ -214,12 +214,12 @@ export function validasiUser(i: IsianUser): HasilValidasiUser {
   const galat: Record<string, string> = {};
   const phone = normalizePhone(i.noHp);
   if (!phone) galat.noHp = 'Nomor HP tidak valid (08… / 628…).';
-  if (!(LEVEL_SAH as readonly number[]).includes(i.level)) galat.level = 'Level harus 1, 2, 3, 4, 5, atau 9.';
+  if (!(LEVEL_SAH as readonly number[]).includes(i.level)) galat.level = 'Level harus 1, 2, 3, 4, 5, 6, atau 9.';
   if (!i.nama.trim()) galat.nama = 'Nama wajib diisi.';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(i.email.trim())) galat.email = 'Email tidak valid.';
   else if (i.email.includes('@domain.com')) galat.email = 'Email placeholder tidak boleh dipakai.';
-  if (!i.brand.trim()) galat.brand = 'Brand wajib (pakai ALL untuk Finance/CFO/Admin).';
-  if (!i.dept.trim()) galat.dept = 'Departemen wajib (pakai ALL untuk Finance/CFO/Admin).';
+  if (!i.brand.trim()) galat.brand = 'Brand wajib (pakai ALL untuk Finance/COO/CFO/Admin).';
+  if (!i.dept.trim()) galat.dept = 'Departemen wajib (pakai ALL untuk Finance/COO/CFO/Admin).';
   if (Object.keys(galat).length) return { ok: false, galat };
   return { ok: true, v: { ...i, brand: upper(i.brand), dept: upper(i.dept), jabatan: i.jabatan.trim(), nama: i.nama.trim(), email: i.email.trim().toLowerCase(), phone } };
 }

@@ -133,18 +133,18 @@ describe('buildSignatureBlocks — paritas', () => {
   ];
   const f = (x: unknown): string => `T${String(x)}`;
   it('tanpa CFO: level 1-4, satu orang pertama per level, CFO dilewati, nama "-"/nonaktif/divisi lain dilewati', () => {
-    const k = bangunKotakTTD(users, new Map(), 'brand a', 'dept x', false, f);
+    const k = bangunKotakTTD(users, new Map(), 'brand a', 'dept x', false, false, f);
     expect(k.map((x) => [x.level, x.nama])).toEqual([[1, 'CITRA'], [2, 'BUDI'], [3, 'DANI'], [4, 'EKO']]);
   });
   it('perluCFO: ikut level 5; label & metode sesuai level', () => {
-    const k = bangunKotakTTD(users, new Map(), 'BRAND A', 'DEPT X', true, f);
+    const k = bangunKotakTTD(users, new Map(), 'BRAND A', 'DEPT X', true, false, f);
     expect(k.map((x) => x.level)).toEqual([1, 2, 3, 4, 5]);
     expect(k.map((x) => x.role)).toEqual(['Dibuat Oleh,', 'Diperiksa Oleh,', 'Diverifikasi Oleh,', 'Disetujui Oleh,', 'Disetujui Oleh,']);
     expect(k.map((x) => x.method)).toEqual(['E-SIGN', 'E-SIGN', 'E-SIGN', 'E-SIGN', 'E-SIGN']); // O4: tanpa TTD basah
     expect(k[0]!.label).toBe('( Menunggu )'); expect(k[3]!.label).toBe('( Menunggu )');
   });
   it('Admin (L9, ALL/ALL) bukan penandatangan: tidak muncul sebagai kotak "Mengetahui" (keputusan user, beda dari lama)', () => {
-    const k = bangunKotakTTD(users, new Map(), 'BRAND A', 'DEPT X', true, f);
+    const k = bangunKotakTTD(users, new Map(), 'BRAND A', 'DEPT X', true, false, f);
     expect(k.some((x) => x.level === 9 || x.nama === 'ADMIN')).toBe(false);
     expect(k.map((x) => x.role)).not.toContain('Mengetahui,');
   });
@@ -156,11 +156,11 @@ describe('buildSignatureBlocks — paritas', () => {
       { level: 4, action: 'approved', nama: 'Eko', jabatan: 'FinMgr', timestamp: 4, method: 'WET' },
       { level: 5, action: 'APPROVED', nama: 'Gita', jabatan: 'CFO', timestamp: 5, method: 'E-SIGN' },
     ]);
-    const k = bangunKotakTTD(users, peta, 'BRAND A', 'DEPT X', false, f);
+    const k = bangunKotakTTD(users, peta, 'BRAND A', 'DEPT X', false, false, f);
     expect(k[1]).toMatchObject({ nama: 'Fajar', isSigned: true, label: 'E-Signed', signedAt: 'T2' });
     expect(k[2]!.isSigned).toBe(false);
     expect(k[3]).toMatchObject({ isSigned: true, label: 'TTD Basah — Terverifikasi', method: 'WET' });
-    expect(bangunKotakTTD(users, peta, 'BRAND A', 'DEPT X', true, f)[4]).toMatchObject({ isSigned: true, label: 'E-Signed', method: 'E-SIGN' });
+    expect(bangunKotakTTD(users, peta, 'BRAND A', 'DEPT X', true, false, f)[4]).toMatchObject({ isSigned: true, label: 'E-Signed', method: 'E-SIGN' });
   });
   it('C7: hanya siklus sekarang — baris sebelum pengajuan ulang (L1) terakhir diabaikan; L4/L5 hanya setelah L3 terakhir', () => {
     const r = (level: number, action: string, nama: string, timestamp: unknown) => ({ level, action, nama, jabatan: 'J', timestamp });

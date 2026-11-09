@@ -3,8 +3,8 @@ import { SCHEMAS, TRX_PENGAJUAN, MASTER_USER_TTD, MASTER_VENDOR, DB_PO, colIndex
 import { validateHeader, overallWritable } from '@/repo/header-validator';
 
 describe('schema registry (paritas Config.gs)', () => {
-  it('Trx_Pengajuan = 48 kolom, posisi kunci sama dengan COL lama (1-based)', () => {
-    expect(TRX_PENGAJUAN.cols).toHaveLength(48);
+  it('Trx_Pengajuan = 48 kolom lama + kolom 49 dicadangkan ("Cashout", tak dipakai) + REQUIRE_COO (kolom 50, 2026-11-09); posisi kunci lama sama dengan COL lama (1-based)', () => {
+    expect(TRX_PENGAJUAN.cols).toHaveLength(50);
     const one = (k: string) => colIndex(TRX_PENGAJUAN, k) + 1;
     expect(one('ID_TRX')).toBe(1);
     expect(one('FILE_URL')).toBe(20);
@@ -13,6 +13,8 @@ describe('schema registry (paritas Config.gs)', () => {
     expect(one('LINK_TTD')).toBe(34);
     expect(one('REQUIRE_CFO')).toBe(41);
     expect(one('QTY_SJ')).toBe(48);
+    expect(one('CASHOUT_DICADANGKAN')).toBe(49);
+    expect(one('REQUIRE_COO')).toBe(50);
   });
   it('Master_User_TTD: No_HP=H(8), hash=I(9), salt=J(10)', () => {
     expect(colIndex(MASTER_USER_TTD, 'No_HP') + 1).toBe(8);
@@ -39,6 +41,14 @@ describe('validator header', () => {
   it('alias "Soft File" untuk FILE_URL & LINK_TTD diterima', () => {
     const h = [...header]; h[19] = 'Soft File'; h[33] = 'Soft File';
     expect(validateHeader(TRX_PENGAJUAN, h).ok).toBe(true);
+  });
+  it('kolom 49 dicadangkan: header "Cashout" atau kosong diterima; REQUIRE_COO (kolom 50) wajib ada (2026-11-09)', () => {
+    const h = [...header]; h[48] = 'Cashout';
+    expect(validateHeader(TRX_PENGAJUAN, h).ok).toBe(true);
+    h[48] = '';
+    expect(validateHeader(TRX_PENGAJUAN, h).ok).toBe(true);
+    const tanpaCoo = h.slice(0, 49);
+    expect(validateHeader(TRX_PENGAJUAN, tanpaCoo).ok).toBe(false); // header REQUIRE_COO belum ditambahkan -> app read-only (aman)
   });
   it('kolom ekstra di kanan diperbolehkan', () => {
     expect(validateHeader(TRX_PENGAJUAN, [...header, 'CATATAN_BARU']).ok).toBe(true);
