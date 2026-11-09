@@ -127,12 +127,13 @@ describe('F2-E bayar', () => {
     expect(res.filter((x) => x === 'OK').length).toBe(logOf('NTR-00001').length);
     expect(row('NTR-00001')[C('TOTAL_PAID')]).toBe(total);
   });
-  it('COO (2026-11-09): dokumen GA >= ambang diblokir bayar tanpa persetujuan COO walau Fin. Mgr + CFO sudah; dengan COO boleh; non-GA tidak terpengaruh', async () => {
-    const GA = { DEPARTEMENT: 'GENERAL AFFAIRS' };
-    w.store.seed(TRX_PENGAJUAN, [...w.store.rowsOf(TRX_PENGAJUAN), siap('NTR-00006', 7_000_000, GA), siap('NTR-00007', 7_000_000, GA), siap('NTR-00008', 2_000_000, GA)]);
+  it('COO (2026-11-09): dokumen wajib-COO (GA diajukan >= ambang) diblokir bayar tanpa persetujuan COO walau Fin. Mgr + CFO sudah; dengan COO boleh; yang tidak wajib tidak terpengaruh', async () => {
+    const GA = { DEPARTEMENT: 'GENERAL AFFAIRS', REQUIRE_COO: 'YES' };
+    w.store.seed(TRX_PENGAJUAN, [...w.store.rowsOf(TRX_PENGAJUAN), siap('NTR-00006', 7_000_000, GA), siap('NTR-00007', 7_000_000, GA), siap('NTR-00008', 2_000_000, { DEPARTEMENT: 'GENERAL AFFAIRS', REQUIRE_COO: 'NO' })]);
     const a = [...w.store.rowsOf(TRX_APPROVAL) as (string | number)[][]];
     for (const id of ['NTR-00006', 'NTR-00007', 'NTR-00008']) a.push(apr(id, 2, 'budi@x.id', 45990), apr(id, 3, 'dani@x.id', 46000), apr(id, 4, 'eko@x.id', 46001));
-    a.push(apr('NTR-00006', 5, 'gita@x.id', 46003), apr('NTR-00007', 6, 'rusli@x.id', 46002), apr('NTR-00007', 5, 'gita@x.id', 46003));
+    a.push(apr('NTR-00006', 5, 'gita@x.id', 46003), apr('NTR-00007', 1, 'naila@x.id', 45980), apr('NTR-00007', 6, 'rusli@x.id', 46002), apr('NTR-00007', 5, 'gita@x.id', 46003));
+    a.push(apr('NTR-00006', 1, 'naila@x.id', 45980));
     w.store.seed(TRX_APPROVAL, a);
     const q = await antreanFinance(w.deps, fina, 'bayar');
     expect(q.items.find((i) => i.id === 'NTR-00006')!.blokirBayar).toMatch(/COO/);

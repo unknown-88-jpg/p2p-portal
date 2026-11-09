@@ -362,3 +362,33 @@ describe('baca (owner-only)', () => {
     expect(await code(getMine(w.deps, citra, id))).toBe('OK');
   });
 });
+
+describe('COO (2026-11-09): REQUIRE_COO dikunci saat pengajuan', () => {
+  const naila = { ...citra, phone: '6281200000009', email: 'naila@x.id', nama: 'Naila', roles: [{ brand: 'BRAND A', dept: 'GENERAL AFFAIRS', level: 1 }, { brand: 'BRAND A', dept: 'DEPT X', level: 1 }] } as SessionData;
+  const mulai = async (o: Partial<PengajuanInput>): Promise<string> => (await createDraft(w.deps, naila, nonTrade({ noInvoice: `GA-${String(++k)}`, ...o }))).id;
+  beforeEach(() => {
+    w.store.seed(MASTER_USER_TTD, [
+      ['BRAND A', 'GENERAL AFFAIRS', 1, 'GA Staff', 'Naila', 'naila@x.id', 'YES', '6281200000009', '', ''], ['BRAND A', 'GENERAL AFFAIRS', 2, 'GA Manager', 'Oki', 'oki@x.id', 'YES', '6281200000010', '', ''],
+      ['BRAND A', 'DEPT X', 1, 'Staff', 'Naila', 'naila@x.id', 'YES', '6281200000009', '', ''], ['BRAND A', 'DEPT X', 2, 'Mgr', 'Budi', 'budi@x.id', 'YES', '6281200000001', '', ''],
+    ]);
+  });
+  it('draft & submit GA >= Rp 5.000.000 -> REQUIRE_COO YES; di bawah ambang atau dept lain -> NO', async () => {
+    const ga = await mulai({ departement: 'GENERAL AFFAIRS', invoiceAmount: 5_000_000 });
+    expect(rowOf(ga)[C('REQUIRE_COO')]).toBe('YES');
+    const kecil = await mulai({ departement: 'GENERAL AFFAIRS', invoiceAmount: 4_999_999 });
+    expect(rowOf(kecil)[C('REQUIRE_COO')]).toBe('NO');
+    const lain = await mulai({ departement: 'DEPT X', invoiceAmount: 9_000_000 });
+    expect(rowOf(lain)[C('REQUIRE_COO')]).toBe('NO');
+    attach(ga); await submitPengajuan(w.deps, naila, ga, key());
+    expect(rowOf(ga)[C('REQUIRE_COO')]).toBe('YES');
+  });
+  it('submit memutuskan ulang dari nominal saat pengajuan: flag yang dirusak di sheet dikoreksi; revisi ke bawah ambang melepas COO', async () => {
+    const id = await mulai({ departement: 'GENERAL AFFAIRS', invoiceAmount: 6_000_000 }); attach(id);
+    setCell(id, 'REQUIRE_COO', 'NO');
+    await submitPengajuan(w.deps, naila, id, key());
+    expect(rowOf(id)[C('REQUIRE_COO')]).toBe('YES');
+    const kecil = await mulai({ departement: 'GENERAL AFFAIRS', invoiceAmount: 6_000_000 });
+    await updateDraft(w.deps, naila, kecil, nonTrade({ departement: 'GENERAL AFFAIRS', noInvoice: 'GA-REV', invoiceAmount: 1_000_000 }));
+    expect(rowOf(kecil)[C('REQUIRE_COO')]).toBe('NO');
+  });
+});

@@ -37,7 +37,7 @@ export function bangunKotakTTD(users: readonly BarisUserTTD[], approved: Readonl
     if (level === LEVEL.COO && !perluCOO) continue; // COO hanya untuk dokumen GA >= ambang (2026-11-09)
     if (!signers.some((s) => s.level === level)) signers.push({ level, jabatan: str(u.jabatan) || 'Staff', nama });
   }
-  const urut = (l: number): number => (l === LEVEL.COO ? LEVEL.FINANCE_MGR + 0.5 : l); // alur: Fin. Mgr -> COO -> CFO
+  const urut = (l: number): number => (l === LEVEL.COO ? LEVEL.MANAGER + 0.5 : l); // alur: Manager -> COO -> verifikasi pajak -> Fin. Mgr -> CFO
   signers.sort((a, c) => urut(a.level) - urut(c.level));
   return signers.map((s) => {
     const rec = approved.get(s.level);
@@ -73,7 +73,8 @@ export function petaPersetujuan(rows: readonly { level: unknown; action: unknown
   for (const r of ok) { // urutan baris = urutan append (kronologis); yang terakhir menang
     const level = lv(r.level);
     const t = wkt(r.timestamp);
-    const batas = level >= LEVEL.FINANCE_MGR ? Math.max(mulaiSiklus, mulaiPersetujuan) : mulaiSiklus;
+    // COO menyetujui sebelum verifikasi pajak: berlaku untuk siklus pengajuan sekarang (bukan setelah L3). L4/L5 hanya setelah L3 terakhir.
+    const batas = level >= LEVEL.FINANCE_MGR && level !== LEVEL.COO ? Math.max(mulaiSiklus, mulaiPersetujuan) : mulaiSiklus;
     if (level !== LEVEL.PIC && Number.isNaN(batas)) continue;
     if (batas > -Infinity && !(t >= batas)) continue;
     m.set(level, { level, nama: str(r.nama), jabatan: str(r.jabatan), timestamp: r.timestamp, method: str(r.method) });

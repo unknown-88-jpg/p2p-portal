@@ -27,8 +27,8 @@ export interface ItemFinance {
   etag: string; invoiceAmount: number; diskon: number; biayaLainnya: number; punyaNPWP: boolean; jenisPembayaran: string;
   /** Dokumen ini diajukan oleh pengguna yang sedang login (I6: tidak boleh memverifikasi pajaknya sendiri; penjaga di F2-B). */
   ajuanSendiri: boolean;
-  /** Tahap persetujuan (F2-C): siapa yang sudah menyetujui di siklus verifikasi sekarang (nama saja). */
-  persetujuan?: { finMgr: string | null; coo: string | null; cfo: string | null; finMgrSaya: boolean; cooSaya: boolean; /** tombol Kirim WA: tujuan berikutnya & jatah manual sudah terpakai */ wa: { target: 'finmgr' | 'coo' | 'cfo'; terkirim: boolean } | null };
+  /** Tahap persetujuan (F2-C): siapa yang sudah menyetujui di siklus verifikasi sekarang (nama saja). Untuk tahap pajak dokumen wajib-COO: hanya `coo`/`cooSaya` yang bermakna. */
+  persetujuan?: { finMgr: string | null; coo: string | null; cfo: string | null; finMgrSaya: boolean; cooSaya: boolean; /** tombol Kirim WA: tujuan berikutnya & jatah manual sudah terpakai */ wa: { target: 'finmgr' | 'cfo'; terkirim: boolean } | null };
   /** Tahap bayar (F2-E): alasan gerbang I4 bila belum boleh dibayar (tampilan), dan peran rangkap pengguna ini (peringatan O5b). */
   blokirBayar?: string | null; tugasRangkap?: string[];
 }
@@ -55,7 +55,7 @@ function itemOf(r: RawRow, s: SessionData, now: number, hariIni: string): ItemFi
     jenisPPh: str(cell(r, 'JENIS_PPH')), pphAmount: num(cell(r, 'PPH_AMOUNT')), nominal, totalPaid,
     // Sisa tagihan untuk TAMPILAN saja. Aksi bayar (F2-E, I5) menghitung dari Trx_Payment_Log, bukan kolom ringkasan.
     sisa: Math.max(nominal - totalPaid, 0),
-    perluCFO: wajibCFO(cell(r, 'REQUIRE_CFO'), nominal), perluCOO: wajibCOO(cell(r, 'DEPARTEMENT'), nominal), punyaLampiran: !!str(cell(r, 'FILE_URL')),
+    perluCFO: wajibCFO(cell(r, 'REQUIRE_CFO'), nominal), perluCOO: wajibCOO(cell(r, 'REQUIRE_COO')), punyaLampiran: !!str(cell(r, 'FILE_URL')),
     umurHari: umurHari(msOf(cell(r, 'LAST_UPDATE')), now), ajuanSendiri: milikSendiri(str(cell(r, 'CREATED_BY')), s.email),
     etag: etagOf(r), invoiceAmount: num(cell(r, 'INV_AMOUNT')), diskon: num(cell(r, 'DISKON')), biayaLainnya: num(cell(r, 'BIAYA_LAIN')),
     punyaNPWP: !['', '-'].includes(clean(cell(r, 'NPWP_VENDOR'))), jenisPembayaran: str(cell(r, 'JENIS_PEMBAYARAN')), // punyaNPWP: aturan sama dengan hitungPajak
@@ -74,7 +74,7 @@ export async function antreanFinance(d: AuthDeps, s: SessionData, tahap?: string
   const now = d.clock.now(), hariIni = wibDate(now);
   const semua = rows.map((r) => itemOf(r, s, now, hariIni)).filter((x): x is ItemFinance => x !== null)
     .sort((a, b) => (a.umurHari ?? 1e9) - (b.umurHari ?? 1e9) || b.id.localeCompare(a.id)); // terbaru dulu (UI bisa urut ulang)
-  const tunggu = semua.filter((i) => i.tahap === 'persetujuan' || i.tahap === 'bayar');
+  const tunggu = semua.filter((i) => i.tahap === 'pajak' || i.tahap === 'persetujuan' || i.tahap === 'bayar');
   if (tunggu.length) {
     const baris = new Map(rows.map((r) => [str(cell(r, 'ID_TRX')).toUpperCase(), r]));
     const A = (x: RawRow, k: string): CellValue => x[colIndex(TRX_APPROVAL, k)] ?? null;
@@ -86,8 +86,13 @@ export async function antreanFinance(d: AuthDeps, s: SessionData, tahap?: string
     for (const i of tunggu) {
       const ba = (per.get(i.id.toUpperCase()) ?? []).map((x) => ({ level: A(x, 'Level'), action: A(x, 'Action'), nama: A(x, 'Approver_Name'), email: A(x, 'Approver_Email'), timestamp: A(x, 'Timestamp') }));
       const st = statusPersetujuan(ba);
+      if (i.tahap === 'pajak') {
+        // Dokumen GA wajib COO: tampilkan apakah COO sudah menyetujui (verifikasi pajak ditahan sampai COO setuju).
+        if (i.perluCOO) i.persetujuan = { finMgr: null, coo: st.coo?.nama ?? null, cfo: null, finMgrSaya: false, cooSaya: !!st.coo && milikSendiri(st.coo.email, s.email), wa: null };
+        continue;
+      }
       if (i.tahap === 'persetujuan') {
-        i.persetujuan = { finMgr: st.finMgr?.nama ?? null, coo: st.coo?.nama ?? null, cfo: st.cfo?.nama ?? null, finMgrSaya: !!st.finMgr && milikSendiri(st.finMgr.email, s.email), cooSaya: !!st.coo && milikSendiri(st.coo.email, s.email), wa: await statusWaFinance(d.redis, i.id, i.perluCFO, i.perluCOO, ba) };
+        i.persetujuan = { finMgr: st.finMgr?.nama ?? null, coo: st.coo?.nama ?? null, cfo: st.cfo?.nama ?? null, finMgrSaya: !!st.finMgr && milikSendiri(st.finMgr.email, s.email), cooSaya: !!st.coo && milikSendiri(st.coo.email, s.email), wa: await statusWaFinance(d.redis, i.id, i.perluCFO, ba) };
         continue;
       }
       const r = baris.get(i.id.toUpperCase());
