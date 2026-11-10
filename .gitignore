@@ -6,3 +6,6 @@ node_modules
 next-env.d.ts
 sa-key.json
 *.local.json
+
+# CSV impor vendor (data asli, jangan di-commit)
+vendor*.csv

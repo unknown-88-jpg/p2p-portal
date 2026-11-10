@@ -36,7 +36,7 @@ export async function daftarVendor(d: AuthDeps, s: SessionData, input: z.infer<t
     name: 'vendor.daftar', actor: s.email, ...idemOf(idemKey), lockKeys: [idLockName('VND'), kunciRek(v.bank, v.noRekening)],
     execute: async ({ store, clock }) => {
       const rows = await store.readRows(MASTER_VENDOR);
-      const dup = rekeningSama(rows, v.bank, v.noRekening);
+      const dup = rekeningSama(rows, v.bank, v.noRekening, '', { nama: v.nama, tipe: v.tipe, npwp: v.npwp });
       if (dup) {
         throw new AppError('RULE_VIOLATION', can(s.roles, 'vendor.approve')
           ? `Rekening ${v.bank} ${v.noRekening} sudah terdaftar atas nama "${dup.nama}" (${dup.kode}, ${dup.status}). Kalau ini vendor yang sama, pakai data yang sudah ada.`
@@ -98,7 +98,7 @@ export async function putuskanVendor(d: AuthDeps, s: SessionData, kode: string, 
       if (upper(v.bank) !== upper(input.bank) || bersihRekening(v.noRekening) !== bersihRekening(input.noRekening)) throw new AppError('CONFLICT', 'Data rekening vendor berubah sejak Anda membukanya. Muat ulang lalu periksa lagi.');
       if (aksi === 'approve') {
         if (pendaftarSama(str(V(f.data, 'Didaftarkan_Oleh')), s.email)) throw new AppError('RULE_VIOLATION', 'Anda yang mendaftarkan vendor ini. Pengesahan harus oleh orang lain (maker-checker).');
-        const dup = rekeningSama(await store.readRows(MASTER_VENDOR), v.bank, v.noRekening, k);
+        const dup = rekeningSama(await store.readRows(MASTER_VENDOR), v.bank, v.noRekening, k, { nama: v.nama, tipe: v.tipe, npwp: v.npwp });
         if (dup) throw new AppError('RULE_VIOLATION', `Rekening ini sudah dipakai ${dup.kode} (${dup.nama}, ${dup.status}). Tolak salah satunya.`);
       }
       const baru = aksi === 'approve' ? VENDOR_STATUS.APPROVED : VENDOR_STATUS.REJECTED;
