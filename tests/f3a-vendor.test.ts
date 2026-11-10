@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { peringatanVendor, rekeningSama, validasiVendor } from '@/domain/vendor';
+import { pasanganTipeSah, peringatanVendor, rekeningSama, validasiVendor } from '@/domain/vendor';
 import { daftarVendor as listUntukWizard } from '@/domain/master';
 import { AppError } from '@/lib/errors';
 import { AUDIT_LOG, MASTER_USER_TTD, MASTER_VENDOR, colIndex } from '@/repo/schema';
@@ -110,5 +110,57 @@ describe('F3-A pengesahan (maker-checker, R-21)', () => {
   });
   it('PIC / Fin. Mgr tidak bisa mengesahkan', async () => {
     for (const s of [citra, fm]) expect(await kode(putuskanVendor(w.deps, s, 'VND-0008', 'approve', rek))).toBe('FORBIDDEN');
+  });
+});
+
+// Pengecualian I7 (keputusan user 2026-11-10): satu entitas = dua baris vendor (Trade + Non-Trade) dengan rekening yang sama.
+// Seed: VND-0007 GAMA, Non-Trade, NPWP "01.2", MANDIRI 9999999999, Approved. Data fiktif.
+describe('I7: pasangan Trade / Non-Trade', () => {
+  const gama = { nama: 'GAMA', tipe: 'Trade', npwp: '01.2' };
+  const trade = (o: Record<string, string> = {}) => input({ namaVendor: 'gama', tipeVendor: 'Trade', npwp: '01.2', bank: 'mandiri', namaRekening: 'gama', noRekening: '9999999999', ...o });
+  it('domain: semua syarat harus terpenuhi (nama sama, NPWP sama & terisi, tipe beda)', () => {
+    const b = { nama: 'gama ', tipe: 'Non-Trade', npwp: '012' };
+    expect(pasanganTipeSah(gama, b)).toBe(true);
+    expect(pasanganTipeSah({ ...gama, npwp: '' }, { ...b, npwp: '' })).toBe(false);   // NPWP kosong tidak pernah cukup
+    expect(pasanganTipeSah({ ...gama, npwp: '-' }, { ...b, npwp: '-' })).toBe(false);
+    expect(pasanganTipeSah({ ...gama, npwp: '99' }, b)).toBe(false);                   // NPWP beda
+    expect(pasanganTipeSah({ ...gama, nama: 'LAIN' }, b)).toBe(false);                 // nama beda
+    expect(pasanganTipeSah({ ...gama, tipe: 'Non-Trade' }, b)).toBe(false);           // tipe sama
+    expect(pasanganTipeSah({ ...gama, tipe: 'Aneh' }, b)).toBe(false);                 // tipe tidak valid
+  });
+  it('domain: rekeningSama tanpa calon = perilaku lama; dengan calon pasangan sah = bukan duplikat', () => {
+    expect(rekeningSama(rows(), 'MANDIRI', '9999999999')?.kode).toBe('VND-0007');
+    expect(rekeningSama(rows(), 'MANDIRI', '9999999999', '', gama)).toBeNull();
+    expect(rekeningSama(rows(), 'MANDIRI', '9999999999', '', { ...gama, npwp: '77' })?.kode).toBe('VND-0007');
+  });
+  it('daftar: pasangan sah lolos (Pending, kode baru); peringatan pasangan muncul di antrean pengesah', async () => {
+    const r = await daftarVendor(w.deps, dani, trade(), 'idem-v-pair-0001');
+    expect(r).toMatchObject({ kode: 'VND-0008', status: 'Pending' });
+    const q = await antreanVendor(w.deps, fina);
+    expect(q[0]!.peringatan.join(' ')).toMatch(/pasangan Trade\/Non-Trade.*VND-0007/);
+  });
+  it('daftar: tetap DITOLAK bila NPWP kosong / NPWP beda / nama beda / tipe sama', async () => {
+    expect(await kode(daftarVendor(w.deps, dani, trade({ npwp: '' })))).toBe('RULE_VIOLATION');
+    expect(await kode(daftarVendor(w.deps, dani, trade({ npwp: '99.9' })))).toBe('RULE_VIOLATION');
+    expect(await kode(daftarVendor(w.deps, dani, trade({ namaVendor: 'gama lain' })))).toBe('RULE_VIOLATION');
+    expect(await kode(daftarVendor(w.deps, dani, trade({ tipeVendor: 'Non-Trade' })))).toBe('RULE_VIOLATION');
+    expect(rows()).toHaveLength(2); // tidak ada baris baru
+  });
+  it('tipe ketiga / pasangan kedua dengan tipe sama tetap ditolak setelah pasangan terdaftar', async () => {
+    await daftarVendor(w.deps, dani, trade(), 'idem-v-pair-0002');
+    expect(await kode(daftarVendor(w.deps, dani, trade()))).toBe('RULE_VIOLATION'); // Trade ke-2
+  });
+  it('pengesahan pasangan: lolos untuk orang lain (maker-checker tetap), dan muncul di wizard sesuai tipenya', async () => {
+    await daftarVendor(w.deps, dani, trade(), 'idem-v-pair-0003');
+    const rek = { bank: 'MANDIRI', noRekening: '9999999999' };
+    expect(await kode(putuskanVendor(w.deps, dani, 'VND-0008', 'approve', rek))).toBe('RULE_VIOLATION'); // pendaftar ≠ pengesah
+    expect(await kode(putuskanVendor(w.deps, fina, 'VND-0008', 'approve', rek))).toBe('OK');
+    expect(listUntukWizard(rows(), 'Trade').map((v) => v.kode)).toEqual(['VND-0008']);
+    expect(listUntukWizard(rows(), 'Non-Trade').map((v) => v.kode)).toEqual(['VND-0007']);
+  });
+  it('pengesahan: bila data pasangan berubah jadi tidak sah (NPWP diubah manual), pengesahan ditolak', async () => {
+    await daftarVendor(w.deps, dani, trade(), 'idem-v-pair-0004');
+    w.store.reorder(MASTER_VENDOR, (rs) => rs.map((r) => { if (r[0] === 'VND-0008') r[CV('NPWP')] = '55.5'; return r; }));
+    expect(await kode(putuskanVendor(w.deps, fina, 'VND-0008', 'approve', { bank: 'MANDIRI', noRekening: '9999999999' }))).toBe('RULE_VIOLATION');
   });
 });

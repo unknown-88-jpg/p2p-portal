@@ -17,6 +17,7 @@
     "seed": "tsx scripts/seed-dummy.ts",
     "m1-integration": "tsx scripts/m1-integration.ts",
     "m4b-integration": "tsx --env-file=.env.local scripts/m4b-integration.ts",
+    "import-vendor": "tsx --env-file=.env.local scripts/import-vendor.ts",
     "issue-setpass": "tsx --env-file=.env.local scripts/issue-setpass.ts",
     "wa-webhook-test": "tsx --env-file=.env.local scripts/wa-webhook-test.ts",
     "load-test": "tsx scripts/load-test.ts"
