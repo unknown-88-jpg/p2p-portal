@@ -1,4 +1,5 @@
 import { can } from '@/domain/capabilities';
+import { CATATAN_SKIP_L2, LABEL_L2, LABEL_SKIP_L2, lewatiManager } from '@/domain/approval';
 import { butuhCOO, LEVEL } from '@/domain/config';
 import { RuleError } from '@/domain/errors';
 import { num, str, upper } from '@/domain/legacy-parse';
@@ -187,14 +188,20 @@ export async function submitPengajuan(d: UowDeps, s: SessionData, idTrx: string,
       if (!str(cell(r, 'FILE_URL'))) throw new AppError('RULE_VIOLATION', 'Soft file invoice belum diupload.');
 
       // Manager harus ada, atau dokumen tertahan permanen (lama: hanya tombol UI yang dimatikan).
-      const akunAktif = [...(await loadAccounts(store)).values()].filter((a) => a.aktif);
+      // Pengecualian (keputusan user 2026-11-10): divisi Finance (CONFIG.SKIP_L2_DEPTS) tidak punya Manager L2 -> langkah L2 dilewati.
       const brand = upper(str(cell(r, 'BRAND'))), dept = upper(str(cell(r, 'DEPARTEMENT')));
-      if (!hasAuthority(akunAktif.flatMap((a) => a.roles), brand, dept, LEVEL.MANAGER)) {
-        throw new AppError('RULE_VIOLATION', `Divisi ${dept} belum punya Manager (Level 2) di Master_User_TTD. Pengajuan akan tertahan permanen. Hubungi admin.`);
-      }
-      // O5a: approver != pembuat. Tanpa Manager lain, dokumen tak akan pernah bisa disetujui (tertahan permanen) -> tolak sekarang.
-      if (sod && !hasAuthority(akunAktif.filter((a) => normEmail(a.email) !== normEmail(s.email)).flatMap((a) => a.roles), brand, dept, LEVEL.MANAGER)) {
-        throw new AppError('RULE_VIOLATION', `Divisi ${dept} tidak punya Manager (Level 2) selain Anda sendiri. Persetujuan harus dari Manager lain (pemisahan tugas), jadi pengajuan akan tertahan. Hubungi admin.`);
+      const skipL2 = lewatiManager(dept);
+      // Skip L2 tetap lewat STATUS_FLOW (I3): Draft/Revision -> Submitted -> Manager Approved, dua transisi sah dalam satu batch.
+      if (skipL2) { const t2 = checkTransition(STATUS.SUBMITTED, STATUS.MANAGER_APPROVED); if (t2) throw new AppError('INTERNAL', t2); }
+      if (!skipL2) {
+        const akunAktif = [...(await loadAccounts(store)).values()].filter((a) => a.aktif);
+        if (!hasAuthority(akunAktif.flatMap((a) => a.roles), brand, dept, LEVEL.MANAGER)) {
+          throw new AppError('RULE_VIOLATION', `Divisi ${dept} belum punya Manager (Level 2) di Master_User_TTD. Pengajuan akan tertahan permanen. Hubungi admin.`);
+        }
+        // O5a: approver != pembuat. Tanpa Manager lain, dokumen tak akan pernah bisa disetujui (tertahan permanen) -> tolak sekarang.
+        if (sod && !hasAuthority(akunAktif.filter((a) => normEmail(a.email) !== normEmail(s.email)).flatMap((a) => a.roles), brand, dept, LEVEL.MANAGER)) {
+          throw new AppError('RULE_VIOLATION', `Divisi ${dept} tidak punya Manager (Level 2) selain Anda sendiri. Persetujuan harus dari Manager lain (pemisahan tugas), jadi pengajuan akan tertahan. Hubungi admin.`);
+        }
       }
       // Hak PIC masih berlaku saat submit (peran bisa dicabut setelah draft dibuat).
       const hak = cekHakPengaju(s.roles, brand, dept);
@@ -234,7 +241,7 @@ export async function submitPengajuan(d: UowDeps, s: SessionData, idTrx: string,
       const now = toSheetSerial(clock.now());
       const mutations: Mutation[] = [
         { kind: 'update', schema: TRX_PENGAJUAN, row: f.row, cells: {
-          STATUS: STATUS.SUBMITTED, LAST_UPDATE: now, DPP: calc.dpp, PPN_AMOUNT: calc.ppnAmount, FINAL_AMOUNT: calc.finalAmount,
+          STATUS: skipL2 ? STATUS.MANAGER_APPROVED : STATUS.SUBMITTED, LAST_UPDATE: now, DPP: calc.dpp, PPN_AMOUNT: calc.ppnAmount, FINAL_AMOUNT: calc.finalAmount,
           // Wajib COO dikunci DI SINI (nominal saat pengajuan; keputusan user 2026-11-09) dan tidak dihitung ulang saat verifikasi pajak.
           REQUIRE_CFO: calc.perluCFO ? 'YES' : 'NO', REQUIRE_COO: butuhCOO(upper(dept), calc.finalAmount) ? 'YES' : 'NO', OS_BALANCE: calc.finalAmount - num(cell(r, 'TOTAL_PAID')), QTY_PO: qtyPO, QTY_SJ: qtySJ,
         } },
@@ -247,7 +254,15 @@ export async function submitPengajuan(d: UowDeps, s: SessionData, idTrx: string,
           notes: oldFinal !== calc.finalAmount ? `Diajukan oleh PIC; nominal dihitung ulang server ${oldFinal} -> ${calc.finalAmount}` : 'Diajukan oleh PIC' }, clock),
         auditMutation({ actor: s.email, idTrx, action: 'APPROVAL', field: 'Level 1 (Portal-HP)', newValue: 'APPROVED', notes: 'Diajukan & e-sign otomatis' }, clock),
       ];
-      return { mutations, result: { id: idTrx, status: STATUS.SUBMITTED as string, finalAmount: calc.finalAmount, perluCFO: calc.perluCFO, plafon, sisaBolehTagih: sisa } };
+      if (skipL2) {
+        // Gerbang bayar (I4) mensyaratkan baris Level 2 APPROVED; di sini dicatat eksplisit sebagai SKIP (bukan atas nama orang), supaya audit terang.
+        mutations.splice(2, 0, { kind: 'append', schema: TRX_APPROVAL, cells: {
+          ID_Approval: `APR-${crypto.randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()}`, ID_Trx: idTrx, Level: LEVEL.MANAGER, Role_Label: LABEL_L2,
+          Approver_Name: LABEL_SKIP_L2, Approver_Email: '', Jabatan: '-', Method: 'SKIP-L2', Action: 'APPROVED', Timestamp: now, Notes: CATATAN_SKIP_L2, Signature_URL: '',
+        } });
+        mutations.push(auditMutation({ actor: s.email, idTrx, action: 'STATUS_CHANGE', field: 'Status', oldValue: STATUS.SUBMITTED, newValue: STATUS.MANAGER_APPROVED, notes: CATATAN_SKIP_L2 }, clock));
+      }
+      return { mutations, result: { id: idTrx, status: (skipL2 ? STATUS.MANAGER_APPROVED : STATUS.SUBMITTED) as string, finalAmount: calc.finalAmount, perluCFO: calc.perluCFO, plafon, sisaBolehTagih: sisa } };
     },
   });
 }

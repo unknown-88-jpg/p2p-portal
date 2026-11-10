@@ -1,3 +1,4 @@
+import { lewatiManager } from './approval';
 import { CONFIG, LEVEL } from './config';
 import { clean, num, str, upper } from './legacy-parse';
 import { isAktif, parseLevel } from './roles';
@@ -77,6 +78,10 @@ export interface PicOptions { pics: string[]; adaManager: boolean; manager: stri
 export function picOptions(org: Org, brand: string, dept: string, pengaju = ''): PicOptions {
   const node = org.tree[upper(brand)]?.[upper(dept)];
   if (!node) return { pics: [], adaManager: false, manager: '', peringatan: 'Divisi tidak ditemukan.' };
+  if (lewatiManager(dept)) {
+    // Divisi Finance: tanpa Manager L2. adaManager=true artinya "jalur persetujuan tersedia" (Finance Mgr), jadi form tidak mengunci.
+    return { pics: node.pics, adaManager: true, manager: 'Finance Manager (Level 4)', peringatan: node.pics.length ? '' : `Divisi ${upper(dept)} belum punya PIC pengaju (Level 1) di Master_User_TTD.` };
+  }
   const semua = node.levels[String(LEVEL.MANAGER)] ?? [];
   const diri = pengaju.trim().toLowerCase();
   const lvl2 = diri ? semua.filter((m) => m.nama.trim().toLowerCase() !== diri) : semua;

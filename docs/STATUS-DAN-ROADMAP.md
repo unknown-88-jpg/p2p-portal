@@ -30,6 +30,8 @@ Dokumen lengkap (hasil UAT, desain, risiko) ada di Project "P2P Finance Portal" 
 
 - Next.js 16.4.0 → **16.4.2** (2026-10-24): menutup advisori kritis `npm audit` untuk next 16.0.0–16.4.0; `next build` tidak lagi kadang berhenti dengan `SecurityFatalError`.
 
+- **Skip Manager L2 untuk divisi Finance (keputusan user 2026-11-10; BEDA dari sistem lama).** Dept di `CONFIG.SKIP_L2_DEPTS` (sekarang `FATS`, semua brand) tidak punya Manager L2, jadi submit langsung ke `Manager Approved` (tetap lewat `STATUS_FLOW`: Draft → Submitted → Manager Approved dalam satu batch). Lanjut Staff Finance (verifikasi pajak) → Fin. Mgr → (COO bila GA) → CFO bila ≥ Rp 5 jt. Trx_Approval mendapat baris Level 2 `Method=SKIP-L2`, `Approver_Name` "Dilewati (divisi Finance)", tanpa email (gerbang bayar I4 tetap menuntut baris L2 APPROVED); Audit_Log mencatat `SKIP-L2`. Dept lain tidak berubah (tanpa Manager L2 tetap ditolak). Tambahan: Fin. Mgr yang mengajukan dokumen dept Finance **diblokir** menyetujuinya sendiri (dept lain tetap penanda O5b). SoD pajak (pengaju ≠ verifikator, I6) tidak berubah → butuh ≥ 2 Staff Finance. **Belum dikerjakan:** memaksa CFO bila pengajuannya Fin. Mgr (verifikasi pajak menghitung ulang flag CFO dari nominal, jadi perlu perubahan terpisah). Bila hanya ada satu Fin. Mgr dan dia pengaju, dokumen tertahan di Tax Verified sampai ada Fin. Mgr lain.
+
 ## Temuan terbuka (tidak menghalangi Fase 1)
 - F-02: invoice PDF tidak bisa dicetak gabungan dengan voucher (CSP `object-src 'none'`).
 - Screenshot Master_COA produksi, rekening di Master_COA dummy terlihat nyata, folder Drive `upload-test` berisi file lain, perbandingan 5 voucher dengan sistem lama (syarat keluar M7), label data basah (stale) di UI.
