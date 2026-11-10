@@ -1,5 +1,5 @@
 import { can } from '@/domain/capabilities';
-import { etagCocok, milikSendiri, PREFIX_TOLAK_FINANCE } from '@/domain/approval';
+import { cekFinMgrPengajuSendiri, etagCocok, milikSendiri, PREFIX_TOLAK_FINANCE } from '@/domain/approval';
 import { butuhCFO, CONFIG, LEVEL } from '@/domain/config';
 import { isValidYmd } from '@/domain/pengajuan';
 import { LEVEL_LABEL } from '@/domain/dokumen';
@@ -163,6 +163,9 @@ export async function setujuiFinance(d: AuthDeps, s: SessionData, token: string,
       const perluCOO = wajibCOO(cell(r, 'REQUIRE_COO'));
       const tolak = cekEApprove(sebagai, s.roles, s.email, perluCFO, perluCOO, st);
       if (tolak) throw new AppError(tolak.kode, tolak.pesan);
+      // Keputusan user 2026-11-10: dokumen divisi Finance (tanpa Manager L2) -> Fin. Mgr pengaju tidak boleh jadi penyetuju L4-nya sendiri.
+      const diriSendiri = sebagai === 'finmgr' ? cekFinMgrPengajuSendiri(str(cell(r, 'DEPARTEMENT')), str(cell(r, 'CREATED_BY')), s.email) : null;
+      if (diriSendiri) throw new AppError('RULE_VIOLATION', diriSendiri);
       await requireStepUp(d, token); // setelah aturan: password tidak diminta untuk aksi yang memang akan ditolak
 
       const lengkap = sebagai !== 'coo' && persetujuanLengkap(sebagai, perluCFO);

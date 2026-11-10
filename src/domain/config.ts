@@ -3,6 +3,8 @@ export const CONFIG = {
   CFO_THRESHOLD: 5_000_000,
   /** Keputusan user 2026-11-09: dokumen dept ini (semua brand, termasuk Shared Service) dengan nominal >= ambang CFO wajib persetujuan COO (L6), setelah Fin. Mgr dan sebelum CFO. */
   COO_DEPT: 'GENERAL AFFAIRS',
+  /** Keputusan user 2026-11-10: pengajuan dari dept ini (semua brand) TIDAK lewat Manager L2: langsung Manager Approved lalu Staff Finance -> Fin. Mgr -> (COO bila GA) -> CFO bila >= ambang. */
+  SKIP_L2_DEPTS: ['FATS'] as readonly string[],
   PPN_RATE: 0.11,
   PAYMENT_TOLERANCE: 1000,
   /** D9: approval via WA di/atas nominal ini DIMATIKAN (wajib web + konfirmasi password). */

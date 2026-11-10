@@ -4,6 +4,10 @@ import { checkTransition, STATUS, type Status } from './status';
 
 // Aturan approval Manager (Level 2). Murni: tanpa I/O. Perilaku lama: Approval.gs (managerApprove/managerReject).
 
+/** Keputusan user 2026-11-10: divisi Finance (CONFIG.SKIP_L2_DEPTS) tidak punya Manager L2; langkah L2 dilewati (dicatat eksplisit, bukan hilang diam-diam). */
+export const lewatiManager = (dept: string): boolean => CONFIG.SKIP_L2_DEPTS.includes(dept.trim().toUpperCase());
+export const LABEL_SKIP_L2 = 'Dilewati (divisi Finance)';
+export const CATATAN_SKIP_L2 = 'SKIP-L2: divisi Finance tidak punya Manager L2; lanjut ke Finance (Staff -> Fin. Mgr -> CFO bila >= Rp 5 jt)';
 export const ALASAN_MAX = 500;
 export const CATATAN_MAX = 300;
 export const LABEL_L2 = 'Diperiksa Oleh,'; // LEVEL_LABEL[2] di Config.gs
@@ -78,6 +82,11 @@ export const PREFIX_TOLAK_FINANCE = '[DITOLAK FINANCE] ';
 export type Via = 'web' | 'wa';
 
 /** Pembuat dokumen = pengguna ini? (email, tanpa beda huruf/spasi). Dipakai menyaring antrean & hitungan Manager (M8 F-05). */
+export const PESAN_FINMGR_PENGAJU_SENDIRI = 'Anda mengajukan dokumen divisi Finance ini, jadi tidak boleh menyetujuinya sebagai Fin. Mgr. Minta Fin. Mgr lain memprosesnya.';
+/** Dokumen divisi Finance tanpa Manager L2: Fin. Mgr yang mengajukan tidak boleh jadi penyetuju L4-nya sendiri (BLOKIR; di dept lain tetap penanda O5b). */
+export const cekFinMgrPengajuSendiri = (dept: string, pembuatEmail: string, email: string): string | null =>
+  lewatiManager(dept) && milikSendiri(pembuatEmail, email) ? PESAN_FINMGR_PENGAJU_SENDIRI : null;
+
 export const milikSendiri = (pembuatEmail: string, email: string): boolean => {
   const a = pembuatEmail.trim().toLowerCase();
   return a !== '' && a === email.trim().toLowerCase();
