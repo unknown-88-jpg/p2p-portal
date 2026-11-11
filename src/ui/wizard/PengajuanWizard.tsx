@@ -109,7 +109,8 @@ export function PengajuanWizard({ roles, email, nama, awal }: WizardProps) {
       if (masalah) { set({ status: 'galat', data: null, galat: masalah }); if (!lagi) setPo({ status: 'galat', data: null, galat: masalah }); return; }
       set({ status: 'siap', data, galat: null });
       setPo({ status: 'siap', data, galat: null });
-      if (!lagi) setForm((f) => ({ ...f, poNumber: data.poNumber, vendorKode: data.vendor.kode }));
+      // beberapa rekening: pilihan lama dipertahankan bila masih termasuk kandidat, selain itu dikosongkan (PIC memilih di langkah Vendor)
+      if (!lagi) setForm((f) => ({ ...f, poNumber: data.poNumber, vendorKode: data.vendor ? data.vendor.kode : data.vendorPilihan.some((v) => upper(v.kode) === upper(f.vendorKode)) ? f.vendorKode : '' }));
     } catch (e) { set({ status: 'galat', data: null, galat: errMessage(e) }); if (!lagi) setPo({ status: 'galat', data: null, galat: errMessage(e) }); }
   }, []);
   // Edit dokumen Trade: tarik P.O diam-diam agar gauge & validasi vendor siap.
@@ -124,10 +125,10 @@ export function PengajuanWizard({ roles, email, nama, awal }: WizardProps) {
   const dupAktif = dup && dup.kunci === kunciDup ? dup.pesan : null;
   const poData = po.status === 'siap' && po.data && upper(po.data.poNumber) === upper(form.poNumber) ? po.data : null;
   const vendorTerpilih = form.tipe === 'Trade'
-    ? poData?.vendor ? { kode: poData.vendor.kode, nama: poData.vendor.nama, bank: poData.vendor.bank, namaRekening: poData.vendor.namaRekening, noRekening: poData.vendor.noRekening, npwp: poData.vendor.npwp } : null
+    ? (() => { const v = poData ? poData.vendor ?? poData.vendorPilihan.find((x) => upper(x.kode) === upper(form.vendorKode)) : null; return v ? { kode: v.kode, nama: v.nama, bank: v.bank, namaRekening: v.namaRekening, noRekening: v.noRekening, npwp: v.npwp } : null; })()
     : (() => { const v = vendors.data?.find((x) => x.kode === form.vendorKode); return v ? { kode: v.kode, nama: v.namaAsli, bank: v.bank, namaRekening: v.namaRekening, noRekening: v.noRekening, npwp: v.npwp } : null; })();
   const ctx: KonteksValidasi = {
-    poSiap: !!poData, poVendorKode: poData?.vendor.kode ?? '', adaManager: pic ? pic.adaManager : null,
+    poSiap: !!poData, poVendorKode: poData?.vendor?.kode ?? '', poVendorPilihan: poData && !poData.vendor ? poData.vendorPilihan.map((v) => v.kode) : [], adaManager: pic ? pic.adaManager : null,
     duplikat: dupAktif, punyaLampiran: punyaLampiran || !!staged,
   };
   const preview = useMemo(() => previewHitung(form, vendorTerpilih?.npwp ?? ''), [form, vendorTerpilih?.npwp]);

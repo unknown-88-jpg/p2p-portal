@@ -1,7 +1,7 @@
 // Schema registry — menggantikan COL/COL_USER/COL_APPROVAL/COL_PAYLOG/COL_AUDIT di Config.gs.
 // Urutan kolom lama dipertahankan PERSIS (kolom baru hanya ditambah di paling kanan).
 export type ColType = 'text' | 'money' | 'date' | 'datetime' | 'enum' | 'bool';
-export interface Col { readonly key: string; readonly type: ColType; /** header lain yang sah untuk posisi ini */ readonly aliases?: readonly string[] }
+export interface Col { readonly key: string; readonly type: ColType; /** header lain yang sah untuk posisi ini */ readonly aliases?: readonly string[]; /** kolom boleh tidak ada di sheet (header kosong) */ readonly optional?: boolean }
 export interface TabSchema {
   readonly tab: string;
   readonly cols: readonly Col[];
@@ -72,7 +72,8 @@ export const DB_PO: TabSchema = {
   cols: [c('PO'), c('PO_Date', 'date'), c('RFQ_Ref_ID'), c('Vendor_Name'), c('Vendor_Quote_No'), c('Status', 'enum'),
     c('Company_Name'), c('PIC_Admin'), c('Tax_Status', 'enum'), c('Subtotal', 'money'), c('PPN_Amount', 'money'),
     c('Service Fee', 'money'), c('Grand_Total', 'money'), c('PO_File_Link'), c('Item_Name'), c('QTY PO', 'money'),
-    c('Kode Vendor')],
+    // Opsional (2026-11-11): sumber IMPORTRANGE nyata tidak membawa kolom ini -> vendor dicocokkan lewat Vendor_Name (lihat vendorUntukPo).
+    { ...c('Kode Vendor'), optional: true }],
 };
 
 export const DB_SJ: TabSchema = {

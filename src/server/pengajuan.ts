@@ -8,7 +8,7 @@ import {
   cariInvoiceDuplikat, cekHakPengaju, hitungDraft, ID_PREFIX, invoiceLockName, pesanInvoiceDuplikat,
   validatePengajuan, type BarisRingkas, type PengajuanInput,
 } from '@/domain/pengajuan';
-import { gatePoSubmit, type PoLookup } from '@/domain/po';
+import { gatePoSubmit, vendorCocokPo, type PoLookup } from '@/domain/po';
 import { hasAuthority, normEmail } from '@/domain/roles';
 import { checkTransition, STATUS } from '@/domain/status';
 import { AppError } from '@/lib/errors';
@@ -63,7 +63,7 @@ async function periksaPoUntukDraft(store: TableStore, po: string, vendor: Vendor
   const lk = await lookupPo(store, po);
   if (lk.status === 'notFound') throw new AppError('NOT_FOUND', `Nomor P.O "${upper(po)}" tidak ditemukan di DB_PO.`);
   if (lk.status === 'unreadable') return { qtyPO: 0, qtySJ: 0 };
-  if (upper(lk.po.kodeVendor) !== upper(vendor.kode)) throw new AppError('RULE_VIOLATION', `Vendor pada P.O ini adalah "${lk.po.kodeVendor}", bukan "${vendor.kode}".`);
+  if (!vendorCocokPo(lk.po, vendor)) throw new AppError('RULE_VIOLATION', `Vendor pada P.O ini adalah "${lk.po.kodeVendor || lk.po.namaVendor}", bukan "${lk.po.kodeVendor ? vendor.kode : vendor.nama}".`);
   return { qtyPO: lk.po.qtyPO, qtySJ: lk.qtySJ };
 }
 
@@ -233,7 +233,7 @@ export async function submitPengajuan(d: UowDeps, s: SessionData, idTrx: string,
           throw new AppError('RULE_VIOLATION', dec.message);
         }
         if (lk.status !== 'found') throw new AppError('INTERNAL', 'Status PO tidak konsisten.');
-        if (upper(lk.po.kodeVendor) !== upper(vendor.kode)) throw new AppError('RULE_VIOLATION', `Vendor pada P.O ini adalah "${lk.po.kodeVendor}", bukan "${vendor.kode}".`);
+        if (!vendorCocokPo(lk.po, vendor)) throw new AppError('RULE_VIOLATION', `Vendor pada P.O ini adalah "${lk.po.kodeVendor || lk.po.namaVendor}", bukan "${lk.po.kodeVendor ? vendor.kode : vendor.nama}".`);
         qtyPO = lk.po.qtyPO; qtySJ = lk.qtySJ; plafon = dec.plafon; sisa = dec.sisaBoleh;
       }
 

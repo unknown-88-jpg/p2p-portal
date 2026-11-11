@@ -94,6 +94,8 @@ export interface KonteksValidasi {
   poSiap: boolean;
   /** Vendor milik PO yang ditarik (Trade). */
   poVendorKode: string;
+  /** Trade, vendor P.O punya beberapa rekening: kode-kode yang boleh dipilih (kosong = tidak berlaku). */
+  poVendorPilihan?: readonly string[];
   /** Divisi punya Manager L2 (design: tombol lanjut dikunci bila tidak). null = belum diketahui/memuat. */
   adaManager: boolean | null;
   /** Pesan duplikat invoice dari cek inline; null = tidak duplikat / belum dicek. */
@@ -124,6 +126,7 @@ export function validasiLangkah(langkah: Langkah, f: FormPengajuan, k: KonteksVa
     case 'vendor':
       if (!f.vendorKode) g.vendorKode = 'Pilih vendor.';
       else if (f.tipe === 'Trade' && k.poVendorKode && f.vendorKode.toUpperCase() !== k.poVendorKode.toUpperCase()) g.vendorKode = `Vendor harus sama dengan vendor di P.O (${k.poVendorKode}).`;
+      else if (f.tipe === 'Trade' && !k.poVendorKode && k.poVendorPilihan?.length && !k.poVendorPilihan.some((x) => x.toUpperCase() === f.vendorKode.toUpperCase())) g.vendorKode = 'Pilih salah satu rekening vendor P.O ini.';
       break;
     case 'tagihan': {
       if (!f.noInvoice.trim()) g.noInvoice = WAJIB;
@@ -258,7 +261,8 @@ export function deptBoleh(roles: readonly Role[], org: Pick<Org, 'brands' | 'tre
 }
 
 /** Trade: vendor di PO harus bertipe Trade (server menolak lainnya saat simpan draft) - tampilkan lebih awal. null = aman. */
-export function cekPoUntukTrade(po: { vendor: { tipe: string; nama: string } }): string | null {
+export function cekPoUntukTrade(po: { vendor: { tipe: string; nama: string } | null }): string | null {
+  if (!po.vendor) return null; // beberapa rekening: server hanya mengirim kandidat Trade yang sudah disahkan
   return po.vendor.tipe.trim().toLowerCase() === 'trade' ? null : `Vendor pada P.O ini ("${po.vendor.nama}") bertipe ${po.vendor.tipe || '-'}, bukan Trade, sehingga tidak bisa diajukan sebagai pengajuan Trade.`;
 }
 

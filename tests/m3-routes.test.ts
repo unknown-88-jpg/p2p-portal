@@ -131,9 +131,38 @@ describe('M3: PO', () => {
   });
   it('vendor tak ada di master / belum Approved -> 422 dengan pesan lama', async () => {
     const a = await po(get('/api/po/PO%2FHL%2F2026%2F003', ck));
-    expect(a.status).toBe(422); expect((await j(a)).error.message).toBe('Vendor "V9" di PO ini tidak ada di Master_Vendor.');
+    expect(a.status).toBe(422); expect((await j(a)).error.message).toMatch(/^Vendor "V9" di P\.O ini belum terdaftar di Master_Vendor\./);
     const b = await po(get('/api/po/PO%2FHL%2F2026%2F002', ck));
     expect(b.status).toBe(422); expect((await j(b)).error.message).toMatch(/masih berstatus Pending/);
+  });
+  describe('DB_PO tanpa Kode Vendor (sumber P.O tidak membawanya) -> vendor dicocokkan lewat Vendor_Name', () => {
+    const tanpaKode = (nama: string | null): R => poRow({ 'Kode Vendor': null, Vendor_Name: nama });
+    const tarik = () => po(get('/api/po/PO%2FHL%2F2026%2F001', ck));
+    it('nama cocok tepat satu vendor Trade Approved (abaikan besar-kecil/spasi) -> dipakai langsung', async () => {
+      w.store.seed(DB_PO, [tanpaKode('  alfa ')]);
+      const r = await j(await tarik());
+      expect(r.po.vendor).toMatchObject({ kode: 'V1', nama: 'Alfa' });
+      expect(r.po.vendorPilihan).toEqual([]);
+    });
+    it('satu vendor, beberapa rekening -> vendor null + daftar pilihan; server tidak menebak', async () => {
+      w.store.seed(MASTER_VENDOR, [['V1', 'Alfa', 'Trade', '', 'BCA', 'Alfa', "'99", 'Approved'], ['V5', 'ALFA', 'Trade', '', 'BNI', 'Alfa', "'77", 'Approved'], ['V6', 'Alfa', 'Trade', '', 'BRI', 'Alfa', "'55", 'Pending'], ['V7', 'Alfa', 'Non-Trade', '', 'CIMB', 'Alfa', "'33", 'Approved']]);
+      w.store.seed(DB_PO, [tanpaKode('Alfa')]);
+      const r = await j(await tarik());
+      expect(r.po.vendor).toBeNull();
+      expect(r.po.vendorPilihan.map((v: { kode: string }) => v.kode)).toEqual(['V1', 'V5']); // Pending & Non-Trade tidak ditawarkan
+      expect(r.po.namaVendor).toBe('Alfa');
+    });
+    it('hanya terdaftar Non-Trade / belum Approved / tidak terdaftar / nama kosong -> 422 dengan pesan yang menyebut sebabnya', async () => {
+      const pesan = async (nama: string | null) => { w.store.seed(DB_PO, [tanpaKode(nama)]); const r = await tarik(); expect(r.status).toBe(422); return (await j(r)).error.message as string; };
+      expect(await pesan('Gama')).toMatch(/bertipe Non-Trade, bukan Trade/);
+      expect(await pesan('Beta')).toMatch(/masih berstatus Pending/);
+      expect(await pesan('Tidak Ada')).toMatch(/"Tidak Ada" di P\.O ini belum terdaftar/);
+      expect(await pesan(null)).toMatch(/tidak memuat nama maupun kode vendor/);
+    });
+    it('Kode Vendor terisi tetap menang atas nama (perilaku lama)', async () => {
+      w.store.seed(DB_PO, [poRow({ Vendor_Name: 'Gama' })]);
+      expect((await j(await tarik())).po.vendor.kode).toBe('V1');
+    });
   });
   it('tagihan kumulatif: Rejected tidak dihitung; excludeIdTrx hanya untuk tampilan; sisa tidak negatif', async () => {
     w.store.seed(TRX_PENGAJUAN, [trx('T1', 'PO/HL/2026/001', 'Submitted', 400_000, 100_000), trx('T2', 'po/hl/2026/001', 'Rejected', 300_000), trx('T3', 'PO/HL/2026/001', 'Paid', 600_000, 600_000), trx('T4', 'PO/LAIN', 'Paid', 5)]);

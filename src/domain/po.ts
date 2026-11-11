@@ -12,6 +12,8 @@ export function hitungPlafonSJ(grandTotal: unknown): number {
 export interface PoRecord {
   poNumber: string; companyName: string; statusPPN: string; subtotalPO: number; grandTotalPO: number;
   description: string; qtyPO: number; kodeVendor: string;
+  /** Vendor_Name dari DB_PO; dipakai mencocokkan vendor bila kodeVendor kosong. */
+  namaVendor: string;
 }
 /** Hasil pencarian PO. 'unreadable' = DB_PO/DB_SJ (IMPORTRANGE) error/loading: BUKAN "PO tidak ada". */
 export type PoLookup =
@@ -56,4 +58,36 @@ export function cocokkanPrefix(rows: readonly (readonly unknown[])[], poClean: s
     if (prefix && poClean.indexOf(prefix) !== -1) return { company: String(r[0] ?? '').trim(), brand: String(r[1] ?? '').trim() };
   }
   return { company: '', brand: '' };
+}
+
+// ------------------------------------------------------------------ vendor milik P.O
+export interface VendorRingkas { kode: string; nama: string; tipe: string; status: string }
+const normNama = (v: unknown): string => String(v ?? '').trim().toUpperCase().replace(/\s+/g, ' ');
+
+/**
+ * Apakah vendor ini vendor P.O tsb. Kode Vendor di DB_PO terisi -> kode harus sama (perilaku lama). Kosong (sumber P.O tidak membawa
+ * kode; keputusan user 2026-11-11) -> NAMA harus persis sama (abaikan besar-kecil & spasi ganda). Keduanya kosong -> tidak pernah cocok.
+ */
+export function vendorCocokPo(po: Pick<PoRecord, 'kodeVendor' | 'namaVendor'>, v: Pick<VendorRingkas, 'kode' | 'nama'>): boolean {
+  const kode = normNama(po.kodeVendor);
+  if (kode) return normNama(v.kode) === kode;
+  const nama = normNama(po.namaVendor);
+  return nama !== '' && normNama(v.nama) === nama;
+}
+
+export type VendorPoHasil<V> = { ok: true; kandidat: V[] } | { ok: false; pesan: string };
+/**
+ * Vendor yang boleh dipakai untuk P.O ini: cocok (vendorCocokPo) + bertipe Trade + Approved. Lebih dari satu kandidat hanya mungkin
+ * lewat pencocokan nama (satu vendor, beberapa rekening) -> PIC yang memilih; server tidak pernah menebak rekening.
+ */
+export function vendorUntukPo<V extends VendorRingkas>(po: Pick<PoRecord, 'kodeVendor' | 'namaVendor'>, semua: readonly V[]): VendorPoHasil<V> {
+  const sebut = po.kodeVendor.trim() || po.namaVendor.trim();
+  if (!sebut) return { ok: false, pesan: 'P.O ini tidak memuat nama maupun kode vendor di DB_PO. Hubungi admin sistem P.O.' };
+  const cocok = semua.filter((v) => v.kode.trim() !== '' && vendorCocokPo(po, v));
+  if (cocok.length === 0) return { ok: false, pesan: `Vendor "${sebut}" di P.O ini belum terdaftar di Master_Vendor. Daftarkan dulu di menu Vendor (nama harus sama persis dengan di P.O).` };
+  const trade = cocok.filter((v) => v.tipe.trim().toLowerCase() === 'trade');
+  if (trade.length === 0) return { ok: false, pesan: `Vendor "${cocok[0]!.nama}" di P.O ini terdaftar bertipe ${cocok[0]!.tipe || '-'}, bukan Trade, sehingga tidak bisa dipakai untuk pengajuan Trade. Minta Finance mendaftarkannya sebagai vendor Trade.` };
+  const sah = trade.filter((v) => v.status.trim().toUpperCase() === 'APPROVED');
+  if (sah.length === 0) return { ok: false, pesan: `Vendor "${trade[0]!.nama}" masih berstatus ${trade[0]!.status || '-'}. Minta Finance sahkan rekeningnya dulu sebelum mengajukan.` };
+  return { ok: true, kandidat: sah };
 }

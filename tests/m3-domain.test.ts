@@ -69,7 +69,7 @@ describe('hitungPajak: tambahan yang SENGAJA beda dari sistem lama', () => {
 });
 
 describe('plafon PO & gate submit (keputusan 2026-10-12: PO tak ketemu / tak terbaca -> TOLAK)', () => {
-  const found = (qtySJ: number, gt = 1_000_000, qtyPO = 10): PoLookup => ({ status: 'found', qtySJ, po: { poNumber: 'PO-1', companyName: 'C', statusPPN: 'Non PPN', subtotalPO: gt, grandTotalPO: gt, description: '', qtyPO, kodeVendor: 'V1' } });
+  const found = (qtySJ: number, gt = 1_000_000, qtyPO = 10): PoLookup => ({ status: 'found', qtySJ, po: { poNumber: 'PO-1', companyName: 'C', statusPPN: 'Non PPN', subtotalPO: gt, grandTotalPO: gt, description: '', qtyPO, kodeVendor: 'V1', namaVendor: 'Gama' } });
   it('PO tak ketemu -> ditolak PO_NOT_FOUND', () => {
     const d = gatePoSubmit('po-x', { status: 'notFound' }, 0);
     expect(d).toMatchObject({ ok: false, code: 'PO_NOT_FOUND' });
@@ -158,3 +158,15 @@ describe('builder master (paritas API_Master.gs)', () => {
     expect(daftarVendor(v, 'Trade')[0]!.namaLengkap).toBe('[V1] Alfa');
   });
 });
+
+describe('header DB_PO: kolom Kode Vendor opsional', () => {
+  it('header 16 kolom (tanpa Kode Vendor) sah; header salah di posisi itu tetap dilaporkan', async () => {
+    const { validateHeader } = await import('@/repo/header-validator');
+    const { DB_PO } = await import('@/repo/schema');
+    const h = DB_PO.cols.map((c) => c.key);
+    expect(validateHeader(DB_PO, h.slice(0, 16)).ok).toBe(true);
+    expect(validateHeader(DB_PO, h).ok).toBe(true);
+    expect(validateHeader(DB_PO, [...h.slice(0, 16), 'Lain']).ok).toBe(false);
+  });
+});
+
