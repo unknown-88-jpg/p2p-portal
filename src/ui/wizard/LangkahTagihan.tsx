@@ -9,7 +9,7 @@ import type { TahapUnggah } from '../unggah-lampiran';
 export function LangkahTagihan({ form, ubah, galat, tandai, preview, po, onCekInvoice, cekInvoiceMemuat, lampiran }: {
   form: FormPengajuan; ubah: (p: Partial<FormPengajuan>) => void; galat: Galat; tandai: (k: string) => void; preview: PreviewHitung | null; po: DataPo | null;
   onCekInvoice: () => void; cekInvoiceMemuat: boolean;
-  lampiran: { idTrx: string | null; punyaLampiran: boolean; staged: Staged | null; memproses: boolean; unggah: { tahap: TahapUnggah; bagian: number } | null; galat: string | null; onPilih: (f: File) => void; onHapus: () => void };
+  lampiran: { idTrx: string | null; punyaLampiran: boolean; staged: Staged | null; memproses: boolean; unggah: { tahap: TahapUnggah; bagian: number } | null; galat: string | null; onPilih: (f: File[]) => void; onHapus: () => void; onHapusSatu: (i: number) => void; onGeser: (i: number, arah: -1 | 1) => void };
 }) {
   const melebihiSisa = !!(po && preview && preview.finalAmount > po.sisaBolehTagih);
   return (
@@ -66,7 +66,7 @@ export function LangkahTagihan({ form, ubah, galat, tandai, preview, po, onCekIn
       )}
       {melebihiSisa && <Pesan jenis="warn">Nominal akhir ({rupiah(preview!.finalAmount)}) melebihi sisa plafon P.O ({rupiah(po!.sisaBolehTagih)}). Server akan menolak saat diajukan, kecuali plafon berubah.</Pesan>}
 
-      <UnggahLampiranUI idTrx={lampiran.idTrx} punyaLampiran={lampiran.punyaLampiran} staged={lampiran.staged} memproses={lampiran.memproses} unggah={lampiran.unggah} galat={lampiran.galat ?? galat.lampiran ?? null} onPilih={lampiran.onPilih} onHapus={lampiran.onHapus} />
+      <UnggahLampiranUI idTrx={lampiran.idTrx} punyaLampiran={lampiran.punyaLampiran} staged={lampiran.staged} memproses={lampiran.memproses} unggah={lampiran.unggah} galat={lampiran.galat ?? galat.lampiran ?? null} onPilih={lampiran.onPilih} onHapus={lampiran.onHapus} onHapusSatu={lampiran.onHapusSatu} onGeser={lampiran.onGeser} />
     </>
   );
 }

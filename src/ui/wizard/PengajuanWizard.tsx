@@ -3,7 +3,7 @@ import { catatanTampil } from '@/domain/approval';
 import { butuhCOO } from '@/domain/config';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RuleError } from '@/domain/errors';
-import { validasiUnggahan } from '@/domain/lampiran';
+import { GABUNG_MAKS_FILE, validasiUnggahan } from '@/domain/lampiran';
 import { picOptions } from '@/domain/master';
 import {
   angka, bacaDrafLokal, bisaSimpanDraft, brandBoleh, cekPoUntukTrade, dariDokumen, deptBoleh, formAdaIsi, formKosong, JUDUL_LANGKAH, keInputServer,
@@ -14,6 +14,7 @@ import type { Role } from '@/domain/roles';
 import { labelStatus } from '@/domain/status-label';
 import { api, errMessage, isApiError } from '../api';
 import { Dialog, Pesan, Toast, type IsiToast } from '../kit';
+import { gabungJadiPdf } from '../gabung-pdf';
 import { kompresGambar } from '../kompres-gambar';
 import { putKeDrive } from '../put-drive';
 import { GalatUnggah, unggahLampiran, type TahapUnggah } from '../unggah-lampiran';
@@ -22,7 +23,7 @@ import { LangkahJenis } from './LangkahJenis';
 import { LangkahTagihan } from './LangkahTagihan';
 import { LangkahTinjau } from './LangkahTinjau';
 import { LangkahVendor } from './LangkahVendor';
-import type { Staged } from './UnggahLampiranUI';
+import type { Staged, Sumber } from './UnggahLampiranUI';
 import type { DataPo, HasilAjukan, HasilSimpan, Muat, Org, VendorOpsi } from './tipe';
 
 const kosong = <T,>(): Muat<T> => ({ status: 'idle', data: null, galat: null });
@@ -168,15 +169,47 @@ export function PengajuanWizard({ roles, email, nama, awal }: WizardProps) {
   useEffect(() => { if (langkah === 'tagihan' && form.vendorKode && form.noInvoice.trim() && dup?.kunci !== kunciDup) void cekInvoice(); }, [langkah]);
 
   // ---------------------------------------------------------------- lampiran: pilih (kompres + validasi), simpan ke staged
-  const pilihBerkas = useCallback(async (f: File) => {
-    setGalatUnggah(null); setMemproses(true);
+  /** Susun ulang `staged` dari daftar sumber: 1 file = apa adanya; > 1 = digabung jadi satu PDF (Drive tetap satu file/link). */
+  const susunStaged = useCallback(async (sumber: Sumber[]) => {
+    setGalatUnggah(null);
+    if (sumber.length === 0) { setStaged((prev) => { if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl); return null; }); return; }
+    setMemproses(true);
     try {
-      const hasil = await kompresGambar(f);
-      validasiUnggahan({ namaAsli: hasil.name, size: hasil.size, mimeType: hasil.type });
-      setStaged((prev) => { if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl); return { file: hasil, previewUrl: hasil.type.startsWith('image/') ? URL.createObjectURL(hasil) : null, ukuranAsli: f.size }; });
-    } catch (e) { setGalatUnggah(e instanceof RuleError ? e.message : 'File tidak dapat dibaca. Coba file lain.'); }
-    finally { setMemproses(false); }
+      let file = sumber[0]!.file;
+      if (sumber.length > 1) {
+        const g = await gabungJadiPdf(sumber.map((x) => x.file));
+        file = new File([g.bytes as BlobPart], g.nama, { type: 'application/pdf', lastModified: Date.now() });
+      }
+      validasiUnggahan({ namaAsli: file.name, size: file.size, mimeType: file.type });
+      const ukuranAsli = sumber.reduce((t, x) => t + x.ukuranAsli, 0);
+      setStaged((prev) => { if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl); return { file, previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : null, ukuranAsli, sumber }; });
+    } catch (e) {
+      // daftar lama dipertahankan: file yang baru ditambahkan/diubah saja yang ditolak
+      setGalatUnggah(e instanceof RuleError ? (sumber.length > 1 && /lebih dari/.test(e.message) ? `Gabungan ${sumber.length} file lebih dari 10 MB. Kurangi file atau kecilkan dulu.` : e.message) : 'File tidak dapat dibaca. Coba file lain.');
+    } finally { setMemproses(false); }
   }, []);
+  const pilihBerkas = useCallback(async (baru: File[]) => {
+    setGalatUnggah(null);
+    const lama = stagedRef.current?.sumber ?? [];
+    if (lama.length + baru.length > GABUNG_MAKS_FILE) { setGalatUnggah(`Maksimal ${GABUNG_MAKS_FILE} file per pengajuan.`); return; }
+    setMemproses(true);
+    const tambahan: Sumber[] = [];
+    try {
+      for (const f of baru) {
+        const hasil = await kompresGambar(f);
+        validasiUnggahan({ namaAsli: hasil.name, size: hasil.size, mimeType: hasil.type });
+        tambahan.push({ file: hasil, ukuranAsli: f.size });
+      }
+    } catch (e) { setGalatUnggah(e instanceof RuleError ? e.message : 'File tidak dapat dibaca. Coba file lain.'); setMemproses(false); return; }
+    await susunStaged([...lama, ...tambahan]);
+  }, [susunStaged]);
+  const hapusSatu = useCallback((i: number) => void susunStaged((stagedRef.current?.sumber ?? []).filter((_, n) => n !== i)), [susunStaged]);
+  const geser = useCallback((i: number, arah: -1 | 1) => {
+    const s = [...(stagedRef.current?.sumber ?? [])]; const j = i + arah;
+    if (j < 0 || j >= s.length) return;
+    [s[i], s[j]] = [s[j]!, s[i]!];
+    void susunStaged(s);
+  }, [susunStaged]);
   const hapusStaged = useCallback(() => setStaged((prev) => { if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl); return null; }), []);
   useEffect(() => () => { const p = stagedRef.current?.previewUrl; if (p) URL.revokeObjectURL(p); }, []);
 
@@ -358,7 +391,7 @@ export function PengajuanWizard({ roles, email, nama, awal }: WizardProps) {
       {langkah === 'vendor' && <LangkahVendor form={form} ubah={ubah} galat={galat} vendors={vendors} po={po} onCobaLagi={() => void muatVendors()} />}
       {langkah === 'tagihan' && (
         <LangkahTagihan form={form} ubah={ubah} galat={galat} tandai={tandai} preview={preview} po={poData} onCekInvoice={() => void cekInvoice()} cekInvoiceMemuat={dupMemuat}
-          lampiran={{ idTrx, punyaLampiran, staged, memproses, unggah, galat: galatUnggah, onPilih: (f) => void pilihBerkas(f), onHapus: hapusStaged }} />
+          lampiran={{ idTrx, punyaLampiran, staged, memproses, unggah, galat: galatUnggah, onPilih: (f) => void pilihBerkas(f), onHapus: hapusStaged, onHapusSatu: hapusSatu, onGeser: geser }} />
       )}
       {langkah === 'tinjau' && (
         <div className="tinjau-wrap">

@@ -205,6 +205,15 @@ a.metrik-kartu:hover .metrik-panah { background: var(--parchment); color: var(--
 .pilihan { border-radius: var(--r-md); }
 .pilihan button { font-size: 15px; min-height: 44px; }
 .pilihan button[aria-selected="true"] { background: var(--primary-soft); }
+.file-row { flex-wrap: wrap; }
+.file-row .aksi { align-items: center; }
+.file-row .info { flex: 1 1 160px; }
+.file-urut { list-style: none; counter-reset: urut; margin: 12px 0 0; padding: 12px 0 0; border-top: 1px solid var(--divider); display: grid; gap: 4px; font-size: 14px; }
+.file-urut li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-width: 0; }
+.file-urut li::before { counter-increment: urut; content: counter(urut) "."; color: var(--muted); }
+.file-urut .nama { flex: 1 1 140px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-urut .aksi { display: flex; gap: 12px; }
+.file-urut button:disabled { opacity: .4; cursor: default; }
 .pilihan-rek { display: block; margin-top: 2px; font-size: 13px; font-weight: 400; color: var(--muted); overflow-wrap: anywhere; }
 .kv > div { font-size: 14px; }
 .kv dd, .kv .v { font-weight: 500; }
