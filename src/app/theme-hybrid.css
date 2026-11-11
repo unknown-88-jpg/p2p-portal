@@ -205,6 +205,7 @@ a.metrik-kartu:hover .metrik-panah { background: var(--parchment); color: var(--
 .pilihan { border-radius: var(--r-md); }
 .pilihan button { font-size: 15px; min-height: 44px; }
 .pilihan button[aria-selected="true"] { background: var(--primary-soft); }
+.pilihan-rek { display: block; margin-top: 2px; font-size: 13px; font-weight: 400; color: var(--muted); overflow-wrap: anywhere; }
 .kv > div { font-size: 14px; }
 .kv dd, .kv .v { font-weight: 500; }
 

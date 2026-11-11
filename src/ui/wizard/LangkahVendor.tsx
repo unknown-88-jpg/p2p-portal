@@ -27,7 +27,7 @@ export function LangkahVendor({ form, ubah, galat, vendors, po, onCobaLagi }: {
   const daftar = useMemo(() => {
     const t = q.trim().toLowerCase();
     const semua = vendors.data ?? [];
-    return (t ? semua.filter((v) => v.namaLengkap.toLowerCase().includes(t)) : semua).slice(0, 60);
+    return (t ? semua.filter((v) => `${v.namaLengkap} ${v.bank} ${v.namaRekening} ${v.noRekening}`.toLowerCase().includes(t)) : semua).slice(0, 60);
   }, [vendors.data, q]);
 
   if (form.tipe === 'Trade') {
@@ -46,7 +46,7 @@ export function LangkahVendor({ form, ubah, galat, vendors, po, onCobaLagi }: {
   return (
     <>
       {terpilih && <KartuVendor v={{ ...terpilih, nama: terpilih.namaAsli }} />}
-      <Field label={terpilih ? 'Ganti vendor' : 'Cari vendor'} id="cariVendor" galat={galat.vendorKode} petunjuk={<>Hanya vendor yang sudah disahkan Finance. Ketik sebagian nama atau kode. Belum terdaftar? <a className="link" href="/vendor" target="_blank" rel="noopener">Daftarkan vendor baru</a>.</>}>
+      <Field label={terpilih ? 'Ganti vendor' : 'Cari vendor'} id="cariVendor" galat={galat.vendorKode} petunjuk={<>Hanya vendor yang sudah disahkan Finance. Ketik sebagian nama, kode, bank, atau nomor rekening. Belum terdaftar? <a className="link" href="/vendor" target="_blank" rel="noopener">Daftarkan vendor baru</a>.</>}>
         {(p) => <input {...p} type="search" value={q} autoComplete="off" placeholder="mis. Gama" onChange={(e) => setQ(e.target.value)} />}
       </Field>
       <div className="pilihan" role="listbox" aria-label="Daftar vendor">
@@ -55,6 +55,8 @@ export function LangkahVendor({ form, ubah, galat, vendors, po, onCobaLagi }: {
           : daftar.map((v) => (
             <button key={v.kode} type="button" role="option" aria-selected={v.kode === form.vendorKode} onClick={() => { ubah({ vendorKode: v.kode }); setQ(''); }}>
               <span className="kode">{v.kode}</span>{v.namaAsli}
+              {/* satu vendor bisa punya beberapa rekening: bank + 4 digit terakhir supaya bisa dibedakan (nomor tetap disamarkan di layar) */}
+              <span className="pilihan-rek">{v.bank || 'Bank -'} · <span className="num">{samarkanRekening(v.noRekening)}</span>{v.namaRekening ? ` · a.n. ${v.namaRekening}` : ''}</span>
             </button>
           ))}
       </div>
