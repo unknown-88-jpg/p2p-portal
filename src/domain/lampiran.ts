@@ -77,6 +77,21 @@ export function namaSetelahKompres(namaAsli: string): string {
   return `${dasar}.jpg`;
 }
 
+// ---- Gabung beberapa lampiran jadi SATU PDF di browser (keputusan user 2026-11-11): Drive & sheet tetap menyimpan satu file/satu link.
+export const GABUNG_MAKS_FILE = 10;
+/** Halaman untuk satu foto: muat di A4 (595 x 842 pt, tegak/rebah mengikuti foto), rasio tetap, tidak pernah membesarkan. */
+export function ukuranHalamanFoto(w: number, h: number): { w: number; h: number } | null {
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w < 1 || h < 1) return null;
+  const [mw, mh] = w > h ? [842, 595] : [595, 842];
+  const skala = Math.min(1, mw / w, mh / h);
+  return { w: Math.max(1, Math.round(w * skala)), h: Math.max(1, Math.round(h * skala)) };
+}
+/** Nama file gabungan: nama dasar file pertama + jumlah file. */
+export function namaGabungan(namaPertama: string, jumlah: number): string {
+  const dasar = (namaPertama.split(/[\\/]/).pop() ?? '').replace(/\.[^.]*$/, '').slice(0, 30) || 'lampiran';
+  return `${dasar}-gabungan-${jumlah}-file.pdf`;
+}
+
 export function formatUkuran(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes < 0) return '-';
   if (bytes < 1024) return `${bytes} B`;
