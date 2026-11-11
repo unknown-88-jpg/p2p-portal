@@ -23,7 +23,7 @@ export async function lookupPo(store: TableStore, poNumber: string): Promise<PoL
 
   const row = po.find((r) => upper(r[P('PO')]) === poClean);
   if (!row) return { status: 'notFound' };
-  const usedPo = ['Company_Name', 'Tax_Status', 'Subtotal', 'Grand_Total', 'Item_Name', 'QTY PO', 'Kode Vendor'];
+  const usedPo = ['Company_Name', 'Tax_Status', 'Subtotal', 'Grand_Total', 'Item_Name', 'QTY PO', 'Kode Vendor', 'Vendor_Name'];
   if (usedPo.some((k) => isSheetError(row[P(k)]))) return { status: 'unreadable' };
 
   let qtySJ = 0;
@@ -37,7 +37,7 @@ export async function lookupPo(store: TableStore, poNumber: string): Promise<PoL
     po: {
       poNumber: poClean, companyName: str(row[P('Company_Name')]), statusPPN: str(row[P('Tax_Status')]) || 'Non PPN',
       subtotalPO: num(row[P('Subtotal')]), grandTotalPO: num(row[P('Grand_Total')]), description: str(row[P('Item_Name')]),
-      qtyPO: num(row[P('QTY PO')]), kodeVendor: str(row[P('Kode Vendor')]),
+      qtyPO: num(row[P('QTY PO')]), kodeVendor: str(row[P('Kode Vendor')]), namaVendor: str(row[P('Vendor_Name')]),
     },
   };
 }

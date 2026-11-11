@@ -1,7 +1,8 @@
-import { cekPlafonPO } from '@/domain/po';
+import { bangunVendor } from '@/domain/master';
+import { cekPlafonPO, vendorUntukPo } from '@/domain/po';
+import { MASTER_VENDOR } from '@/repo/schema';
 import { AppError } from '@/lib/errors';
 import { upper } from '@/domain/legacy-parse';
-import { readVendorByCode } from './master-read';
 import { cocokkanPrefix, lookupPo, readBilling, readSettingRows } from './po-read';
 import type { UowDeps } from './uow';
 
@@ -18,12 +19,14 @@ export async function getPoDetails(d: UowDeps, poNumber: string, excludeIdTrx?: 
   const po = { ...lk.po, companyName: m.company || lk.po.companyName, brandName: m.brand || '-' };
 
   const billing = await readBilling(d.store, poClean, excludeIdTrx);
-  const vendor = await readVendorByCode(d.store, po.kodeVendor);
-  if (!vendor) throw new AppError('RULE_VIOLATION', `Vendor "${po.kodeVendor}" di PO ini tidak ada di Master_Vendor.`);
-  if (upper(vendor.status) !== 'APPROVED') throw new AppError('RULE_VIOLATION', `Vendor "${vendor.nama}" masih berstatus ${vendor.status}. Minta Finance sahkan rekeningnya dulu sebelum mengajukan.`);
+  // Vendor P.O: lewat Kode Vendor bila DB_PO membawanya, selain itu lewat nama. > 1 kandidat (satu vendor, beberapa rekening) -> PIC memilih.
+  const hasil = vendorUntukPo(po, (await d.store.readRows(MASTER_VENDOR)).map(bangunVendor));
+  if (!hasil.ok) throw new AppError('RULE_VIOLATION', hasil.pesan);
+  const vendor = hasil.kandidat.length === 1 ? hasil.kandidat[0]! : null;
+  const vendorPilihan = hasil.kandidat.length > 1 ? hasil.kandidat : [];
 
   const c = cekPlafonPO({ poNumber: poClean, grandTotal: po.grandTotalPO, totalDiajukan: billing.totalDiajukan });
   const plafonSJ = c.plafon;
   const sisaBolehTagih = Math.max(plafonSJ - billing.totalDiajukan, 0);
-  return { ...po, qtySJ: lk.qtySJ, qtyKurang: Math.max(po.qtyPO - lk.qtySJ, 0), plafonSJ, sisaBolehTagih, billing, vendor };
+  return { ...po, qtySJ: lk.qtySJ, qtyKurang: Math.max(po.qtyPO - lk.qtySJ, 0), plafonSJ, sisaBolehTagih, billing, vendor, vendorPilihan };
 }

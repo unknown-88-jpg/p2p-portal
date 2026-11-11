@@ -8,7 +8,10 @@ export interface DataPo {
   poNumber: string; companyName: string; statusPPN: string; subtotalPO: number; grandTotalPO: number; description: string; qtyPO: number; kodeVendor: string; brandName: string;
   qtySJ: number; qtyKurang: number; plafonSJ: number; sisaBolehTagih: number;
   billing: { totalDiajukan: number; totalDibayar: number; dokumen: DokumenPo[] };
-  vendor: VendorPo;
+  /** null = vendor P.O punya beberapa rekening terdaftar -> PIC memilih dari `vendorPilihan`. */
+  vendor: VendorPo | null;
+  vendorPilihan: VendorPo[];
+  namaVendor: string;
 }
 export type StatusMuat = 'idle' | 'memuat' | 'siap' | 'galat';
 export interface Muat<T> { status: StatusMuat; data: T | null; galat: string | null }

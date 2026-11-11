@@ -331,6 +331,17 @@ describe('submit Trade (I10; I11 dihapus)', () => {
     w.store.seed(DB_PO, [poRow()]);
     expect(await code(submitPengajuan(w.deps, citra, id, key()))).toBe('OK');
   });
+  it('DB_PO tanpa Kode Vendor: vendor dicek lewat NAMA saat draft & submit; vendor bernama lain / Non-Trade ditolak', async () => {
+    w.store.seed(MASTER_VENDOR, [['V1', 'Alfa', 'Trade', '', 'BCA', 'Alfa', "'99", 'Approved'], ['V5', 'ALFA', 'Trade', '', 'BNI', 'Alfa', "'77", 'Approved'], ['V4', 'Delta', 'Trade', '', '', '', '', 'Approved'], ['V7', 'Alfa', 'Non-Trade', '', '', '', '', 'Approved']]);
+    w.store.seed(DB_PO, [poRow({ 'Kode Vendor': null, Vendor_Name: 'Alfa' })]);
+    expect(await code(createDraft(w.deps, citra, trade({ vendorKode: 'V4', noInvoice: 'INV-N1' })))).toBe('RULE_VIOLATION'); // nama beda
+    expect(await code(createDraft(w.deps, citra, trade({ vendorKode: 'V7', noInvoice: 'INV-N2' })))).toBe('RULE_VIOLATION'); // Non-Trade
+    const id = await mk({ invoiceAmount: 100_000, vendorKode: 'V5', noInvoice: 'INV-N3' }); // rekening kedua vendor yang sama: boleh
+    expect(await code(submitPengajuan(w.deps, citra, id, key()))).toBe('OK');
+    const id2 = await mk({ invoiceAmount: 100_000, vendorKode: 'V1', noInvoice: 'INV-N4' });
+    w.store.seed(DB_PO, [poRow({ 'Kode Vendor': null, Vendor_Name: 'Delta' })]); // vendor P.O berubah setelah draft
+    expect(await code(submitPengajuan(w.deps, citra, id2, key()))).toBe('RULE_VIOLATION');
+  });
   it('vendor PO diganti setelah draft => ditolak', async () => {
     const id = await mk({ invoiceAmount: 100_000 });
     w.store.seed(DB_PO, [poRow({ 'Kode Vendor': 'V4' })]);

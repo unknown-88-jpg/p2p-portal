@@ -15,6 +15,7 @@ export function validateHeader(schema: TabSchema, headerRow: readonly unknown[] 
   schema.cols.forEach((col, i) => {
     const found = norm(headerRow[i]);
     if (!schema.strictHeader) return; // tab yang headernya belum didaftarkan penuh: dilewati
+    if (col.optional && found === '') return;
     const ok = found === norm(col.key) || (col.aliases ?? []).some((a) => norm(a) === found);
     if (!ok) issues.push({ tab: schema.tab, position: i + 1, expected: col.key, found: String(headerRow[i] ?? '') });
   });

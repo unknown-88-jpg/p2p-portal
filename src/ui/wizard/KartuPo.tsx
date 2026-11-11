@@ -11,7 +11,7 @@ export function KartuPo({ po, nominalIni = 0, judul = 'Data P.O' }: { po: DataPo
       <div className="kartu-h">{judul}</div>
       <dl className="kv">
         <div><dt>No. P.O</dt><dd>{po.poNumber}</dd></div>
-        <div><dt>Vendor</dt><dd>{po.vendor.nama} <span className="muted">({po.vendor.kode})</span></dd></div>
+        <div><dt>Vendor</dt><dd>{po.vendor ? <>{po.vendor.nama} <span className="muted">({po.vendor.kode})</span></> : <>{po.namaVendor} <span className="muted">({po.vendorPilihan.length} rekening terdaftar, pilih di langkah Vendor)</span></>}</dd></div>
         {po.description && <div><dt>Keterangan</dt><dd>{po.description}</dd></div>}
         <div><dt>Grand total P.O</dt><dd className="num">{rupiah(po.grandTotalPO)}</dd></div>
         {po.qtyPO > 0

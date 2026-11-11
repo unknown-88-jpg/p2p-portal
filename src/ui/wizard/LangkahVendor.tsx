@@ -31,11 +31,26 @@ export function LangkahVendor({ form, ubah, galat, vendors, po, onCobaLagi }: {
   }, [vendors.data, q]);
 
   if (form.tipe === 'Trade') {
-    const v = po.data?.vendor;
+    const pilihan = po.data && !po.data.vendor ? po.data.vendorPilihan : [];
+    const v = po.data?.vendor ?? pilihan.find((x) => x.kode === form.vendorKode);
     return (
       <>
-        {v ? <KartuVendor v={v} /> : <Pesan jenis="warn">Tarik data P.O di langkah pertama dulu — vendor mengikuti P.O.</Pesan>}
-        <p className="hint pt">Pada pengajuan Trade, vendor ditentukan oleh P.O dan tidak bisa diganti di sini.</p>
+        {v ? <KartuVendor v={v} /> : pilihan.length === 0 && <Pesan jenis="warn">Tarik data P.O di langkah pertama dulu — vendor mengikuti P.O.</Pesan>}
+        {pilihan.length > 0 && (
+          <>
+            <div className="lbl pt" id="rek-po-l">Pilih rekening vendor</div>
+            <p className="hint">Vendor P.O ini ({po.data?.namaVendor}) punya {pilihan.length} rekening terdaftar. Pilih rekening tujuan pembayaran sesuai invoice.</p>
+            <div className="pilihan" role="listbox" aria-labelledby="rek-po-l">
+              {pilihan.map((x) => (
+                <button key={x.kode} type="button" role="option" aria-selected={x.kode === form.vendorKode} onClick={() => ubah({ vendorKode: x.kode })}>
+                  <span className="kode">{x.kode}</span>{x.nama}
+                  <span className="pilihan-rek">{x.bank || 'Bank -'} · <span className="num">{samarkanRekening(x.noRekening)}</span>{x.namaRekening ? ` · a.n. ${x.namaRekening}` : ''}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+        <p className="hint pt">{pilihan.length > 0 ? 'Pada pengajuan Trade, vendor ditentukan oleh P.O; hanya rekeningnya yang bisa dipilih.' : 'Pada pengajuan Trade, vendor ditentukan oleh P.O dan tidak bisa diganti di sini.'}</p>
         {galat.vendorKode && <Pesan jenis="err">{galat.vendorKode}</Pesan>}
       </>
     );
