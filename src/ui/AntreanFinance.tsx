@@ -96,7 +96,7 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
           ))}
         </div>
         {ring.jumlah > 0 && !dokRuang && <div className="fin-alat">
-          <div className="cari"><input type="search" aria-label="Cari di antrean" placeholder="Cari ID, vendor, invoice, PIC" value={q} onChange={(e) => setQ(e.target.value)} /></div>
+          <div className="cari"><input type="search" aria-label="Cari di antrean" placeholder="Cari ID, vendor, brand, invoice, PIC" value={q} onChange={(e) => setQ(e.target.value)} /></div>
           <label className="fin-urut"><span className="sr-only">Urutkan</span>
             <select value={urut} onChange={(e) => setUrut(e.target.value as Urut)}>
               <option value="terbaru">Terbaru</option><option value="umur">Terlama di tahap</option><option value="jatuh-tempo">Jatuh tempo terdekat</option><option value="nominal">Nominal terbesar</option>
@@ -122,14 +122,14 @@ export function AntreanFinance({ tahapAwal }: { tahapAwal?: KunciTahap | undefin
             {tampil.length === 0 ? <p className="muted" role="status">Tidak ada yang cocok dengan kata kunci.</p> : (
               <div className={ruangPajak ? 'fin-tabel' : undefined}>
               {/* Kepala kolom hanya tampilan (layar lebar, daftar penuh); tiap baris tetap membawa label sendiri untuk pembaca layar. */}
-              {ruangPajak && <div className="daftar-head" aria-hidden="true"><span>Vendor</span><span>ID</span><span>Umur</span><span>Jatuh tempo</span><span>Keterangan</span><span className="kanan">Nominal</span></div>}
+              {ruangPajak && <div className="daftar-head" aria-hidden="true"><span>Vendor</span><span>ID</span><span>Brand</span><span>Umur</span><span>Jatuh tempo</span><span>Keterangan</span><span className="kanan">Nominal</span></div>}
               <ul className="ib-daftar">
                 {tampil.map((i) => (
                   <li key={i.id} className={`inbox-row${cur?.id === i.id ? ' aktif' : ''}`}>
                     <button type="button" className="ib-kartu" aria-current={cur?.id === i.id ? 'true' : undefined} onClick={() => { setSel(i.id); setDetailHP(true); }}>
                       <span className="ib-h">
                         <span className="ib-v">{i.vendorNama || '—'}</span>
-                        <span className="ib-meta"><span className="dok-id num">{i.id}</span><span className="ib-umur">{umurTeks(i.umurHari) || i.tanggal}</span>
+                        <span className="ib-meta"><span className="dok-id num">{i.id}</span><span className="ib-brand">{i.brand || '—'}</span><span className="ib-umur">{umurTeks(i.umurHari) || i.tanggal}</span>
                           <span className="fin-badges">{i.tahap === 'pajak' && i.perluCOO && !i.persetujuan?.coo && <span className="badge-tunggu">Menunggu COO</span>}{i.persetujuan?.finMgr && !i.persetujuan.cfo && i.perluCFO && <span className="badge-tunggu">Menunggu CFO</span>}{i.blokirBayar && <span className="badge-saya">Belum boleh dibayar</span>}{i.ajuanSendiri && <span className="badge-saya">Ajuan Anda</span>}{i.perluCOO && <span className="badge-cfo">COO</span>}{i.perluCFO && <span className="badge-cfo">CFO</span>}</span></span>
                       </span>
                       <span className="ib-b">

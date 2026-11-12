@@ -344,6 +344,7 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); }
 .inbox-row:has(.pilih-cb) .ib-v { padding-right: 34px; }
 .ib-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-height: 20px; }
 .ib-umur { font-size: 12px; color: var(--muted); }
+.ib-brand { font-size: 12px; font-weight: 500; color: var(--ink-80); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 .ib-meta .fin-badges { margin-left: auto; }
 .ib-meta .badge-cfo, .ib-meta .badge-saya, .ib-meta .badge-tunggu { font-size: 11px; padding: 1px 7px; }
 .ib-b { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 8px; }
@@ -357,7 +358,7 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); }
 /* Finance — daftar penuh (Verifikasi pajak): baris tabel seperti daftar Pengajuan saya di layar lebar, kartu di HP */
 .fin-tabel .daftar-head { display: none; }
 @media (min-width: 1100px) {
-  .fin-tabel { --fcols: minmax(0, 1.6fr) 112px 80px 112px minmax(0, 1fr) 150px; background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); box-shadow: var(--shadow-xs); overflow: hidden; }
+  .fin-tabel { --fcols: minmax(0, 1.6fr) 112px minmax(0, .8fr) 80px 112px minmax(0, 1fr) 150px; background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); box-shadow: var(--shadow-xs); overflow: hidden; }
   .fin-tabel .daftar-head { display: grid; grid-template-columns: var(--fcols); gap: 16px; padding: 10px 16px; background: var(--pearl); border-bottom: 1px solid var(--hairline); font-size: 12px; font-weight: 500; color: var(--muted); }
   .fin-tabel .daftar-head .kanan { text-align: right; }
   .inbox.hanya-daftar .fin-tabel .ib-daftar { display: block; margin: 0; }
@@ -368,10 +369,11 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); }
   .fin-tabel .ib-h > *, .fin-tabel .ib-meta > *, .fin-tabel .ib-k > * { grid-row: 1; min-width: 0; }
   .fin-tabel .ib-v { grid-column: 1; font-size: 14px; font-weight: 500; padding-right: 0; }
   .fin-tabel .dok-id { grid-column: 2; justify-self: start; }
-  .fin-tabel .ib-umur { grid-column: 3; font-size: 14px; color: var(--ink-80); }
-  .fin-tabel .ib-k:first-child .ib-dd { grid-column: 4; }
-  .fin-tabel .fin-badges { grid-column: 5; margin-left: 0; justify-content: flex-start; }
-  .fin-tabel .ib-n { grid-column: 6; text-align: right; }
+  .fin-tabel .ib-brand { grid-column: 3; font-size: 14px; font-weight: 400; }
+  .fin-tabel .ib-umur { grid-column: 4; font-size: 14px; color: var(--ink-80); }
+  .fin-tabel .ib-k:first-child .ib-dd { grid-column: 5; }
+  .fin-tabel .fin-badges { grid-column: 6; margin-left: 0; justify-content: flex-start; }
+  .fin-tabel .ib-n { grid-column: 7; text-align: right; }
   .fin-tabel .ib-dd { font-size: 14px; }
   .fin-tabel .ib-meta .dok-id { font-size: 12px; padding: 2px 9px; }
   .fin-tabel .ib-dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
