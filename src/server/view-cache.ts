@@ -17,6 +17,10 @@ interface Slot { entri: Map<string, Entri>; terbang: Map<string, Promise<RawRow[
 const slots = new WeakMap<TableStore, Slot>();
 const slotOf = (s: TableStore): Slot => { let x = slots.get(s); if (!x) { x = { entri: new Map(), terbang: new Map() }; slots.set(s, x); } return x; };
 const verKey = (tab: string): string => `tabver:${tab}`;
+/** Versi tab saat ini (dinaikkan tiap tulis lewat aplikasi). Dipakai sebagai sidik "tidak ada yang berubah" oleh cache turunan (lonceng). Melempar bila Redis mati. */
+export async function versiTab(redis: RedisPort, tabs: readonly string[]): Promise<string> {
+  return (await Promise.all(tabs.map((t) => redis.get(verKey(t))))).map((v) => v ?? '0').join('.');
+}
 
 export interface ViewDeps { redis: RedisPort; store: TableStore; clock: Clock }
 

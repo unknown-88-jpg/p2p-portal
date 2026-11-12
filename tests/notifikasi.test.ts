@@ -3,7 +3,8 @@ import { cronBermasalah, susunNotifikasi } from '@/domain/notifikasi';
 import { MASTER_VENDOR, TRX_APPROVAL, TRX_PENGAJUAN } from '@/repo/schema';
 import type { SessionData } from '@/server/auth';
 import { catatCron } from '@/server/admin';
-import { notifikasiSaya } from '@/server/notifikasi';
+import { NOTIF_TTL_MS, notifikasiSaya } from '@/server/notifikasi';
+import { naikkanVersi, VIEW_TTL_MS } from '@/server/view-cache';
 import { authWorld } from './auth-helpers';
 import { trxRow } from './helpers';
 
@@ -72,5 +73,39 @@ describe('lonceng: per peran (semua pengguna)', () => {
     const asli = w.store.readRows.bind(w.store);
     w.store.readRows = async (sc, o) => { if (sc.tab === MASTER_VENDOR.tab) throw new Error('Sheets 500 (tes)'); return asli(sc, o); };
     expect(await kunci(sess('fs@x.id', [3]))).toEqual(['fin-pajak:1']);
+  });
+  describe('cache lonceng di Redis (hemat kuota baca Sheets)', () => {
+    const fs = sess('fs@x.id', [3]);
+    const maju = (ms: number) => (w.clock as unknown as { advance(ms: number): void }).advance(ms);
+    it('panggilan kedua tidak membaca Sheets; pengguna lain punya cache sendiri', async () => {
+      const a = await kunci(fs);
+      const r = w.store.reads;
+      expect(await kunci(fs)).toEqual(a);
+      expect(w.store.reads).toBe(r);
+      expect(await kunci(sess('fm@x.id', [4]))).toEqual(['fin-finmgr:1']);
+    });
+    it('tulis lewat aplikasi (versi tab naik) -> dihitung ulang seketika; perubahan langsung di sheet baru terlihat setelah TTL', async () => {
+      expect(await kunci(fs)).toEqual(['fin-pajak:1', 'vendor:1']);
+      w.store.seed(MASTER_VENDOR, []); // ubah langsung di sheet: belum terlihat
+      expect(await kunci(fs)).toEqual(['fin-pajak:1', 'vendor:1']);
+      await naikkanVersi(w.redis, [MASTER_VENDOR.tab]);
+      expect(await kunci(fs)).toEqual(['fin-pajak:1']);
+      w.store.seed(TRX_PENGAJUAN, []);
+      maju(NOTIF_TTL_MS + VIEW_TTL_MS + 1);
+      expect(await kunci(fs)).toEqual([]);
+    });
+    it('peran berubah -> cache lama tidak dipakai', async () => {
+      await kunci(fs);
+      expect(await kunci(sess('fs@x.id', [4]))).toEqual(['fin-finmgr:1']);
+    });
+    it('hasil dengan sumber gagal TIDAK disimpan; Redis mati -> tetap menghitung', async () => {
+      const asli = w.store.readRows.bind(w.store);
+      w.store.readRows = async (sc, o) => { if (sc.tab === MASTER_VENDOR.tab) throw new Error('Sheets 500 (tes)'); return asli(sc, o); };
+      expect(await kunci(fs)).toEqual(['fin-pajak:1']);
+      w.store.readRows = asli;
+      expect(await kunci(fs)).toEqual(['fin-pajak:1', 'vendor:1']);
+      w.redis.down = true;
+      expect(await kunci(fs)).toEqual(['fin-pajak:1', 'vendor:1']);
+    });
   });
 });
